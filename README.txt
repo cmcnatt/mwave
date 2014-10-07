@@ -3,7 +3,7 @@ Copyright (C) 2014  Cameron McNatt
 contact: cameron.mcnatt@gmail.com
 repository: https://github.com/camalamadingdong/mwave
 
-Last modified: 17 September, 2014
+README Last modified: 17 September, 2014
 
 mwave can be used to compute (for example):
 - various linear wave fields
