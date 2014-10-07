@@ -1,0 +1,92 @@
+ -----------------------------------------------------------------------
+
+                        WAMIT  Version 7.04(x64)       
+
+     Copyright (c) 1999-012  WAMIT Incorporated                        
+     Copyright (c) 1998 Massachusetts Institute of Technology          
+
+ -----------------------------------------------------------------------
+
+     The WAMIT software performs computations of wave interactions with
+     floating or submerged vessels.  WAMIT is a registered trademark of
+     WAMIT Incorporated.  This copy of the WAMIT software is licensed to 
+
+            Institute for Energy Systems                    
+            School of Engineering                           
+            The University of Edinburgh                     
+            The King's Buildings                            
+            Mayfield Road                                   
+            Edinburgh, EH9 3JL                              
+            UK                                              
+             
+     for end use at the above site.        Release date: 1 Nov 2012 
+
+ -----------------------------------------------------------------------
+
+
+ Low-order panel method  (ILOWHI=0)                                     
+                                                                        
+ Input from Geometric Data Files:                                       
+                               N=  1     ver21.gdf                      
+ Model ver2111-Mar-2014                                                 
+                                                                        
+                               N=  2     ver22.gdf                      
+ Model ver2211-Mar-2014                                                 
+                                                                        
+ Input from Potential Control File:      ver2.pot                       
+ .pot file   Series:     Run: ver2                                      
+                                                                        
+                                                                        
+ POTEN run date and starting time:        11-Mar-2014  --  12:58:41     
+   Period       Time           RAD      DIFF  (max iterations)          
+    2.5312    12:58:44          11      10                              
+
+ Gravity:     9.80660                Length scale:        1.00000
+ Water depth:        10.00000       Water density:     1000.00000
+ Logarithmic singularity index:              ILOG =     1
+ Source formulation index:                   ISOR =     0
+ Diffraction/scattering formulation index: ISCATT =     0
+ Number of blocks used in linear system:   ISOLVE =     0
+ Number of unknowns in linear system:        NEQN =  1280
+ Global Symmetry:   X=0         
+
+ BODY PARAMETERS:
+
+ Body number: N= 1       Total panels:  1280    Waterline panels:   64
+               Irregular frequency index: IRR =0  Symmetries:  X=0,Y=0    
+
+ XBODY =    0.0000 YBODY =   -4.0000 ZBODY =   -0.2500 PHIBODY =   0.0
+ Volumes (VOLX,VOLY,VOLZ):           3.13657      3.13657      3.13658    
+ Center of Buoyancy (Xb,Yb,Zb):     0.000000     0.000000    -0.250000
+ Hydrostatic and gravitational restoring coefficients: 
+ C(3,3),C(3,4),C(3,5):   3.1366     -0.18363E-06   0.0000    
+ C(4,4),C(4,5),C(4,6):              -0.38971E-02   0.0000       0.0000    
+        C(5,5),C(5,6):                           -0.38970E-02 -0.39302E-06
+ Center of Gravity  (Xg,Yg,Zg):     0.000000     0.000000     0.000000
+
+ Body number: N= 2       Total panels:  1280    Waterline panels:   64
+               Irregular frequency index: IRR =0  Symmetries:  X=0,Y=0    
+
+ XBODY =    0.0000 YBODY =    4.0000 ZBODY =   -0.2500 PHIBODY =   0.0
+ Volumes (VOLX,VOLY,VOLZ):           3.13657      3.13657      3.13658    
+ Center of Buoyancy (Xb,Yb,Zb):     0.000000     0.000000    -0.250000
+ Hydrostatic and gravitational restoring coefficients: 
+ C(3,3),C(3,4),C(3,5):   3.1366     -0.18363E-06   0.0000    
+ C(4,4),C(4,5),C(4,6):              -0.38971E-02   0.0000       0.0000    
+        C(5,5),C(5,6):                           -0.38970E-02 -0.39302E-06
+ Center of Gravity  (Xg,Yg,Zg):     0.000000     0.000000     0.000000
+
+
+ ------------------------------------------------------------------------
+                            Output from  WAMIT
+ ------------------------------------------------------------------------
+ FORCE run date and starting time:                11-Mar-2014 -- 12:58:44
+ ------------------------------------------------------------------------
+ I/O Filenames:  ver2.frc            ver2.p2f            ver2.out            
+ .frc file   Series:     Run: ver2                                       
+
+ 
+ ************************************************************************
+
+ Wave period (sec) =  2.531200E+00        Wavenumber (kL) =  6.283352E-01
+ ------------------------------------------------------------------------

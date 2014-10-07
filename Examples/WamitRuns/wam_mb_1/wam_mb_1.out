@@ -1,0 +1,107 @@
+ -----------------------------------------------------------------------
+
+                        WAMIT  Version 7.04(x64)       
+
+     Copyright (c) 1999-012  WAMIT Incorporated                        
+     Copyright (c) 1998 Massachusetts Institute of Technology          
+
+ -----------------------------------------------------------------------
+
+     The WAMIT software performs computations of wave interactions with
+     floating or submerged vessels.  WAMIT is a registered trademark of
+     WAMIT Incorporated.  This copy of the WAMIT software is licensed to 
+
+            Institute for Energy Systems                    
+            School of Engineering                           
+            The University of Edinburgh                     
+            The King's Buildings                            
+            Mayfield Road                                   
+            Edinburgh, EH9 3JL                              
+            UK                                              
+             
+     for end use at the above site.        Release date: 1 Nov 2012 
+
+ -----------------------------------------------------------------------
+
+
+ Low-order panel method  (ILOWHI=0)                                     
+                                                                        
+ Input from Geometric Data Files:                                       
+                               N=  1     wam_mb_11.gdf                  
+ Model wam_mb_11, created: 02-Sep-2014                                  
+                                                                        
+                               N=  2     wam_mb_12.gdf                  
+ Model wam_mb_12, created: 02-Sep-2014                                  
+                                                                        
+                               N=  3     wam_mb_13.gdf                  
+ Model wam_mb_13, created: 02-Sep-2014                                  
+                                                                        
+ Input from Potential Control File:      wam_mb_1.pot                   
+ .pot file   Series:     Run: wam_mb_1                                  
+                                                                        
+                                                                        
+ POTEN run date and starting time:        02-Sep-2014  --  05:10:59     
+   Period       Time           RAD      DIFF  (max iterations)          
+    7.0000    05:12:20          15      12                              
+
+ Gravity:     9.80660                Length scale:        1.00000
+ Water depth:       100.00000       Water density:     1000.00000
+ Logarithmic singularity index:              ILOG =     1
+ Source formulation index:                   ISOR =     0
+ Diffraction/scattering formulation index: ISCATT =     0
+ Number of blocks used in linear system:   ISOLVE =     0
+ Number of unknowns in linear system:        NEQN =  5376
+ Global Symmetries: none        
+
+ BODY PARAMETERS:
+
+ Body number: N= 1       Total panels:  1920    Waterline panels:  160
+               Irregular frequency index: IRR =0      Symmetries: none    
+
+ XBODY =  -40.0000 YBODY =   40.0000 ZBODY =    0.0000 PHIBODY = 315.0
+ Volumes (VOLX,VOLY,VOLZ):           2069.15      2069.35      2070.19    
+ Center of Buoyancy (Xb,Yb,Zb):     0.000002     0.000000    -1.991985
+ Hydrostatic and gravitational restoring coefficients: 
+ C(3,3),C(3,4),C(3,5):   574.81     -0.70059E-04 -0.27703E-03
+ C(4,4),C(4,5),C(4,6):                462.71      0.28619E-03 -0.48947E-02
+        C(5,5),C(5,6):                            0.15508E+06 -0.56323E-04
+ Center of Gravity  (Xg,Yg,Zg):     0.000000     0.000000     0.000000
+
+ Body number: N= 2       Total panels:  1920    Waterline panels:  160
+               Irregular frequency index: IRR =0      Symmetries: none    
+
+ XBODY =    0.0000 YBODY =  -40.0000 ZBODY =    0.0000 PHIBODY =   0.0
+ Volumes (VOLX,VOLY,VOLZ):           2069.15      2069.35      2070.19    
+ Center of Buoyancy (Xb,Yb,Zb):     0.000002     0.000000    -1.991985
+ Hydrostatic and gravitational restoring coefficients: 
+ C(3,3),C(3,4),C(3,5):   574.81     -0.70059E-04 -0.27703E-03
+ C(4,4),C(4,5),C(4,6):                462.71      0.28619E-03 -0.48947E-02
+        C(5,5),C(5,6):                            0.15508E+06 -0.56323E-04
+ Center of Gravity  (Xg,Yg,Zg):     0.000000     0.000000     0.000000
+
+ Body number: N= 3       Total panels:  1536    Waterline panels:   48
+               Irregular frequency index: IRR =0      Symmetries: none    
+
+ XBODY =   10.0000 YBODY =    0.0000 ZBODY =   -2.5000 PHIBODY =   0.0
+ Volumes (VOLX,VOLY,VOLZ):           783.153      783.152      783.153    
+ Center of Buoyancy (Xb,Yb,Zb):     0.000000     0.000000    -2.500000
+ Hydrostatic and gravitational restoring coefficients: 
+ C(3,3),C(3,4),C(3,5):   78.315      0.18406E-04  0.27362E-05
+ C(4,4),C(4,5),C(4,6):               -1471.8      0.59419E-04 -0.14305E-05
+        C(5,5),C(5,6):                            -1471.8     -0.42843E-04
+ Center of Gravity  (Xg,Yg,Zg):     0.000000     0.000000     0.000000
+
+
+ ------------------------------------------------------------------------
+                            Output from  WAMIT
+ ------------------------------------------------------------------------
+ FORCE run date and starting time:                02-Sep-2014 -- 05:12:21
+ ------------------------------------------------------------------------
+ I/O Filenames:  wam_mb_1.frc        wam_mb_1.p2f        wam_mb_1.out        
+ .frc file   Series:     Run: wam_mb_1                                   
+
+ 
+ ************************************************************************
+
+ Wave period (sec) =  7.000000E+00        Wavenumber (kL) =  8.215714E-02
+ ------------------------------------------------------------------------

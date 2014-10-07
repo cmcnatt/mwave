@@ -1,0 +1,115 @@
+ -----------------------------------------------------------------------
+
+                        WAMIT  Version 7.04(x64)       
+
+     Copyright (c) 1999-012  WAMIT Incorporated                        
+     Copyright (c) 1998 Massachusetts Institute of Technology          
+
+ -----------------------------------------------------------------------
+
+     The WAMIT software performs computations of wave interactions with
+     floating or submerged vessels.  WAMIT is a registered trademark of
+     WAMIT Incorporated.  This copy of the WAMIT software is licensed to 
+
+            Institute for Energy Systems                    
+            School of Engineering                           
+            The University of Edinburgh                     
+            The King's Buildings                            
+            Mayfield Road                                   
+            Edinburgh, EH9 3JL                              
+            UK                                              
+             
+     for end use at the above site.        Release date: 1 Nov 2012 
+
+ -----------------------------------------------------------------------
+
+
+ Low-order panel method  (ILOWHI=0)                                     
+                                                                        
+ Input from Geometric Data File:         wam_1b_wf_11.gdf               
+ Model wam_1b_wf_11, created: 31-Aug-2014                               
+                                                                        
+ Input from Potential Control File:      wam_1b_wf_1.pot                
+ .pot file   Series:     Run: wam_1b_wf_1                               
+                                                                        
+                                                                        
+ POTEN run date and starting time:        31-Aug-2014  --  06:28:41     
+   Period       Time           RAD      DIFF  (max iterations)          
+    4.0000    06:28:49          11       9                              
+    5.0000    06:28:50          10       9                              
+    6.0000    06:28:50          10       9                              
+    7.0000    06:28:51          10       9                              
+    8.0000    06:28:51          10       9                              
+    9.0000    06:28:51          10       9                              
+   10.0000    06:28:52          10       9                              
+   11.0000    06:28:52          10       9                              
+   12.0000    06:28:53          10       9                              
+
+ Gravity:     9.80660                Length scale:        1.00000
+ Water depth:        infinite       Water density:     1000.00000
+ Logarithmic singularity index:              ILOG =     1
+ Source formulation index:                   ISOR =     0
+ Diffraction/scattering formulation index: ISCATT =     0
+ Number of blocks used in linear system:   ISOLVE =     0
+ Number of unknowns in linear system:        NEQN =  1536
+
+ BODY PARAMETERS:
+
+ Total panels:    1536  Waterline panels:     48      Symmetries: none    
+ Irregular frequency index: IRR = 0
+
+ XBODY =    0.0000 YBODY =    0.0000 ZBODY =   -2.5000 PHIBODY =   0.0
+ Volumes (VOLX,VOLY,VOLZ):           783.153      783.152      783.153    
+ Center of Buoyancy (Xb,Yb,Zb):     0.000000     0.000000    -2.500000
+ Hydrostatic and gravitational restoring coefficients: 
+ C(3,3),C(3,4),C(3,5):   78.315      0.18406E-04  0.27362E-05
+ C(4,4),C(4,5),C(4,6):               -1471.8      0.59419E-04 -0.14305E-05
+        C(5,5),C(5,6):                            -1471.8     -0.42843E-04
+ Center of Gravity  (Xg,Yg,Zg):     0.000000     0.000000     0.000000
+
+
+ ------------------------------------------------------------------------
+                            Output from  WAMIT
+ ------------------------------------------------------------------------
+ FORCE run date and starting time:                31-Aug-2014 -- 06:28:54
+ ------------------------------------------------------------------------
+ I/O Filenames:  wam_1b_wf_1.frc     wam_1b_wf_1.p2f     wam_1b_wf_1.out     
+ .frc file   Series:     Run: wam_1b_wf_1                                
+
+ 
+ ************************************************************************
+
+ Wave period (sec) =  4.000000E+00        Wavenumber (kL) =  2.516062E-01
+ ------------------------------------------------------------------------
+ ************************************************************************
+
+ Wave period (sec) =  5.000000E+00        Wavenumber (kL) =  1.610280E-01
+ ------------------------------------------------------------------------
+ ************************************************************************
+
+ Wave period (sec) =  6.000000E+00        Wavenumber (kL) =  1.118250E-01
+ ------------------------------------------------------------------------
+ ************************************************************************
+
+ Wave period (sec) =  7.000000E+00        Wavenumber (kL) =  8.215713E-02
+ ------------------------------------------------------------------------
+ ************************************************************************
+
+ Wave period (sec) =  8.000000E+00        Wavenumber (kL) =  6.290155E-02
+ ------------------------------------------------------------------------
+ ************************************************************************
+
+ Wave period (sec) =  9.000000E+00        Wavenumber (kL) =  4.969999E-02
+ ------------------------------------------------------------------------
+ ************************************************************************
+
+ Wave period (sec) =  1.000000E+01        Wavenumber (kL) =  4.025700E-02
+ ------------------------------------------------------------------------
+ ************************************************************************
+
+ Wave period (sec) =  1.100000E+01        Wavenumber (kL) =  3.327024E-02
+ ------------------------------------------------------------------------
+ ************************************************************************
+
+ Wave period (sec) =  1.200000E+01        Wavenumber (kL) =  2.795624E-02
+ ------------------------------------------------------------------------

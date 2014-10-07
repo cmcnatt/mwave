@@ -1,0 +1,75 @@
+ -----------------------------------------------------------------------
+
+                        WAMIT  Version 7.04(x64)       
+
+     Copyright (c) 1999-012  WAMIT Incorporated                        
+     Copyright (c) 1998 Massachusetts Institute of Technology          
+
+ -----------------------------------------------------------------------
+
+     The WAMIT software performs computations of wave interactions with
+     floating or submerged vessels.  WAMIT is a registered trademark of
+     WAMIT Incorporated.  This copy of the WAMIT software is licensed to 
+
+            Institute for Energy Systems                    
+            School of Engineering                           
+            The University of Edinburgh                     
+            The King's Buildings                            
+            Mayfield Road                                   
+            Edinburgh, EH9 3JL                              
+            UK                                              
+             
+     for end use at the above site.        Release date: 1 Nov 2012 
+
+ -----------------------------------------------------------------------
+
+
+ Low-order panel method  (ILOWHI=0)                                     
+                                                                        
+ Input from Geometric Data File:         hb1.gdf                        
+ Model hb110-Mar-2014                                                   
+                                                                        
+ Input from Potential Control File:      hb.pot                         
+ .pot file   Series:     Run: hb                                        
+                                                                        
+                                                                        
+ POTEN run date and starting time:        10-Mar-2014  --  15:18:03     
+   Period       Time           RAD      DIFF  (max iterations)          
+    2.5312    15:18:03           9       9                              
+
+ Gravity:     9.80660                Length scale:        1.00000
+ Water depth:        10.00000       Water density:     1000.00000
+ Logarithmic singularity index:              ILOG =     1
+ Source formulation index:                   ISOR =     0
+ Diffraction/scattering formulation index: ISCATT =     0
+ Number of blocks used in linear system:   ISOLVE =     0
+ Number of unknowns in linear system:        NEQN =   320
+
+ BODY PARAMETERS:
+
+ Total panels:    1280  Waterline panels:     64  Symmetries:  X=0,Y=0    
+ Irregular frequency index: IRR = 0
+
+ XBODY =    0.0000 YBODY =    0.0000 ZBODY =   -0.2500 PHIBODY =   0.0
+ Volumes (VOLX,VOLY,VOLZ):           3.13658      3.13658      3.13658    
+ Center of Buoyancy (Xb,Yb,Zb):     0.000000     0.000000    -0.250000
+ Hydrostatic and gravitational restoring coefficients: 
+ C(3,3),C(3,4),C(3,5):   3.1366       0.0000       0.0000    
+ C(4,4),C(4,5),C(4,6):              -0.38967E-02   0.0000       0.0000    
+        C(5,5),C(5,6):                           -0.38969E-02   0.0000    
+ Center of Gravity  (Xg,Yg,Zg):     0.000000     0.000000     0.000000
+
+
+ ------------------------------------------------------------------------
+                            Output from  WAMIT
+ ------------------------------------------------------------------------
+ FORCE run date and starting time:                10-Mar-2014 -- 15:18:19
+ ------------------------------------------------------------------------
+ I/O Filenames:  hb.frc              hb.p2f              hb.out              
+ .frc file   Series:     Run: hb                                         
+
+ 
+ ************************************************************************
+
+ Wave period (sec) =  2.531200E+00        Wavenumber (kL) =  6.283352E-01
+ ------------------------------------------------------------------------

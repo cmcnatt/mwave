@@ -1,0 +1,19 @@
+.pot file   Series:     Run: ut3
+ -1.0000
+0           1
+9		Number of periods to be analyzed
+  5.0000
+  4.5000
+  4.0000
+  3.5000
+  3.0000
+  2.5000
+  2.0000
+  1.5000
+  1.0000
+1		Number of direction headdings to be analyzed
+  0.0000
+1
+ut31.gdf
+  0.0000	  0.0000	 -0.7500	  0.0000
+0 0 1 0 0 0

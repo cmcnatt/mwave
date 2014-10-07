@@ -1,0 +1,5 @@
+! generic configuration file:  config.wam
+RAMGBMAX= 2.0
+NCPU=1
+USERID_PATH = N:\wamitv7
+LICENSE_PATH=\wamitv7\license

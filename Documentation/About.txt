@@ -1,0 +1,9 @@
+The Documentation needs some work. 
+
+What is hear is written in Lyx: www.lyx.org
+
+Probably the best way to start is through the references: Reference.txt
+
+I'm hoping that my PhD These will serve as documentation as well.  
+
+If all else fails, please contact me with questions of for help: cameron.mcnatt@gmail.com

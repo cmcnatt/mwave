@@ -1,0 +1,359 @@
+#LyX 2.0 created this file. For more info see http://www.lyx.org/
+\lyxformat 413
+\begin_document
+\begin_header
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\use_hyperref false
+\papersize default
+\use_geometry false
+\use_amsmath 1
+\use_esint 1
+\use_mhchem 1
+\use_mathdots 1
+\cite_engine basic
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Standard
+In general
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\eta_{s}\left(r,\theta\right)=\sum_{n=-\infty}^{\infty}B_{n}H_{n}^{\left(2\right)}\left(kr\right)e^{in\theta}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+we know 
+\begin_inset Formula $\eta_{s}$
+\end_inset
+
+ at 
+\begin_inset Formula $r=r_{0}$
+\end_inset
+
+, so we have
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\eta_{s}\left(\theta\right)=\sum_{n=-\infty}^{\infty}B_{n}H_{n}^{\left(2\right)}\left(kr_{0}\right)e^{in\theta}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Calling 
+\begin_inset Formula $C_{n}=B_{n}H_{n}^{\left(2\right)}\left(kr_{0}\right)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\eta_{s}\left(\theta\right)=\sum_{n=-\infty}^{\infty}C_{n}e^{in\theta}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+so
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+C_{n}=\frac{1}{2\pi}\int_{0}^{2\pi}\eta_{s}\left(\theta\right)e^{-in\theta}d\theta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+and
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+B_{n}=\frac{C_{n}}{H_{n}^{\left(2\right)}\left(kr_{0}\right)}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Positive summation
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{eqnarray*}
+H_{-n}^{\left(2\right)} & = & e^{-in\pi}H_{n}^{\left(2\right)}\\
+ & = & \left(-1\right)^{n}H_{n}^{\left(2\right)}
+\end{eqnarray*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\eta_{s}\left(r,\theta\right)=B_{0}H_{0}^{\left(2\right)}+\sum_{n=1}^{\infty}\left(B_{n}e^{in\theta}+\left(-1\right)^{n}B_{-n}e^{-in\theta}\right)H_{n}\left(kr\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Relation to the far-field Kochin function.
+ In the far-field, as 
+\begin_inset Formula $r\rightarrow\infty$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\eta_{f}\left(r,\theta\right)=\frac{f\left(\theta\right)}{\left(kr\right)^{1/2}}e^{-ikr}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+How do we relate 
+\begin_inset Formula $\eta_{s}$
+\end_inset
+
+ and 
+\begin_inset Formula $\eta_{f}$
+\end_inset
+
+?
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\sum_{n=-\infty}^{\infty}B_{n}H_{n}^{\left(2\right)}\left(kr\right)e^{in\theta}\begin{array}{c}
+?\\
+=\\
+\\
+\end{array}\frac{f\left(\theta\right)}{\left(kr\right)^{1/2}}e^{-ikr}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The Hankel function
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+H_{n}^{\left(2\right)}\left(kr\right)=J_{n}\left(kr\right)-iY_{n}\left(kr\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+where 
+\begin_inset Formula $J_{n}$
+\end_inset
+
+ and 
+\begin_inset Formula $Y_{n}$
+\end_inset
+
+ are Bessel functions of the first and second kind.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+kr\gg\left|n^{2}-\frac{1}{4}\right|
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+J_{n}\left(kr\right)\approx\sqrt{\frac{2}{\pi kr}}\cos\left(kr-\frac{n\pi}{2}-\frac{\pi}{4}\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+Y_{n}\left(kr\right)\approx\sqrt{\frac{2}{\pi kr}}\sin\left(kr-\frac{n\pi}{2}-\frac{\pi}{4}\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{eqnarray*}
+H_{n}^{\left(2\right)} & = & \sqrt{\frac{2}{\pi kr}}\left(\cos\left(kr-\frac{n\pi}{2}-\frac{\pi}{4}\right)-i\sin\left(kr-\frac{n\pi}{2}-\frac{\pi}{4}\right)\right)\\
+ & = & \sqrt{\frac{2}{\pi kr}}e^{-i\left(kr-\frac{n\pi}{2}-\frac{\pi}{4}\right)}\\
+ & = & \sqrt{\frac{2}{\pi kr}}e^{i\frac{\pi}{4}}e^{in\frac{\pi}{2}}e^{-ikr}
+\end{eqnarray*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+So, we have
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{eqnarray*}
+\sum_{n=-\infty}^{\infty}B_{n}\left(\sqrt{\frac{2}{\pi kr}}e^{i\frac{\pi}{4}}e^{in\frac{\pi}{2}}e^{-ikr}\right)e^{in\theta} & = & \frac{f\left(\theta\right)}{\left(kr\right)^{1/2}}e^{-ikr}\\
+\frac{1}{\pi}\left(1+i\right)\frac{1}{\left(kr\right)^{1/2}}e^{-ikr}\sum_{n=-\infty}^{\infty}B_{n}i^{n}e^{in\theta} & = & \frac{f\left(\theta\right)}{\left(kr\right)^{1/2}}e^{-ikr}
+\end{eqnarray*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+f\left(\theta\right)=\frac{1}{\pi}\left(1+i\right)\sum_{n=-\infty}^{\infty}B_{n}i^{n}e^{in\theta}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Ok, let's think a bit more...
+\end_layout
+
+\begin_layout Standard
+So, let's say we have the incident wave
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\eta_{i}\left(\theta,r\right)=\sum_{n=-\infty}^{\infty}A_{n}J_{n}\left(kr\right)e^{in\left(\theta-\beta\right)}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+And so we have the diffracted wave
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\eta_{d}\left(r,\theta\right)=\sum_{n=-\infty}^{\infty}A_{n}J_{n}\left(kr\right)e^{in\left(\theta-\beta\right)}+\sum_{n=-\infty}^{\infty}B_{n}H_{n}\left(kr\right)e^{in\theta}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\end_body
+\end_document

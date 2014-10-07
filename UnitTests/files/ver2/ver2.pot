@@ -1,0 +1,18 @@
+.pot file   Series:     Run: ver2
+ 10.0000
+0           1
+1		Number of periods to be analyzed
+  2.5312
+5		Number of direction headdings to be analyzed
+  0.0000
+ 22.5000
+ 45.0000
+ 67.5000
+ 90.0000
+2
+ver21.gdf
+  0.0000	 -4.0000	 -0.2500	  0.0000
+1 1 1 1 1 1
+ver22.gdf
+  0.0000	  4.0000	 -0.2500	  0.0000
+1 1 1 1 1 1
