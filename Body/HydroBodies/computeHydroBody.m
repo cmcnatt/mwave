@@ -21,7 +21,10 @@ Contributors:
 function [hydroB, eta0aSw, eta0aRw] = computeHydroBody(waveCP, hydroF, floatB, varargin)
 % TODO: document this man
 
-[opts, args] = checkOptions({{'SigFigCutoff', 1}, {'Movie', 1}, {'Mmax', 1}, {'AccTrim'}, {'Waves', 1}, {'Scattered', 1} {'Radiated', 1}}, varargin);
+[opts, args] = checkOptions({{'SigFigCutoff', 1}, {'Movie', 1}, {'Mmax', 1}, ...
+    {'AccTrim'}, {'Waves', 1}, {'Scattered', 1} {'Radiated', 1}}, varargin);
+% Mmax is an optional input that limits the number of coefficients to
+% include in the diffraction transfer matrix and radiation coeffs
 
 sigFig = args{1};
 movLoc = args{2};
@@ -70,9 +73,9 @@ nT = length(T);
 
 lam = round(IWaves.T2Lam(T,h));
 
-Mb = length(Beta);
+Mb = length(Beta);  % number of directions
 if (mod(Mb,2) == 1)
-    Mb2 = (Mb-1)/2;
+    Mb2 = (Mb-1)/2; % 
 else
     Mb2 = Mb/2-1;
 end
@@ -99,10 +102,13 @@ etaR = waveCP.Elevation('Radiated');
 AR = cell(nT, dof);
 
 for nt = 1:nT
-    % Get scattering coeffs
-    aSb = zeros(2*Mb2+1, Mb);
+    % For each wave period (nT is the number of periods), find the
+    % diffraction transfer matrix and the radiation amplitudes
+    
+    % 1) get scattering coeffs for the diffraction transfer matrix
+    aSb = zeros(2*Mb2+1, Mb);   % aSb is an array of the scattered coeffs at each incident wave direction
 
-    trimMs = zeros(Mb+dof,1);
+    trimMs = zeros(Mb+dof,1);   % trimMs holds the cutoff M value
 
     for m = 1:Mb
         if (nT == 1)
@@ -189,14 +195,14 @@ for nt = 1:nT
     aIbetaT = aIbeta.';
 
     % 3 - solve for each row of the diffraction transfer matrix B
-    B = zeros(2*M+1, 2*M+1);
+    D = zeros(2*M+1, 2*M+1);
 
     for m = -M:M
         bm = aIbetaT\(aSb(m+M+1,:).');
-        B(m+M+1,:) = bm.';
+        D(m+M+1,:) = bm.';
     end
 
-    DTM{nt} = B;
+    DTM{nt} = D;
     
     % Force Transfer Matrix
     if ((nT == 1) && (dof == 1))

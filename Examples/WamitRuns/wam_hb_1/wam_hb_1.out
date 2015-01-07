@@ -27,23 +27,23 @@
  Low-order panel method  (ILOWHI=0)                                     
                                                                         
  Input from Geometric Data File:         wam_hb_11.gdf                  
- Model wam_hb_11, created: 02-Sep-2014                                  
+ Model wam_hb_11, created: 03-Nov-2014                                  
                                                                         
  Input from Potential Control File:      wam_hb_1.pot                   
  .pot file   Series:     Run: wam_hb_1                                  
                                                                         
                                                                         
- POTEN run date and starting time:        02-Sep-2014  --  06:06:02     
+ POTEN run date and starting time:        03-Nov-2014  --  15:33:19     
    Period       Time           RAD      DIFF  (max iterations)          
-    4.0000    06:06:18          16      14                              
-    5.0000    06:06:24          14      12                              
-    6.0000    06:06:28          13      11                              
-    7.0000    06:06:31          13      11                              
-    8.0000    06:06:35          12      10                              
-    9.0000    06:06:39          12      10                              
-   10.0000    06:06:42          11      10                              
-   11.0000    06:06:46          11       9                              
-   12.0000    06:06:49          11       9                              
+    4.0000    15:33:25          16      14                              
+    5.0000    15:33:28          14      12                              
+    6.0000    15:33:30          13      11                              
+    7.0000    15:33:33          13      11                              
+    8.0000    15:33:35          12      10                              
+    9.0000    15:33:37          12      10                              
+   10.0000    15:33:39          11      10                              
+   11.0000    15:33:42          11       9                              
+   12.0000    15:33:44          11       9                              
 
  Gravity:     9.80660                Length scale:        1.00000
  Water depth:        50.00000       Water density:     1000.00000
@@ -71,7 +71,7 @@
  ------------------------------------------------------------------------
                             Output from  WAMIT
  ------------------------------------------------------------------------
- FORCE run date and starting time:                02-Sep-2014 -- 06:06:51
+ FORCE run date and starting time:                03-Nov-2014 -- 15:33:44
  ------------------------------------------------------------------------
  I/O Filenames:  wam_hb_1.frc        wam_hb_1.p2f        wam_hb_1.out        
  .frc file   Series:     Run: wam_hb_1                                   

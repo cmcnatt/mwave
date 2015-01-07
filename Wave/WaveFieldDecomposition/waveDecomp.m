@@ -43,13 +43,33 @@ function [A, eta0] = waveDecomp(k, r0, theta, z, h, eta, L, M, varargin)
 %   subsequent row contains the coefficients of the subsequent evanescent 
 %   mode. The columns are the coefficients for the circular modes for the
 %   propagating mode then each evanescent mode.
+%
+%   Optional arguments:
+%     - 'SigFigCutoff', val - val is the number of significant figures to 
+%       keep. Cut off all values that insignificant.
+%       [A, eta0] = waveDecomp(k, r0, theta, z, h, eta, L, M, ...
+%               'SigFigCutoff', val)
+%     - 'Incident' - computes the coefficients for an incident cylindircal
+%       wave rather than an outwardly radiating one
 
-[opts, args] = checkOptions({{'SigFigCutoff', 1}}, varargin);
+[opts, args] = checkOptions({{'SigFigCutoff', 1}, 'Incident', {'Round', 1}}, varargin);
 useSigFig = opts(1);
 if (useSigFig)
     sigFig = args{1};
 else
     sigFig = -1;
+end
+
+isInc = opts(2);
+if (isInc)
+    L = 0;
+end
+
+round2 = 0;
+rnd = false;
+if (opts(3))
+    rnd = true;
+    round2 = args{3};
 end
 
 [Nz, Ntheta] = size(eta);
@@ -110,16 +130,30 @@ end
 
 % then find the circular coefficients
 % l = 0 - progressive coefficients
-H0 = besselh(0, 2, k0*r0);
-Hm = besselh(1:M, 2, k0*r0);
-Hnm = (-1).^(1:M).*Hm;
+if (~isInc)
+    H0 = besselh(0, 2, k0*r0);
+    Hm = besselh(1:M, 2, k0*r0);
+    Hnm = (-1).^(1:M).*Hm;
+else
+    H0 = besselj(0, k0*r0);
+    Hm = besselj(1:M, k0*r0);
+    Hnm = (-1).^(1:M).*Hm;
+end
 
 X = 1/Ntheta*fft(etaL(1,:));
+
+if(rnd)
+    X = round(X./round2).*round2;
+end
 
 A0 = zeros(1, 2*M+1);
 A0(M+1) =  X(1)/H0;
 A0(M+2:2*M+1) = X(2:M+1)./Hm;
 A0(M:-1:1) = X(Ntheta:-1:Ntheta-M+1)./Hnm;
+
+if(rnd)
+    A0 = round(A0./round2).*round2;
+end
 
 Mold = M;
 

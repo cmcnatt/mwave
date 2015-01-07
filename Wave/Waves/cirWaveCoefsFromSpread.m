@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Contributors:
     C. McNatt
 %}
-function [an, B, theta] = cirWaveCoefsFromSpread(M, s, k, varargin)
+function [am, B, theta] = cirWaveCoefsFromSpread(M, s, k, varargin)
 % Produces the curved (or short-crested) wave coefficient for curved
 % incident waves from a cos squared spreading defined by s: 
 %
@@ -31,11 +31,10 @@ function [an, B, theta] = cirWaveCoefsFromSpread(M, s, k, varargin)
 %           k - the wave number
 %           'RandPhase' - optional input, to create a random phase
 %
-% Ouputs:   an - circular wave coefficients
+% Ouputs:   am - circular wave coefficients
 %           B - the directional spread
 %           theta - theta points for B
 
-W = 1; % width parameter
 opts = checkOptions({'RandPhase'}, varargin);
 randPhase = opts(1);
 
@@ -43,22 +42,17 @@ randPhase = opts(1);
 Nthet = 4096;
 dthet = 2*pi/Nthet;
 theta = 0:dthet:(2*pi-dthet);
+theta = -pi:dthet:(pi-dthet);
 
-B2 = cos(1/2*theta).^(2*s);
+B2 = abs(cos(1/2*theta)).^(s);
 A = trapz(theta,B2);
-B2 = B2./A;
-
-B = sqrt(B2);
-
-B = W*B;
+B = B2./A;
 
 if (randPhase)
     B = B.*exp(2*pi*1i*rand(size(B)));
 end
 
-F = 2*pi*k*B;
-
-fori = 1/Nthet*fft(F);
+fori = 2*pi*1/Nthet*fft(B);
 
 am = ones(2*M+1,1);
 
@@ -67,9 +61,9 @@ am(M+2:2*M+1) = fori(2:M+1);
 am(M:-1:1) = fori(Nthet:-1:Nthet-M+1);
 
 m = (-M:M).';
-an = (-1i).^m.*am;
+am = (-1i).^m.*am;
 
-an = an.';
+am = am.';
 end
 
 function [eps] = makePhase(theta)
