@@ -37,15 +37,15 @@ load([folder '\wam_hb1_1_hb']);
 % First we need to figure out the spatial arrangement of the array. Let's
 % do 5 bodies arranged like this
 %
-%   *(-100,100)
+%   *(-50,100)
 %
-%               *(100,50)
+%               *(50,50)
 %
-%   *(-100,0)
+%   *(-50,0)
 %
-%               *(100,-50)
+%               *(50,-50)
 %
-%   *(-100,-100)
+%   *(-50,-100)
 
 % We create an array of HydroBodies 
 for m = 1:5
@@ -58,11 +58,11 @@ for m = 1:5
 end
 
 % Then we set their positions
-hbs(1).XYpos = [-50, 50];
+hbs(1).XYpos = [-50, 100];
 hbs(2).XYpos = [-50, 0];
-hbs(3).XYpos = [-50, -50];
-hbs(4).XYpos = [50, 25];
-hbs(5).XYpos = [50, -25];
+hbs(3).XYpos = [-50, -100];
+hbs(4).XYpos = [50, 50];
+hbs(5).XYpos = [50, -50];
 
 % And that's our array of bodies..
 

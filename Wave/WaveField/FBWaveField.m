@@ -238,11 +238,12 @@ classdef FBWaveField < IWaveField & handle
             end
             
             thiswf = wf.getWF(type);
-            if (strcmp(wf.iwavefield.CollType, 'Direction'))
-                hs = thiswf.SigWaveHeight('Merge');
-            else
-                hs = thiswf.SigWaveHeight;
-            end
+            hs = thiswf.SigWaveHeight('Merge');
+%             if (strcmp(wf.iwavefield.CollType, 'Direction'))
+%                 hs = thiswf.SigWaveHeight('Merge');
+%             else
+%                 hs = thiswf.SigWaveHeight;
+%             end
         end
         
         % Gets spectrums at the points closest to the desired points

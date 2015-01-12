@@ -219,4 +219,122 @@ fet;
 % total wave field. You can adjust the 'A' value and see how it affects the
 % wave field.
 
-%% TODO: WaveFieldCollection example
+%% WaveFieldCollection example
+% A WaveFieldCollection is a way to store multiple related wave fields in
+% a single object. A common way to use a WaveFieldCollection is to store 
+% multiple wave directions at the same period. A single WaveField does not
+% allow one to have multiple directions at the same period, because these
+% waves would be coherent. However, in a spectral sense, these wave
+% components are orthongal and so it is justifiable to keep them separate.
+%
+% In this example a wave field will be generated with a directional
+% spectrum
+
+% create a wave spectrum
+% first create a frequency point spectrum
+Hs = 2;                         % significant wave height
+fm = 0.2;                       % modal period
+f = 0.08:0.02:0.8;              % the range of wave frequencies (Hz)
+S = bretschneider(Hs, fm, f);   % Bretschneider spectrum
+
+% next create a directional spread
+s = 4;                              % spreading parameter
+betac = 0;                          % center direction
+beta = linspace(-pi, pi, 21);       % directions (radians)
+G = cosSpectSpread(s, betac, beta); % spreading function
+SG = S'*G;                          % create a matrix of the spectral amps
+
+% finally, create the wave spectrum object
+Spec = WaveSpectrum(SG, f, beta);   
+
+a = Spec.Amplitudes('RandPhase');   % return wave amplitudes with random 
+                                    % phase for each wave component in the
+                                    % spectrum
+                                    
+f = Spec.Frequencies;               % Already had f,beta from above, but 
+beta = Spec.Directions;             % just wanted to show these methods
+S = Spec.Spectrum;                  % These are the actual Spectral values 
+                                    % (it is the same as the SG variable
+                                    % above that was used to create the
+                                    % WaveSpectrum object)
+                   
+figure;                             % plot the spectrum
+surf(f, 180/pi*beta, S.');
+xlabel('frequency (Hz)');
+ylabel('direction (deg)');
+zlabel('Spectral density (m^2/Hz)');
+
+% create wave field for this spectrum. All the waves at the same direction 
+% can be grouped into a single WaveField. Then the WaveFields at each
+% direction are grouped together in a WaveFieldCollection
+rho = 1025;
+h = 40;
+x = -50:0.5:50;
+y = -50:0.5:50;
+
+[X, Y] = meshgrid(x, y);
+
+for n = 1:length(beta)
+    wcs = PlaneWaves(abs(a(:,n)), 1./f, beta(n)*ones(size(f)), h, ...
+        angle(a(:,n)));
+    wfs(n) = PlaneWaveField(rho, wcs, 1, X, Y);
+end
+
+% creates the WaveFieldCollection object
+wf = WaveFieldCollection(wfs, 'Direction', beta);   % a WaveFieldCollection 
+                                                    % has what is called a
+                                                    % collection type. This
+                                                    % is specified by the
+                                                    % second argument:
+                                                    % 'Direction', and it
+                                                    % has what is called an
+                                                    % index, which is
+                                                    % specified by the last
+                                                    % argument, beta
+
+wf.CollType     % The CollType should be 'Direction'
+wf.WFcount      % The WFcount should be the same as the number of direction
+wf.Indices      % The Indices are the directions
+
+% A WaveFieldCollection is a WaveField and can output regular things like
+% wave elevation, which is a cell array of plane wave field
+eta = wf.Elevation; 
+
+figure;             % lets just look at a few that have wave energy
+istartF = 5;
+istopF = 9;
+nf = istopF - istartF + 1;
+istartB = 9;
+istopB = 13;
+nb = istopB - istartB + 1;
+
+for m = istartB:istopB
+    for n = istartF:istopF
+        subplot(nf, nb, (m - istartB)*nb + n - istartF + 1);
+        pcolor(X,Y,real(eta{n, m}));
+        if(m == istartB)
+            title(['f = ' num2str(f(n))]);
+        end
+        if (n == istartF)
+            ylabel(['Dir = ' num2str(beta(m))]);
+        end
+        set(gca, 'xtick', [], 'ytick', [], 'clim', 0.1*[-1 1]);
+        shading flat;
+        axis equal;
+        axis tight
+    end
+end
+
+% SigWaveHeight - gives a wave field picture of the significat wave height
+% In this case it is not very interesting, because Hs is the same
+% everywhere. (It is more interesting when there are bodies present that
+% modify the spectral wave field).
+Hs_wf = wf.SigWaveHeight('Merge');
+Hs_spec = Spec.SigWaveHeight;       % Hs can also be computed from the 
+                                    % spectrum
+                                    
+% lets see how these values compare the Hs originally specified
+[Hs Hs_wf(1,1) Hs_spec]
+
+% there is some error due to how the spectrum is discritized into wave
+% components, but it's pretty close

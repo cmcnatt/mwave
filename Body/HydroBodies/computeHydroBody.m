@@ -23,8 +23,21 @@ function [hydroB, eta0aSw, eta0aRw] = computeHydroBody(waveCP, hydroF, floatB, v
 
 [opts, args] = checkOptions({{'SigFigCutoff', 1}, {'Movie', 1}, {'Mmax', 1}, ...
     {'AccTrim'}, {'Waves', 1}, {'Scattered', 1} {'Radiated', 1}}, varargin);
-% Mmax is an optional input that limits the number of coefficients to
+% 'Mmax' is an optional input that limits the number of coefficients to
 % include in the diffraction transfer matrix and radiation coeffs
+%
+% 'SigFigCutoff', N tells the computation to only use the first N 
+% significant figures. 'AccTrim' removes values on the ends that do not
+% contribute significantly to reproducing the wave field. Without these
+% options, when you compute arrays, you may get a warning message:
+%
+% Warning: Matrix is close to singular or badly scaled. Results may be 
+% inaccurate. RCOND =  6.653070e-65. 
+%
+% This is because the diffraction transfer matrix has some small values,
+% which are likely meaningless, and which makes the matrix solution hard to
+% find. To get rid of these values, when you create the HydroBody, use, the
+% options 'SigFigCutoff', 5, and 'AccTrim'. See example, Wamit_createHB_1
 
 sigFig = args{1};
 movLoc = args{2};
