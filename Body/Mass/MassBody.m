@@ -198,7 +198,7 @@ classdef MassBody < handle
                  mpPos(n,:) = mp.Pos;
                  
                  ma = ma + mpMass(n);
-                 mapos = mapos + mpMass(n)*mpPos(n);
+                 mapos = mapos + mpMass(n)*mpPos(n,:);
              end
              
              rnd = 1e9;

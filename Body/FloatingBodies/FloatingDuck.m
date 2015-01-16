@@ -39,7 +39,7 @@ classdef FloatingDuck < FloatingBody
             % Salter type Duck, but can have 'wedges' on the front and/or back and at different angles
             %
             % rho - fluid density
-            % radius - radius of the cylinder park
+            % radius - radius of the cylinder part
             % lengthFront - length from the center to tip of front 'wedge'
             % angleFront - angle from vertical toward negative x to 'spoke' out to front 'wedge'
             % lengthBack - length from the center to tip of back 'wedge'
@@ -70,7 +70,7 @@ classdef FloatingDuck < FloatingBody
                 Ntheta = varargin{1};
                 Nr = varargin{2};
                 Nwid = varargin{3};
-                [panGeo, mass] = make_doubleDuck(rho, radius, lengthFront, angleFront, lengthBack, angleBack, width, Ntheta, Nr, Nwid);
+                [panGeo, mass] = makePanelMass_doubleDuck(rho, radius, lengthFront, angleFront, lengthBack, angleBack, width, Ntheta, Nr, Nwid);
                 fb.panelGeo = panGeo;
                 fb.iLowHi = 0;
                 

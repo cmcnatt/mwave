@@ -270,6 +270,7 @@ classdef IHydroComp < handle
                 end
             else
                 vel = hcomp.Velocities('Optimal');
+                vel = squeeze(vel);
                 
                 power = zeros(size(vel));
                 
@@ -277,7 +278,7 @@ classdef IHydroComp < handle
                     b_ = squeeze(hcomp.b(n,:,:));
 
                     if (hcomp.nInc == 1)
-                        u = squeeze(vel(n,:));
+                        u = squeeze(vel(n,:)).';
                         power(n, :) = 0.5*real((b_*conj(u)).*u);
                     else
                         for j = 1:hcomp.nInc
