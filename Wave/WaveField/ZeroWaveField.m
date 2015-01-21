@@ -44,8 +44,8 @@ classdef ZeroWaveField < WaveField
                 end
             else
                 rho = varargin{1};
-                h = varargin{2};
-                t = varargin{3};
+                t = varargin{2};
+                h = varargin{3};
                 isarray = varargin{4};
                 varargin = varargin(5:end);
                 
