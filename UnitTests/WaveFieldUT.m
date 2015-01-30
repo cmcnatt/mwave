@@ -330,30 +330,39 @@ classdef WaveFieldUT < matlab.unittest.TestCase
             wc = PlaneWaves(1, 1, 0, 10);
             loc = [0 0];
 
-            wf = PntSrcWaveField('Heave', loc, rho, wc, 1, X, Y);
+            wf1 = PntSrcWaveField('Heave', loc, rho, wc, 1, X, Y);
+            wf2 = PntSrcWaveField('Heave', loc, rho, wc, 1, X, Y);
             
-            eta1 = wf.Elevation;
+            eta1 = wf1.Elevation;
             
             thet = linspace(0,2*pi,21)';
             R = 2;
             cir = R*[cos(thet), sin(thet)];
             
-            wf.RemoveBodies(cir);
+            wf1.RemoveGeometries(cir, 'Out');
+            eta2 = wf1.Elevation;
             
-            eta2 = wf.Elevation;
-            
+            wf2.RemoveGeometries(cir, 'In');
+            eta3 = wf2.Elevation;
+                        
             figure;
-            subplot(2,1,1);
+            subplot(3,1,1);
             pcolor(X,Y,real(eta1{1}))
             fet;
             set(gca,'clim', [-0.2 0.2]);
             title({'WaveFieldUT - testRemove', 'Full WaveField'});
             
-            subplot(2,1,2);
+            subplot(3,1,2);
             pcolor(X,Y,real(eta2{1}))
             fet;
             set(gca,'clim', [-0.2 0.2]);
             title('WaveField with removed circle');
+            
+            subplot(3,1,3);
+            pcolor(X,Y,real(eta3{1}))
+            fet;
+            set(gca,'clim', [-0.2 0.2]);
+            title('WaveField inside circle');
         end
     end
 end

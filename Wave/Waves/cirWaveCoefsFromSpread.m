@@ -52,18 +52,7 @@ if (randPhase)
     B = B.*exp(2*pi*1i*rand(size(B)));
 end
 
-fori = 2*pi*1/Nthet*fft(B);
-
-am = ones(2*M+1,1);
-
-am(M+1) = fori(1);
-am(M+2:2*M+1) = fori(2:M+1);
-am(M:-1:1) = fori(Nthet:-1:Nthet-M+1);
-
-m = (-M:M).';
-am = (-1i).^m.*am;
-
-am = am.';
+am = cirWaveCoefsFromFunc(B);
 end
 
 function [eps] = makePhase(theta)

@@ -459,64 +459,62 @@ classdef WaveField < IWaveField & handle
             end
         end
         
-        function [] = RemoveBodies(wf, bodies)
+        function [] = RemoveGeometries(wf, geos, wfInOrOut)
             
-            if (isa(bodies, 'FloatingBody'))
-                nBod = length(bodies);
-                sects = cell(nBod,1);
-                for n = 1:nBod
-                    sects{n} = bodies(n).WaterPlaneSec;
-                end
-            else
-                if (~iscell(bodies))
-                    sects = {bodies};
-                else
-                    sects = bodies;
-                end                
+            if (~iscell(geos))
+                geos = {geos};
             end
-                        
-            nBod = length(sects);
             
-            for l = 1:nBod
-                sect = sects{l};
-                siz = size(sect);
+            nGeo = length(geos);
+            
+            if (strcmp(wfInOrOut, 'In'))
+                wfIn = true;
+            elseif (strcmp(wfInOrOut, 'Out'))
+                wfIn = false;
+            else
+                error('The wfInOrOut value must be either ''In'' or ''Out''.');
+            end
+            
+            for m = 1:nGeo
+                geon = geos{m};
                 
-                if (siz(2) ~= 2)
-                    error('Body sections must be Nx2 arrays of (x,y) points');
+                [M, N] = size(geon);
+                
+                if (M < 4)
+                    error('The geometry must have at least 4 (x,y) points');
+                end
+                
+                if (N ~= 2)
+                    error('The geometry is defined by an Nx2 matrix of N (x,y) points');
+                end
+                
+                if all(geon(1,:) ~= geon(end,:))
+                    error('The first and last point of the geometry must be same to create a closed contour');
                 end
                 
                 if (wf.isarray)
-                    [nY, nX] = size(wf.x);
-                    
-                    for m = 1:nY
-                        for n = 1:nX
-                            pnt = [wf.x(m,n), wf.y(m,n)];
-                            
-                            if (isInsideLoop(sect, pnt))
-                                for o = 1:wf.nT
-                                    wf.p{o}(m,n) = NaN;
-                                    if (wf.hasvel)
-                                        wf.vel{o}(m,n) = NaN;
-                                    end
-                                end
-                            end
-                        end
-                    end
+                    xq = wf.x;
+                    yq = wf.y;
                 else
-                    nPnt = size(wf.points);
-                    nPnt = nPnt(1);
+                    xq = wf.points(:,1);
+                    yq = wf.points(:,2);
+                end
+                
+                [in, on] = inpolygon(xq, yq, geon(:,1),geon(:,2));
+                
+                if (wfIn)
+                    in = ~in;
+                end
+                
+                for n = 1:wf.nT
+                    pm = wf.p{m};
+                    pm(in) = NaN;
+                    wf.p{m} = pm;
                     
-                    for n = 1:nPnt
-                        if (wf.points(n,3) == 0)
-                            if (isInsideLoop(sect, wf.points(n,1:2)))
-                                for o = 1:wf.nT
-                                    wf.p{o}(n) = NaN;
-                                    if (wf.hasvel)
-                                        wf.vel{o}(n) = NaN;
-                                    end
-                                end
-                            end
-                        end
+                    if (wf.hasvel)
+                        velm = wf.vel{m};
+                        velm(in,:) = NaN;
+                        wf.vel{m} = velm;
                     end
                 end
             end

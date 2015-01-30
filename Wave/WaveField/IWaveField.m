@@ -52,7 +52,7 @@ classdef IWaveField < handle
         SigWaveHeight(wf, varargin)
         Spectra(wf, varargin)
         EnergyFlux(wf, surf, varargin)
-        RemoveBodies(wf, bodies)
+        RemoveGeometries(wf, geos, wfInOrOut)
         
         % Overloaded Operators
         eq(wfa, wfb)
