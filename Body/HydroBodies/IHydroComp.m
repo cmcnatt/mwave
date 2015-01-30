@@ -119,7 +119,9 @@ classdef IHydroComp < handle
             
             hcomp.computeIfNot();
             
-            optm = checkOptions({{'Optimal'}}, varargin);
+            opts = checkOptions({{'Optimal'}, {'ConstOpt', 1}}, varargin);
+            
+            optm = (opts(1) || opts(2));
             
             omega = 2*pi./hcomp.t;
             
@@ -171,7 +173,7 @@ classdef IHydroComp < handle
                     end
                 end
             else
-                vel = hcomp.Velocities('Optimal');
+                vel = hcomp.Velocities(varargin{:});
                 motions = zeros(size(vel));
                 
                 for n = 1:hcomp.nT
@@ -192,7 +194,36 @@ classdef IHydroComp < handle
             
             hcomp.computeIfNot();
             
-            optm = checkOptions({'Optimal'}, varargin);
+            [opts, args] = checkOptions({{'Optimal'}, {'ConstOpt', 1}}, varargin);
+            
+            if (opts(1))
+                optm = true;
+            else
+                optm = false;
+            end
+            
+            if (opts(2))
+                coptm = true;
+                gamma = args{2};
+            else
+                coptm = false;
+            end
+            
+            if (optm && coptm)
+                error('Either ''Optimal'' or ''ConstOpt'' may be used as an argument, not both');
+            end
+            
+            if (coptm)
+                nGam = length(gamma);
+                if (nGam ~= hcomp.dof)
+                    error('The constaint vector must be the same size as the DOF');
+                end
+                
+                G = diag(gamma);
+                optm = true;
+            else
+                G = NaN;
+            end
             
             fex = hcomp.Fex;
             
@@ -210,6 +241,11 @@ classdef IHydroComp < handle
                     end
                 end
             else
+                % optimal motions
+                % or
+                % constained optimal velocity following 
+                % Pizer (1993) "Maximum wave-power absorption of point
+                % absorbers under motion constaints"
                 velocities = zeros(size(fex));
                 
                 for n = 1:hcomp.nT
@@ -217,14 +253,16 @@ classdef IHydroComp < handle
 
                     if (ndims(fex) == 2)
                         f = fex(n, :).';
-                        velocities(n, :) = 0.5*inv(b_)*f;
+                        v = hcomp.computeOptVel(f, b_, G);
+                        velocities(n, :) = v;
                     else
                         for j = 1:hcomp.nInc
                             f = squeeze(fex(n, j, :));
-                            velocities(n, j, :) = 0.5*inv(b_)*f;
+                            v = hcomp.computeOptVel(f, b_, G);
+                            velocities(n, j, :) = v;
                         end
                     end
-                end
+                end                
             end
         end
         
@@ -236,7 +274,9 @@ classdef IHydroComp < handle
             
             hcomp.computeIfNot();
             
-            optm = checkOptions({'Optimal'}, varargin);
+            opts = checkOptions({{'Optimal'}, {'ConstOpt', 1}}, varargin);
+            
+            optm = (opts(1) || opts(2));
                         
             if (~optm)
                 vel = hcomp.Velocities;
@@ -269,7 +309,7 @@ classdef IHydroComp < handle
 %                     end
                 end
             else
-                vel = hcomp.Velocities('Optimal');
+                vel = hcomp.Velocities(varargin{:});
                 vel = squeeze(vel);
                 
                 power = zeros(size(vel));
@@ -385,8 +425,61 @@ classdef IHydroComp < handle
             hcomp.nInc = nIwav;
             hcomp.isComp = false;
         end
+        
+        function [v] = computeOptVel(hcomp, f, b_, G)
+             % optimal motions
+             % or
+             % constained optimal velocity following 
+             % Pizer (1993) "Maximum wave-power absorption of point
+             % absorbers under motion constaints"
+             
+             % The constrained optimization is still a bit choppy - I think
+             % it is due to numerical errors in computing the eigenvalues.
+             
+             % This is the unconstained optimal velocity
+             v = 0.5*inv(b_)*f;
+             if (~isnan(G(1,1)))
+                 % want to compute the constained optimal velocity
+                 % first, check to see whether the velocity
+                 % violates the constaint
+                 res = v'*inv(G).^2*v;
+                 if (res > 1)
+                     % it violate constaint, must compute new velocity
+                     GBG = G*b_*G;
+                     [Q, Lam] = eig(GBG);
+                     Xpri = Q'*G*f;
+                     I = eye(hcomp.dof);
+                     
+                     fun1 = @(x) hcomp.fmu(Xpri, Lam, x);
+                     fun = @(x) real(Xpri'*inv(Lam + x*I).^2*Xpri - 4);
+                     
+                     fstart = 0;
+                     fend = 1e6;
+                     
+                     fun(fstart)
+                     fun(fend)
+                     
+                     fun1(fstart)
+                     fun1(fend)
+                     
+                     mu = fzero(fun, [0 1e6]);
+                     
+                     v = 0.5*inv(b_ + mu*I)*f;
+                 end 
+             end    
+        end
+        
+        function [f] = fmu(hcomp, Xpri, Lam, mu)
+            N = length(Xpri);
+            f = 0;
+            for n = 1:N
+                f = f + abs(Xpri(n)).^2/(Lam(n,n) + mu).^2;
+            end
+            f = f- 4;
+            f = real(f); % this should always be real, but sometimes it has a very small imag
+        end
     end
-    
+       
     methods (Static)
         function [dof] = GetDoF(fbs)
             % Computes the degrees of freedom from a vector of floating
