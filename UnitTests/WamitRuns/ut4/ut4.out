@@ -28,18 +28,18 @@
                                                                         
  Input from Geometric Data Files:                                       
                                N=  1     ut4.gdf                        
- Model ut4, created: 07-Oct-2014                                        
+ Model ut4, created: 02-Feb-2015                                        
                                                                         
                                N=  2     ut4.gdf                        
- Model ut4, created: 07-Oct-2014                                        
+ Model ut4, created: 02-Feb-2015                                        
                                                                         
  Input from Potential Control File:      ut4.pot                        
  .pot file   Series:     Run: ut4                                       
                                                                         
                                                                         
- POTEN run date and starting time:        07-Oct-2014  --  11:43:31     
+ POTEN run date and starting time:        02-Feb-2015  --  16:27:49     
    Period       Time           RAD      DIFF  (max iterations)          
-    2.8000    11:43:37          10      10                              
+    2.8000    16:27:55          10      10                              
 
  Gravity:     9.80660                Length scale:        1.00000
  Water depth:        infinite       Water density:     1000.00000
@@ -80,7 +80,7 @@
  ------------------------------------------------------------------------
                             Output from  WAMIT
  ------------------------------------------------------------------------
- FORCE run date and starting time:                07-Oct-2014 -- 11:43:37
+ FORCE run date and starting time:                02-Feb-2015 -- 16:27:55
  ------------------------------------------------------------------------
  I/O Filenames:  ut4.frc             ut4.p2f             ut4.out             
  .frc file   Series:     Run: ut4                                        

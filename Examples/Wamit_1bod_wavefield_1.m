@@ -73,8 +73,8 @@ wam_run.WriteRun;
                                     
 %% Run Wamit
 
-% wam_run.RunWamit();
-wam_run.RunWamit('Background');             
+% wam_run.Run;
+wam_run.Run('Background');             
 
 %% Read results
 

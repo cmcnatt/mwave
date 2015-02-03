@@ -39,7 +39,7 @@ classdef WamitUT < matlab.unittest.TestCase
             ut1_run.H = Inf;
 
             ut1_run.WriteRun;
-            ut1_run.RunWamit;
+            ut1_run.Run;
 
             ut1_result = WamitResult(ut1_run);
             ut1_result.ReadResult;
@@ -82,7 +82,7 @@ classdef WamitUT < matlab.unittest.TestCase
             ut2_run.H = Inf;
 
             ut2_run.WriteRun;
-            ut2_run.RunWamit;
+            ut2_run.Run;
 
             ut2_result = WamitResult(ut2_run);
             ut2_result.ReadResult;
@@ -157,7 +157,7 @@ classdef WamitUT < matlab.unittest.TestCase
             ut3_run.H = Inf;
 
             ut3_run.WriteRun;
-            ut3_run.RunWamit;
+            ut3_run.Run;
 
             ut3_result = WamitResult(ut3_run);
             ut3_result.ReadResult;
@@ -222,7 +222,7 @@ classdef WamitUT < matlab.unittest.TestCase
             ut4_run.H = Inf;
 
             ut4_run.WriteRun;
-            ut4_run.RunWamit;
+            ut4_run.Run;
             toc
 
             tic
@@ -288,7 +288,7 @@ classdef WamitUT < matlab.unittest.TestCase
             ut6_run.H = Inf;
 
             ut6_run.WriteRun;
-            ut6_run.RunWamit;
+            ut6_run.Run;
 
             ut6_result = WamitResult(ut6_run);
             ut6_result.ReadResult;

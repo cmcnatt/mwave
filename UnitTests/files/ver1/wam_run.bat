@@ -5,7 +5,7 @@ del %fN%.1 %fN%.2 %fN%.3 %fN%.4 %fN%.5 %fN%.6p %fN%.6vx %fN%.6vy %fN%.6vz %fN%.f
 set "t0=%Time%"
 set "d0=%Date%"
 
-C:\wamitv7\wamit
+N:\wamitv7\wamit
 
 set "t1=%Time%"
 set "d1=%Date%"

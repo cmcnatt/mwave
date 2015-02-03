@@ -128,9 +128,9 @@ classdef HydroArrayCompUT < matlab.unittest.TestCase
             
             figure;
 
-            pcolor(X,Y,abs(etaA{1}));
+            pcolor(X,Y,real(etaA{1}));
             fet;
-            set(gca, 'clim', [0.8 1.2], 'xtick', [], 'ytick', []);
+            set(gca, 'clim', [-1.2 1.2], 'xtick', [], 'ytick', []);
             title({'HydroArrayCompUT', 'Short-crested Wave Field'});
         end
     end

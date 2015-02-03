@@ -109,15 +109,15 @@ wam_run.WriteRun;                   % this writes all the necessary Wamit
 %% Run Wamit
 
 % The following are default values, but just to show that they can be set
-wam_run.WamitPath = 'N:\wamitv7';           % This points to the location 
+wam_run.ExePath = 'N:\wamitv7';           % This points to the location 
                                             % of the Wamit.exe
 wam_run.ScratchPath = 'N:\wamitv7\scratch'; % Wamit needs a scratch folder
 wam_run.UseridPath = 'N:\wamitv7';          % Location of UserId (license)
 
-wam_run.RunWamit;                           % Runs Wamit on the run that   
+wam_run.Run;                           % Runs Wamit on the run that   
                                             % just created. Ties up Matlab
                                             
-% wam_run.RunWamit('Background');             % Runs Wamit in a command
+% wam_run.Run('Background');             % Runs Wamit in a command
                                             % window. Matlab can be used,
                                             % but make sure you wait to
                                             % read the results until the

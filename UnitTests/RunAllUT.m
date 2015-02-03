@@ -30,9 +30,11 @@ profile off;
 
 %% run specfic test to debug
 
-test = WamitUT;
+test = HydroBodyCompUT;
 
-res = run(test, 'testWF');
+run(test)
+
+%res = run(test, 'testIncCirWave');
 
 %% run specfic test to debug
 

@@ -176,7 +176,7 @@ classdef HydroArrayComp < IHydroComp
                  error('To compute wave fields, water depth cannot be empty');
              end
 
-             zwf = ZeroWaveField(rho, h, hacomp.t, isarray, varargin{:});
+             zwf = ZeroWaveField(rho, hacomp.t, h, isarray, varargin{:});
              
              % hacomp.As = cell(hacomp.nT, hacomp.nInc, hacomp.Nhb);
              

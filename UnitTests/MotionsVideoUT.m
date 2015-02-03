@@ -83,7 +83,7 @@ classdef MotionsVideoUT < matlab.unittest.TestCase
             comp_run.H = h;
             
             comp_run.WriteRun;
-            comp_run.RunWamit;
+            comp_run.Run;
             
             comp_result = WamitResult(comp_run);
             comp_result.ReadResult;

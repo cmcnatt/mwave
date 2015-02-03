@@ -387,9 +387,9 @@ classdef WaveFieldCollection < IWaveField & handle
             end
         end
         
-        function [] = RemoveBodies(wf, bodies)
+        function [] = RemoveGeometries(wf, bodies)
             for n = 1:wf.nInd
-                wf.wavefields(n).RemoveBodies(bodies);
+                wf.wavefields(n).RemoveGeometries(bodies);
             end
         end
         
