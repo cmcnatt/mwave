@@ -151,7 +151,7 @@ wam_run.T = T;
 wam_run.Beta = Beta;                                   
 wam_run.H = h;
 
-wam_run.FieldArray = WamitFieldArray([-20 -20 0], [0.4 0.4 1], [101 101 1]);
+wam_run.FieldArray = BemFieldArray([-20 -20 0], [0.4 0.4 1], [101 101 1]);
 
 wam_run.WriteRun;   
 
@@ -218,7 +218,7 @@ wam_run.T = T;
 wam_run.Beta = Beta;                                   
 wam_run.H = h;
 
-wam_run.FieldArray = WamitFieldArray([-20 -20 0], [0.4 0.4 1], [101 101 1]);
+wam_run.FieldArray = BemFieldArray([-20 -20 0], [0.4 0.4 1], [101 101 1]);
 
 wam_run.WriteRun;   
 

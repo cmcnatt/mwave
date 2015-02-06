@@ -28,6 +28,9 @@ classdef IBemRunCondition < handle
         exePath;
         folder;
         floatBods;
+        geoFiles;
+        fieldArray;
+        cylArray;
     end
     
     properties (Dependent)
@@ -35,6 +38,8 @@ classdef IBemRunCondition < handle
         H;                  % Water depth   
         ExePath;            % Path location of BEM executables
         Folder;             % Folder location of run (input/output files) 
+        FieldArray;         % Array of field points (Input is a BemFieldArray)
+        CylArray;           % Cylindrical array of field poinst (Input is a BemCylArray)
     end
     
     properties (Abstract, Dependent)
@@ -105,6 +110,30 @@ classdef IBemRunCondition < handle
             else
                 error('Folder must be a string');
             end
-        end        
+        end
+        
+        function [fa] = get.FieldArray(run)
+            % Get the field point array to be evaluated
+            fa = run.fieldArray;
+        end
+        function [run] = set.FieldArray(run, fa)
+            % Set the field point array to be evaluated
+            if(~isa(fa, 'BemFieldArray'))
+                error('Field array must be of type BemFieldArray');
+            end
+            run.fieldArray = fa;
+        end
+        
+        function [ca] = get.CylArray(run)
+            % Get the cylinder point array to be evaluated
+            ca = run.cylArray;
+        end
+        function [run] = set.CylArray(run, ca)
+            % Set the cylinder point array to be evaluated
+            if(~isa(ca, 'BemCylArray'))
+                error('CylArray array must be of type BemCylArray');
+            end
+            run.cylArray = ca;
+        end
     end
 end

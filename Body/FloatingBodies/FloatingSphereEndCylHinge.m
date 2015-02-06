@@ -127,30 +127,6 @@ classdef FloatingSphereEndCylHinge < FloatingBody
             fb.iLowHi = 0;
         end
         
-        function [fb] = WriteGdf(fb, path, fileName)
-            % Write the geometry object to geometry file.  The PanelGeo
-            % creates a geometry file with the name GeoFile.
-            if (isempty(fb.panelGeo))
-                error('No panel geomerty exists. Cannot create .gdf file.');
-            else
-                fb.geoFile = fileName;
-                fb.panelGeo.WriteGdf(path, fileName);
-                % write _xhinge file with hinge locations
-                filename = [path '\' fileName '_xhinge.dat'];
-                fileID = fopen(filename, 'wt');
-
-                Nhin = size(fb.hingePos,1);
-                fprintf(fileID, ['XHINGE.DAT file for hinge coordinates of hinged body used in ' fileName '\n']);
-                fprintf(fileID, '0 %i \tISX,  NHIN\n', Nhin);
-                for n = 1:Nhin
-                    fprintf(fileID, '%6.2f ', fb.hingePos(n));
-                end
-                fprintf(fileID, '\tHINGPOS\n');
-                fprintf(fileID, '%8.4f\tANGLE\n', pi/180*fb.Angle);
-
-                fclose(fileID);
-            end
-        end
     end
     
     methods (Static)
@@ -192,11 +168,11 @@ classdef FloatingSphereEndCylHinge < FloatingBody
     end
     
     methods (Static, Access = private)
-        function [] = writeHingePos(path, fileName, params)
+        function [] = writeHingePos(filePath, fileName, params)
             hingePs = params{1};
             angle = params{3};
             
-            filename = [path '\' fileName '_xhinge.dat'];
+            filename = [filePath '\' fileName '_xhinge.dat'];
             fileID = fopen(filename, 'wt');
 
             Nhin = size(hingePs,1);

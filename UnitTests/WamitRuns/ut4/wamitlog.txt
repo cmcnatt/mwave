@@ -1,5 +1,5 @@
 
-WAMITLOG.TXT file from WAMIT run:  02-Feb-2015 16:27:49
+WAMITLOG.TXT file from WAMIT run:  03-Feb-2015 14:10:37
 
  Input file config.wam          
 ! generic configuration file:  config.wam
@@ -33,7 +33,7 @@ NUMHDR = 1
 NUMNAM = 0
 SCRATCH_PATH = N:\wamitv7\scratch
 
-POTEN run started:  02-Feb-2015 16:27:49
+POTEN run started:  03-Feb-2015 14:10:37
 
  Input file ut4.pot             
 .pot file   Series:     Run: ut4
@@ -44,15 +44,15 @@ POTEN run started:  02-Feb-2015 16:27:49
 1		Number of direction headdings to be analyzed
   0.0000
 2
-ut4.gdf
+ut41.gdf
  -2.5000	  0.0000	 -0.7500	  0.0000
 0 0 1 0 0 0
-ut4.gdf
+ut42.gdf
   2.5000	  0.0000	 -0.7500	  0.0000
 0 0 1 0 0 0
 
- First    10 lines of input file ut4.gdf             
-Model ut4, created: 02-Feb-2015
+ First    10 lines of input file ut41.gdf            
+Model ut41, created: 03-Feb-2015
   1.0000   9.8066
 0 0
 1536
@@ -63,8 +63,8 @@ Model ut4, created: 02-Feb-2015
 	  0.5000	  0.0000	  0.6875
 	  0.5000	  0.0000	  0.6250
 
- First    10 lines of input file ut4.gdf             
-Model ut4, created: 02-Feb-2015
+ First    10 lines of input file ut42.gdf            
+Model ut42, created: 03-Feb-2015
   1.0000   9.8066
 0 0
 1536
@@ -82,9 +82,9 @@ Model ut4, created: 02-Feb-2015
 
   POTEN module run completed
 
-POTEN run completed:  02-Feb-2015 16:27:55
+POTEN run completed:  03-Feb-2015 14:10:43
 
-FORCE run started:  02-Feb-2015 16:27:55
+FORCE run started:  03-Feb-2015 14:10:43
 
  Input file ut4.frc             
 .frc file   Series:     Run: ut4
@@ -138,6 +138,6 @@ FORCE run started:  02-Feb-2015 16:27:55
 101	-20.0000	  0.4000
 1	  0.0000	  1.0000
 
-FORCE run completed:  02-Feb-2015 16:28:15
+FORCE run completed:  03-Feb-2015 14:11:03
 
   WAMIT run completed

@@ -71,7 +71,7 @@ classdef WamitUT < matlab.unittest.TestCase
 
             ut2_run = WamitRunCondition(folder, name);
             ut2_run.Rho = WamitUT.getRho;
-            ut2_run.FieldArray = WamitFieldArray([-20 -20 0], [0.4 0.4 1], [101 101 1]);
+            ut2_run.FieldArray = BemFieldArray([-20 -20 0], [0.4 0.4 1], [101 101 1]);
 
             cyl = WamitUT.createCylFB();
             cyl.Handle = 'Single';
@@ -145,7 +145,7 @@ classdef WamitUT < matlab.unittest.TestCase
 
             ut3_run = WamitRunCondition(folder, name);
             ut3_run.Rho = WamitUT.getRho;
-            ut3_run.FieldArray = WamitFieldArray([-20 -20 0], [0.4 0.4 1], [101 101 1]);
+            ut3_run.FieldArray = BemFieldArray([-20 -20 0], [0.4 0.4 1], [101 101 1]);
 
             cyl = WamitUT.createCylFB();
             cyl.Handle = 'Spectrum';
@@ -203,10 +203,9 @@ classdef WamitUT < matlab.unittest.TestCase
 
             ut4_run = WamitRunCondition(folder, name);
             ut4_run.Rho = WamitUT.getRho;
-            ut4_run.FieldArray = WamitFieldArray([-20 -20 0], [0.4 0.4 1], [101 101 1]);
+            ut4_run.FieldArray = BemFieldArray([-20 -20 0], [0.4 0.4 1], [101 101 1]);
 
             cyl1 = WamitUT.createCylFB();
-            cyl1.WriteGdf(folder, name);  
             cyl2 = FloatingBody(cyl1);
             
             cyl1.Handle = 'Forward';
@@ -276,7 +275,6 @@ classdef WamitUT < matlab.unittest.TestCase
             rho = WamitUT.getRho;
 
             atten = WamitUT.createAttenFB();
-            atten.WriteGdf(folder, name);
             atten.Handle = 'RAO';
 
             ut6_run = WamitRunCondition(folder, name);
@@ -314,6 +312,78 @@ classdef WamitUT < matlab.unittest.TestCase
             title('Power');
             xlabel('T (s)');
             ylabel('RCW');
+        end
+        
+        function testHingeModes(testCase)
+            name = 'ut8';
+            folder = [WamitUT.getMainPath name];
+
+            rho = 1000;     
+            
+            len = 60;
+            dia = 10;
+            hingePos = [-10; 10];   
+            sphereRad = 0.1*len;
+            Nx = 80;              
+            Ntheta = 24;           
+            wec = FloatingSphereEndCylHinge(rho, len, dia/2, sphereRad, hingePos, Nx, Ntheta);  
+            
+            % Let's look at the Geometry..
+            figure;
+            plot(wec.PanelGeo);
+            axis equal;
+            title('WamitUT - testHingeModes Panelization');
+            
+            wec.Handle = 'atten';
+            wec.Modes = ModesOfMotion([1 1 1 1 1 1 1 1]);   
+            
+            wec.WamIGenMds;
+            
+            wam_run = WamitRunCondition(folder, name);  
+
+            wam_run.Rho = rho;      
+            wam_run.T = 4:0.5:12;   
+            wam_run.Beta = 0;       
+            wam_run.H = Inf;        
+            wam_run.FloatingBodies = wec;       
+
+            wam_run.WriteRun;                   
+            wam_run.Run;                           
+            
+            wam_result = WamitResult(wam_run);  
+            wam_result.ReadResult;              
+            hydroForces = wam_result.HydroForces;
+            
+            % Here, we have 8 DoF
+            A = hydroForces.A;      
+            B = hydroForces.B;      
+            C = hydroForces.C;      
+            Fex = hydroForces.Fex;  
+
+            T = hydroForces.T;     
+            figure;
+            subplot(3,1,1);
+            % DoF 7 and 8 are the hinge modes (or flex)
+            % Because of symmetry the radiation forces 7-7 and 8-8 are the same
+            axe = plotyy(T, [squeeze(A(:,7,7)) squeeze(A(:,8,8))], T, ...
+                squeeze(A(:,3,7)));
+            title({'WamitUT - testHingeModes', 'Added Mass'});
+            ylabel(axe(1), 'kg*m^2');
+            ylabel(axe(2), 'kg*m');
+            legend('flex 1-flex 1', 'flex 2-flex 2', 'heave-flex 1');
+            subplot(3,1,2);
+            axe = plotyy(T, [squeeze(B(:,7,7)) squeeze(B(:,8,8))], T, ...
+                squeeze(B(:,3,7)));
+            title('Hydrodynamic Damping');
+            ylabel(axe(1), 'Ns/m*m^2');
+            ylabel(axe(2), 'Ns/m*m');
+            legend('flex 1-flex 1', 'flex 2-flex 2', 'heave-flex 1');
+            subplot(3,1,3);
+            plot(T, abs([squeeze(Fex(:,1,7)) squeeze(Fex(:,1,8))]));
+            title('Excitation Force');
+            legend('flex 1', 'flex 2');
+            xlabel('Period (s)');
+            ylabel('Nm');
         end
         
         function testReadFolder(testCase)

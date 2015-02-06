@@ -100,7 +100,7 @@ wam_run.FloatingBodies = bodies;
 
 % Let's also create a wave field - makes it nice to see the bodies
 wam_run.FieldArray = ...
-    WamitFieldArray([-100 -100 0], [1 1 1], [201 201 1]);
+    BemFieldArray([-100 -100 0], [1 1 1], [201 201 1]);
 
 wam_run.WriteRun;                   
 

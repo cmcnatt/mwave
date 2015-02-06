@@ -18,8 +18,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Contributors:
     C. McNatt
 %}
-classdef WamitFieldArray
-    % Defines the Wamit field array of points
+classdef BemFieldArray
+    % Defines the field array (gird) of points for a BEM calculation
     
     properties (Access = private)
         start;
@@ -31,6 +31,7 @@ classdef WamitFieldArray
         Start;          % The starting location
         Deltas;         % The spacing in each direction
         NumberPoints;   % The number of points in each direction
+        Lengths;        % The lengths in each direction
     end
     
     methods (Static, Access = private)
@@ -63,7 +64,7 @@ classdef WamitFieldArray
     
     methods
         % Constructor 
-        function [array] = WamitFieldArray(start, deltas, numberPoints)
+        function [array] = BemFieldArray(start, deltas, numberPoints)
             % Constructor
             if (nargin == 0)
                 array.start = [0 0 0];
@@ -112,6 +113,13 @@ classdef WamitFieldArray
         function [array] = set.NumberPoints(array, np)
             np2 = array.checkNumberPoints(np);
             array.numberPoints = np2;
+        end
+        
+        function [lens] = get.Lengths(array)
+            del = array.deltas;
+            np = array.numberPoints;
+            
+            lens = del.*(np - [1 1 1]);
         end
         
         % Computes meshgrids of the array points

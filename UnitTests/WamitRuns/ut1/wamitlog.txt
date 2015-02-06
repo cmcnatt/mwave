@@ -1,5 +1,5 @@
 
-WAMITLOG.TXT file from WAMIT run:  02-Feb-2015 16:22:22
+WAMITLOG.TXT file from WAMIT run:  03-Feb-2015 14:05:25
 
  Input file config.wam          
 ! generic configuration file:  config.wam
@@ -29,7 +29,7 @@ NUMHDR = 1
 NUMNAM = 0
 SCRATCH_PATH = N:\wamitv7\scratch
 
-POTEN run started:  02-Feb-2015 16:22:22
+POTEN run started:  03-Feb-2015 14:05:25
 
  Input file ut1.pot             
 .pot file   Series:     Run: ut1
@@ -104,7 +104,7 @@ ut11.gdf
 0 0 1 0 0 0
 
  First    10 lines of input file ut11.gdf            
-Model ut11, created: 02-Feb-2015
+Model ut11, created: 03-Feb-2015
   1.0000   9.8066
 0 0
 1536
@@ -122,9 +122,9 @@ Model ut11, created: 02-Feb-2015
 
   POTEN module run completed
 
-POTEN run completed:  02-Feb-2015 16:22:36
+POTEN run completed:  03-Feb-2015 14:05:39
 
-FORCE run started:  02-Feb-2015 16:22:36
+FORCE run started:  03-Feb-2015 14:05:39
 
  Input file ut1.frc             
 .frc file   Series:     Run: ut1
@@ -155,6 +155,6 @@ FORCE run started:  02-Feb-2015 16:22:36
 0
 0
 
-FORCE run completed:  02-Feb-2015 16:22:36
+FORCE run completed:  03-Feb-2015 14:05:39
 
   WAMIT run completed

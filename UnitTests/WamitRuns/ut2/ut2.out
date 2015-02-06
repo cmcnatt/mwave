@@ -27,15 +27,15 @@
  Low-order panel method  (ILOWHI=0)                                     
                                                                         
  Input from Geometric Data File:         ut21.gdf                       
- Model ut21, created: 02-Feb-2015                                       
+ Model ut21, created: 04-Feb-2015                                       
                                                                         
  Input from Potential Control File:      ut2.pot                        
  .pot file   Series:     Run: ut2                                       
                                                                         
                                                                         
- POTEN run date and starting time:        02-Feb-2015  --  16:22:39     
+ POTEN run date and starting time:        04-Feb-2015  --  14:40:14     
    Period       Time           RAD      DIFF  (max iterations)          
-    2.8000    16:22:41           9       9                              
+    2.8000    14:40:15           9       9                              
 
  Gravity:     9.80660                Length scale:        1.00000
  Water depth:        infinite       Water density:     1000.00000
@@ -63,7 +63,7 @@
  ------------------------------------------------------------------------
                             Output from  WAMIT
  ------------------------------------------------------------------------
- FORCE run date and starting time:                02-Feb-2015 -- 16:22:41
+ FORCE run date and starting time:                04-Feb-2015 -- 14:40:16
  ------------------------------------------------------------------------
  I/O Filenames:  ut2.frc             ut2.p2f             ut2.out             
  .frc file   Series:     Run: ut2                                        

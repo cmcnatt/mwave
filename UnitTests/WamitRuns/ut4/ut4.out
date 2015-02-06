@@ -27,19 +27,19 @@
  Low-order panel method  (ILOWHI=0)                                     
                                                                         
  Input from Geometric Data Files:                                       
-                               N=  1     ut4.gdf                        
- Model ut4, created: 02-Feb-2015                                        
+                               N=  1     ut41.gdf                       
+ Model ut41, created: 03-Feb-2015                                       
                                                                         
-                               N=  2     ut4.gdf                        
- Model ut4, created: 02-Feb-2015                                        
+                               N=  2     ut42.gdf                       
+ Model ut42, created: 03-Feb-2015                                       
                                                                         
  Input from Potential Control File:      ut4.pot                        
  .pot file   Series:     Run: ut4                                       
                                                                         
                                                                         
- POTEN run date and starting time:        02-Feb-2015  --  16:27:49     
+ POTEN run date and starting time:        03-Feb-2015  --  14:10:37     
    Period       Time           RAD      DIFF  (max iterations)          
-    2.8000    16:27:55          10      10                              
+    2.8000    14:10:43          10      10                              
 
  Gravity:     9.80660                Length scale:        1.00000
  Water depth:        infinite       Water density:     1000.00000
@@ -80,7 +80,7 @@
  ------------------------------------------------------------------------
                             Output from  WAMIT
  ------------------------------------------------------------------------
- FORCE run date and starting time:                02-Feb-2015 -- 16:27:55
+ FORCE run date and starting time:                03-Feb-2015 -- 14:10:43
  ------------------------------------------------------------------------
  I/O Filenames:  ut4.frc             ut4.p2f             ut4.out             
  .frc file   Series:     Run: ut4                                        

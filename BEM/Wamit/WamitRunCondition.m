@@ -28,7 +28,6 @@ classdef WamitRunCondition < IBemRunCondition
         t;
         beta;
         fieldPoints;
-        fieldArray;
         computeVelocity;
         computeBody;
         scratchPath;
@@ -45,7 +44,6 @@ classdef WamitRunCondition < IBemRunCondition
         Beta;               % Directions (radians)
         FloatingBodies;     % FloatingBodies (plural because of multiple bodies)
         FieldPoints;        % Arbitrary field points (Nx3 array)
-        FieldArray;         % Array of field points (Input is a WamitFieldArray)
         ComputeBodyPoints;  % Indicates whether pressure and velocity on the body surface will be computed
         ComputeVelocity;    % Indicates whether velocity should be computed at field points
         WamitPath;          % Path location of wamit.exe
@@ -68,6 +66,7 @@ classdef WamitRunCondition < IBemRunCondition
             run.useridPath = 'N:\wamitv7';
             run.ncpu = 1;
             run.ramGB = 2;
+            run.geoFiles = [];
             if (nargin == 0)
                 run.folder = ' ';
                 run.runName = 'newRun';
@@ -141,8 +140,8 @@ classdef WamitRunCondition < IBemRunCondition
             % Set the wave headings to be run in wamit (radians)
             if (isnumeric(bet))
                 for n = 1:length(bet)
-                    if(bet(n) < 0 || bet(n) > 360)
-                        error('All wave headings must be between 0 and 360 degrees');
+                    if(bet(n) < 0 || bet(n) > 2*pi)
+                        error('All wave headings must be between 0 and 2pi radians');
                     end
                 end
                 run.beta = bet;
@@ -201,19 +200,7 @@ classdef WamitRunCondition < IBemRunCondition
             end
             run.fieldPoints = fp;
         end
-        
-        function [fa] = get.FieldArray(run)
-            % Get the field point array to be evaluated in wamit
-            fa = run.fieldArray;
-        end
-        function [run] = set.FieldArray(run, fa)
-            % Set the field point array to be evaluated in wamit
-            if(~isa(fa, 'WamitFieldArray'))
-                error('Field array must be of type WamitFieldArray');
-            end
-            run.fieldArray = fa;
-        end
-        
+                
         function [cb] = get.ComputeBodyPoints(run)
             % Get whether or not pressure and velocity is evaluated on the
             % body
@@ -313,10 +300,15 @@ classdef WamitRunCondition < IBemRunCondition
                         
             % .gdf
             nbody = length(run.floatBods);
+            run.geoFiles = cell(1, nbody);
             for n = 1:nbody
                 if (isempty(run.floatBods(n).GeoFile))
-                    fileName = [run.runName num2str(n)];
-                    run.floatBods(n).WriteGdf(run.folder, fileName);
+                    geoFile = [run.runName num2str(n)];
+                    run.writeGdf(run.floatBods(n), geoFile);
+                    run.geoFiles{n} = geoFile;
+                    %run.floatBods(n).WriteGdf(run.folder, fileName);
+                else
+                    run.geoFiles{n} = run.floatBods(1).GeoFile;
                 end
             end
             
@@ -366,7 +358,7 @@ classdef WamitRunCondition < IBemRunCondition
             fprintf(fileID, [run.runName '.cfg\n']);
             fprintf(fileID, [run.runName '.pot\n']);
             fprintf(fileID, [run.runName '.frc\n']);
-            fprintf(fileID, [run.floatBods(1).GeoFile '.gdf\n']);
+            fprintf(fileID, [run.geoFiles{1} '.gdf\n']);
             
             fclose(fileID);
                         
@@ -404,6 +396,39 @@ classdef WamitRunCondition < IBemRunCondition
     
     methods (Access = private)
         
+        function [] = writeGdf(run, fb, geoFile)
+            
+            geo = fb.PanelGeo;
+            filename = [run.folder '\' geoFile '.gdf'];
+            fileID = fopen(filename, 'wt');
+            
+            ulen = 1;
+            g = 9.806650;
+            
+            fprintf(fileID, ['Model ' geoFile ', created: ' date '\n']);
+            fprintf(fileID, '%8.4f %8.4f\n', ulen, g);
+            fprintf(fileID, '%i %i \n', geo.Xsymmetry, geo.Ysymmetry);
+            fprintf(fileID, '%i\n', geo.Count);
+            
+            pans = geo.Panels;
+            
+            for n = 1:geo.Count
+                pan = pans(n);
+                verts = pan.Vertices;
+                for m = 1:4
+                    fprintf(fileID, '\t%8.4f\t%8.4f\t%8.4f\n', verts(m,1), verts(m,2), verts(m,3));
+                end
+            end
+            
+            fclose(fileID);
+            
+            % write other files needed for the gdf (i.e. for new modes)
+            if (~isempty(fb.WriteFileMeth))
+                params = {fb.WriteParams, [fb.XYpos, fb.Zpos], fb.Angle};
+                fb.WriteFileMeth(run.folder, geoFile, params);
+            end
+        end
+        
         function [] = writeWamConfig(run)
             filename = [run.folder '\config.wam'];
             fileID = fopen(filename, 'wt');
@@ -437,7 +462,7 @@ classdef WamitRunCondition < IBemRunCondition
             if (run.floatBods(1).WamILowHi)
                 fprintf(fileID, 'ILOWGDF = 0\n');
             end
-            if (~all([isempty(run.fieldArray) isempty(run.fieldPoints)]))
+            if (~all([isempty(run.fieldArray) isempty(run.fieldPoints) isempty(run.cylArray)]))
                 fprintf(fileID, 'INUMOPT6 = 1 \n');
             end
             if (run.computeBody)
@@ -490,7 +515,7 @@ classdef WamitRunCondition < IBemRunCondition
             if (~run.computeBody)
                 ibp = 0;
             end
-            if (all([isempty(run.fieldArray) isempty(run.fieldPoints)]))
+            if (all([isempty(run.fieldArray) isempty(run.fieldPoints) isempty(run.cylArray)]))
                 ifldp = 0;
             end
             % 1 - added mass and damping
@@ -596,7 +621,14 @@ classdef WamitRunCondition < IBemRunCondition
             
             % Field points Method for 6.4 and above...
             % NFIELD - number of explicitly specified field points
-            points = run.fieldPoints;
+            if (~isempty(run.cylArray))
+                if (~isempty(run.fieldPoints))
+                    error('Cannot create WAMIT run with cylinder array and field points');
+                end
+                points = run.cylArray.GetPoints(run.h);
+            else
+                points = run.fieldPoints;
+            end
             N = size(points, 1);
             fprintf(fileID, '%i\n', N);
             % explicit field points
@@ -668,7 +700,7 @@ classdef WamitRunCondition < IBemRunCondition
             for n = 1:nbody
                 % Name of gdf
                 fb = run.floatBods(n);
-                fprintf(fileID, [fb.GeoFile '.gdf\n']);
+                fprintf(fileID, [run.geoFiles{n} '.gdf\n']);
                 % x, y, z, and angle (degrees of body x-axis relative to global x-axis) of
                 % body n
                 fprintf(fileID, '%8.4f\t%8.4f\t%8.4f\t%8.4f\n', fb.XYpos(1), fb.XYpos(2), fb.Zpos, fb.Angle);

@@ -189,30 +189,7 @@ classdef PanelGeo < handle
             geo1 = PanelGeo(pansNeg);
             geo2 = PanelGeo(pansPos);
         end
-        
-        function [] = WriteGdf(geo, path, fileName)
-            filename = [path '\' fileName '.gdf'];
-            fileID = fopen(filename, 'wt');
-            
-            ulen = 1;
-            g = 9.806650;
-            
-            fprintf(fileID, ['Model ' fileName ', created: ' date '\n']);
-            fprintf(fileID, '%8.4f %8.4f\n', ulen, g);
-            fprintf(fileID, '%i %i \n', geo.xsym, geo.ysym);
-            fprintf(fileID, '%i\n', geo.Count);
-            
-            for n = 1:geo.Count
-                pan = geo.panels(n);
-                verts = pan.Vertices;
-                for m = 1:4
-                    fprintf(fileID, '\t%8.4f\t%8.4f\t%8.4f\n', verts(m,1), verts(m,2), verts(m,3));
-                end
-            end
-            
-            fclose(fileID);
-        end
-        
+                
         function [] = plot(geo, varargin)
             geo.plotFuncs(@plot, varargin{:});
         end

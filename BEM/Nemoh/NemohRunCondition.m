@@ -22,30 +22,41 @@ classdef NemohRunCondition < IBemRunCondition
     % Creates input files for a Nemoh run
     
     properties (Access = private)
-        zcg;
         nx;
+        nNode;
         nf;
+        nPan;
         omegaLim;
         nOmega;
         betaLim;
         nBeta;
+        computeHS;
+        useCylSurf;        
     end
 
     properties (Dependent)
-        OmegaLimits;        % Lower and upper limit of the radial frequencies
+        OmegaLims;          % Lower and upper limit of the radial frequencies
         OmegaCount;         % Number of radial frequencies
-        BetaLimits;         % Lower and upper limit of the wave direction
+        BetaLims;           % Lower and upper limit of the wave direction
         BetaCount;          % Number of wave directions
         T;                  % The wave periods (can't set)
         Beta;               % The wave directions (can't set)
         FloatingBodies;     % FloatingBodies (plural because of multiple bodies)
+        ComputeHS;          % Indicates whether to use the Nemoh Mesh.exe to compute the hydrostatics
     end
     
     methods
         
         function [run] = NemohRunCondition(folder)
             run.exePath = [myMatPath '\..\nemoh'];
-            run.rho = 1025;
+            run.rho = 1000;
+            run.nOmega = 0;
+            run.nBeta = 0;
+            run.geoFiles = [];
+            run.computeHS = true;
+            run.fieldArray = [];
+            run.cylArray = [];
+            run.useCylSurf = true;
             if (nargin == 0)
                 run.folder = ' ';
             else 
@@ -54,11 +65,11 @@ classdef NemohRunCondition < IBemRunCondition
             end
         end
                 
-        function [ol] = get.OmegaLimits(run)
+        function [ol] = get.OmegaLims(run)
             % Get the lower and upper freguency limits
             ol = run.omegaLim;
         end
-        function [run] = set.OmegaLimits(run, ol)
+        function [run] = set.OmegaLims(run, ol)
             % Get the lower and upper freguency limits
             
             if (length(ol) ~= 2)
@@ -98,11 +109,11 @@ classdef NemohRunCondition < IBemRunCondition
             t = 2*pi./linspace(run.omegaLim(1), run.omegaLim(2), run.nOmega);
         end
         
-        function [ol] = get.BetaLimits(run)
+        function [ol] = get.BetaLims(run)
             % Get the lower and upper incident direction limits in degrees
             ol = run.omegaLim;
         end
-        function [run] = set.BetaLimits(run, bl)
+        function [run] = set.BetaLims(run, bl)
             % Get the lower and upper incidnet direction limits in degrees
             
             if (length(bl) ~= 2)
@@ -113,7 +124,7 @@ classdef NemohRunCondition < IBemRunCondition
                 error('The first element is the lower limit, which must be less than the upper limit');
             end
             
-            if any(bl <= 0)
+            if any(bl < 0)
                 error('The limits must be positive');
             end
             
@@ -149,22 +160,17 @@ classdef NemohRunCondition < IBemRunCondition
         function [run] = set.FloatingBodies(run, fbs)
             % Set the array of floating bodies
             pass = 1;
-            genmds = 0;
-            if ((length(fbs) > 1) && run.computeBody)
-                error('Cannot compute body points for an array of floating bodies');
+
+            if (length(fbs) > 1)
+                error('Multiple bodies not yet implemented with Nemoh');
             end
+            
             for n = 1:length(fbs)
                 if (~isa(fbs(n), 'FloatingBody'))
                     pass = 0;
                 end
                 if (fbs(n).Ngen > 0)
-                    if (genmds ~= 0)
-                        if (genmds ~= fbs(n).WamIGenMds)
-                            error('The Wamit IGENMDS value must be the same for all floating bodes in the array');
-                        end
-                    else
-                        genmds = fbs(n).WamIGenMds;
-                    end
+                    error('Generalized modes not yet implemented with Nemoh');
                 end
             end
             if (pass)
@@ -174,9 +180,139 @@ classdef NemohRunCondition < IBemRunCondition
             end    
         end
         
+        function [hs] = get.ComputeHS(run)
+            % Indicates whether or not to compute HS with Mesh.exe
+            hs = run.computeHS;
+        end
+        function [run] = set.ComputeHS(run, hs)
+            % Indicates whether or not to compute HS with Mesh.exe
+            if (~isBool(hs))
+                error('The hydrostatic indicator must be a boolean');
+            end
+            
+            run.computeHS = hs;
+        end
+                        
+        function [] = WriteRun(run)
+            % Writes the files for the Nemoh run
+                        
+                        
+            % write Mesh cal - just use this to compute Hydrostatic matrix
+            % for now, only works on first body
+            if (run.computeHS)
+                run.writeMeshCalAndFile(run.floatBods(1));
+            end
+            
+            % write the Nemoh Cal file
+            run.writeCal;
+                        
+            % Write input text file
+            fid=fopen([run.folder, '/input.txt'],'wt');
+            fprintf(fid,' \n 0 \n');
+            fclose(fid);
+            
+        end
+                
+        function [] = RunPreProcessor(run, varargin)
+            % Runs the Nemoh preProcessor
+            % By default, Matlab waits for Nemoh to finish running before
+            % it continues.
+            % 'Background' is an optional argument that runs Nemoh in the
+            % background so that Matlab is free to use.
+            
+            opts = checkOptions({'Background'}, varargin);
+            
+            if (opts)
+                system(['cd ' run.folder ' && ' run.exePath '\preProcessor.exe &']);
+            else
+                system(['cd ' run.folder ' && '  run.exePath '\preProcessor.exe']);
+            end
+        end
+        
+        function [] = RunSolver(run)
+            % Runs the Nemoh Solver 
+            % By default, Matlab waits for Nemoh to finish running before
+            % it continues.
+            % 'Background' is an optional argument that runs Nemoh in the
+            % background so that Matlab is free to use.
+            
+            opts = checkOptions({'Background'}, varargin);
+            
+            if (opts)
+                system(['cd ' run.folder ' && ' run.exePath '\Solver.exe &']);
+            else
+                system(['cd ' run.folder ' && '  run.exePath '\Solver.exe']);
+            end
+        end
+        
+        function [] = RunPostProcessor(run)
+            % Runs the Nemoh postProcessor
+            % By default, Matlab waits for Nemoh to finish running before
+            % it continues.
+            % 'Background' is an optional argument that runs Nemoh in the
+            % background so that Matlab is free to use.
+            
+            opts = checkOptions({'Background'}, varargin);
+            
+            if (opts)
+                system(['cd ' run.folder ' && ' run.exePath '\postProcessor.exe &']);
+            else
+                system(['cd ' run.folder ' && '  run.exePath '\postProcessor.exe']);
+            end
+        end
+        
+        function [] = Run(run, varargin)
+            % Runs Nemoh (preProcessor, Solver, postProcessor) with system
+            % command. 
+            % By default, Matlab waits for Nemoh to finish running
+            % before it continues. 'Background' is an optional argument
+            % that runs Nemoh in the background so that Matlab is free to
+            % use. 
+            % By default, RunNemoh creates a batch file to run all of
+            % preProcessor, Solver, postProcessor. 'NoBatch' is an optional
+            % argument that does not create a batch file to run Nemoh.
+            
+            opts = checkOptions({{'Background'}, {'NoBatch'}, {'NoMesh'}}, varargin);
+            back = opts(1);
+            noBat = opts(2);
+            noMesh = opts(3);
+            
+            if (~run.computeHS)
+                noMesh = true;
+            end
+                        
+            if (~noBat || back)
+                filename = [run.folder '\nem_run.bat'];
+                fileID = fopen(filename, 'wt');
+                if (~noMesh)
+                    fprintf(fileID, '%s\\Mesh.exe >Mesh\\Mesh.log\n', run.exePath);
+                end
+                fprintf(fileID, '%s\\preProcessor.exe\n', run.exePath);
+                fprintf(fileID, '%s\\Solver.exe\n', run.exePath);
+                fprintf(fileID, '%s\\postProcessor.exe\n', run.exePath);
+                fclose(fileID);
+            end
+
+            if (back)
+                runStr = ['cd ' run.folder ' && nem_run.bat &'];
+            else
+                if (noBat)
+                    runStr = ['cd ' run.folder];
+                    if (~noMesh)
+                        runStr = [runStr ' && ' run.exePath '\Mesh.exe >Mesh\Mesh.log '];
+                    end
+                    runStr = [runStr ' && ' run.exePath '\preProcessor.exe && ' run.exePath '\Solver.exe && ' run.exePath '\postProcessor.exe'];
+                else
+                    runStr = ['cd ' run.folder ' && nem_run.bat'];
+                end
+            end
+            
+            system(runStr);
+        end
+         
         function [Mass, Inertia, KH, XB, YB, ZB] = MakeAxisMesh(run, r, z, n, zcg, ntheta, Npan)
             
-            run.zcg = zcg;
+            %run.zcg = zcg;
             
             theta=[0.:pi/(ntheta-1):pi];
             nx=0;
@@ -240,48 +376,13 @@ classdef NemohRunCondition < IBemRunCondition
             end;
             fclose(fid);
             
+            Mass = 0;
+            Inertia = 0; 
+            KH = 0;
+            XB = 0;
+            YB = 0;
+            ZB = 0;
             [Mass, Inertia, KH, XB, YB, ZB] = run.RunMesh;
-        end
-        
-        function [] = WriteRun(run)
-            fid = fopen([run.folder, '\Nemoh.cal'],'wt');
-            
-            fprintf(fid,'--- Environment ------------------------------------------------------------------------------------------------------------------ \n');
-            fprintf(fid,'%f				! RHO 			! KG/M**3 	! Fluid specific volume \n', run.rho);
-            fprintf(fid,'9.81				! G			! M/S**2	! Gravity \n');
-            fprintf(fid,'0.                 ! DEPTH			! M		! Water depth\n');
-            fprintf(fid,'0.	0.              ! XEFF YEFF		! M		! Wave measurement point\n');
-            fprintf(fid,'--- Description of floating bodies -----------------------------------------------------------------------------------------------\n');
-            fprintf(fid,'1				! Number of bodies\n');
-            fprintf(fid,'--- Body 1 -----------------------------------------------------------------------------------------------------------------------\n');
-            fprintf(fid,'%s\\Mesh\\axisym.dat		! Name of mesh file\n', run.folder);
-            fprintf(fid,'%g %g			! Number of points and number of panels 	\n', run.nx, run.nf);
-            fprintf(fid,'6				! Number of degrees of freedom\n');
-            fprintf(fid,'1 1. 0.	0. 0. 0. 0.		! Surge\n');
-            fprintf(fid,'1 0. 1.	0. 0. 0. 0.		! Sway\n');
-            fprintf(fid,'1 0. 0. 1. 0. 0. 0.		! Heave\n');
-            fprintf(fid,'2 1. 0. 0. 0. 0. %f		! Roll about a point\n',run.zcg);
-            fprintf(fid,'2 0. 1. 0. 0. 0. %f		! Pitch about a point\n',run.zcg);
-            fprintf(fid,'2 0. 0. 1. 0. 0. %f		! Yaw about a point\n',run.zcg);
-            fprintf(fid,'6				! Number of resulting generalised forces\n');
-            fprintf(fid,'1 1. 0.	0. 0. 0. 0.		! Force in x direction\n');
-            fprintf(fid,'1 0. 1.	0. 0. 0. 0.		! Force in y direction\n');
-            fprintf(fid,'1 0. 0. 1. 0. 0. 0.		! Force in z direction\n');
-            fprintf(fid,'2 1. 0. 0. 0. 0. %f		! Moment force in x direction about a point\n',run.zcg);
-            fprintf(fid,'2 0. 1. 0. 0. 0. %f		! Moment force in y direction about a point\n',run.zcg);
-            fprintf(fid,'2 0. 0. 1. 0. 0. %f		! Moment force in z direction about a point\n',run.zcg);
-            fprintf(fid,'0				! Number of lines of additional information \n');
-            fprintf(fid,'--- Load cases to be solved -------------------------------------------------------------------------------------------------------\n');
-            fprintf(fid,'1	0.8	0.8		! Number of wave frequencies, Min, and Max (rad/s)\n');
-            fprintf(fid,'1	0.	0.		! Number of wave directions, Min and Max (degrees)\n');
-            fprintf(fid,'--- Post processing ---------------------------------------------------------------------------------------------------------------\n');
-            fprintf(fid,'1	0.1	10.		! IRF 				! IRF calculation (0 for no calculation), time step and duration\n');
-            fprintf(fid,'0				! Show pressure\n');
-            fprintf(fid,'0	0.	180.		! Kochin function 		! Number of directions of calculation (0 for no calculations), Min and Max (degrees)\n');
-            fprintf(fid,'0	50	400.	400.	! Free surface elevation 	! Number of points in x direction (0 for no calcutions) and y direction and dimensions of domain in x and y direction\n');	
-            fprintf(fid,'---');
-            
-            fclose(fid);
         end
         
         function [Mass, Inertia, KH, XB, YB, ZB] = RunMesh(run)
@@ -386,195 +487,6 @@ classdef NemohRunCondition < IBemRunCondition
             Inertia(2,2)=Mass;
             Inertia(3,3)=Mass;
         end
-        
-        function [] = RunPreProcessor(run)
-            % Runs the Nemoh preProcessor
-            % By default, Matlab waits for Nemoh to finish running before
-            % it continues.
-            % 'Background' is an optional argument that runs Nemoh in the
-            % background so that Matlab is free to use.
-            
-            opts = checkOptions({'Background'}, varargin);
-            
-            if (opts)
-                system(['cd ' run.folder ' && ' run.exePath '\preProcessor.exe &']);
-            else
-                system(['cd ' run.folder ' && '  run.exePath '\preProcessor.exe']);
-            end
-        end
-        
-        function [] = RunSolver(run)
-            % Runs the Nemoh Solver 
-            % By default, Matlab waits for Nemoh to finish running before
-            % it continues.
-            % 'Background' is an optional argument that runs Nemoh in the
-            % background so that Matlab is free to use.
-            
-            opts = checkOptions({'Background'}, varargin);
-            
-            if (opts)
-                system(['cd ' run.folder ' && ' run.exePath '\Solver.exe &']);
-            else
-                system(['cd ' run.folder ' && '  run.exePath '\Solver.exe']);
-            end
-        end
-        
-        function [] = RunPostProcessor(run)
-            % Runs the Nemoh postProcessor
-            % By default, Matlab waits for Nemoh to finish running before
-            % it continues.
-            % 'Background' is an optional argument that runs Nemoh in the
-            % background so that Matlab is free to use.
-            
-            opts = checkOptions({'Background'}, varargin);
-            
-            if (opts)
-                system(['cd ' run.folder ' && ' run.exePath '\postProcessor.exe &']);
-            else
-                system(['cd ' run.folder ' && '  run.exePath '\postProcessor.exe']);
-            end
-        end
-        
-        function [] = Run(run, w, dir, depth, varargin)
-            % Runs Nemoh (preProcessor, Solver, postProcessor) with system
-            % command. 
-            % By default, Matlab waits for Nemoh to finish running
-            % before it continues. 'Background' is an optional argument
-            % that runs Nemoh in the background so that Matlab is free to
-            % use. 
-            % By default, RunNemoh creates a batch file to run all of
-            % preProcessor, Solver, postProcessor. 'NoBatch' is an optional
-            % argument that does not create a batch file to run Nemoh.
-            
-            opts = checkOptions({{'Background'}, {'NoBatch'}}, varargin);
-            back = opts(1);
-            noBat = opts(2);
-            
-            fid=fopen([run.folder,'\Nemoh.cal'],'r');
-            for i=1:6
-                ligne = fgetl(fid);
-            end
-            nBodies = fscanf(fid,'%g',1);
-            fclose(fid);
-            
-            fid=fopen([run.folder,'\Nemoh.cal'],'r');
-            n=1;
-            clear textline;
-            textline={};
-            while (~feof(fid))
-                textline(n)={fgetl(fid)};
-                if (n == 4) 
-                    textline(n)={sprintf('%f                 ! DEPTH			! M		! Water depth',depth)};
-                end
-                if ((mod(n,18) == 9) && ((n-9)/18 <= nBodies))
-                    temp=cell2mat(textline(n));
-                    temp2=[];
-                    ntemp=length(temp);
-                    k=1;
-                    for i=1:ntemp
-                        if (temp(i) == '\')
-                            temp2=[temp2,temp(k:i),'\'];
-                            k=i+1;
-                        end;            
-                    end
-                    temp2=[temp2,temp(k:ntemp)];
-                    textline(n)={temp2};
-                    cell2mat(textline(n));
-                end
-                if (n == 9+18*nBodies)
-                    textline(n)={sprintf('%g %f %f       ! Number of wave frequencies, Min, and Max (rad/s)',length(w),w(1),w(length(w)))};
-                end
-                if (n == 10+18*nBodies)
-                    textline(n)={sprintf('%g %f %f		! Number of wave directions, Min and Max (degrees)',1,dir,dir)};
-                end
-                n=n+1;
-            end
-            fclose(fid);
-            
-            fid = fopen([run.folder, '\Nemoh.cal'], 'wt'); 
-            for i=1:n-1
-                fprintf(fid, [cell2mat(textline(i)),'\n']);
-            end
-            fclose(fid);
-            fid=fopen([run.folder, '/input.txt'],'wt');
-            fprintf(fid,' \n 0 \n');
-            fclose(fid);
-            
-            if (~noBat || back)
-                filename = [run.folder '\nem_run.bat'];
-                fileID = fopen(filename, 'wt');
-                fprintf(fileID, '%s\\preProcessor.exe\n', run.exePath);
-                fprintf(fileID, '%s\\Solver.exe\n', run.exePath);
-                fprintf(fileID, '%s\\postProcessor.exe\n', run.exePath);
-                fclose(fileID);
-            end
-
-            if (back)
-                system(['cd ' run.folder ' && nem_run.bat &']);
-            else
-                if (noBat)
-                    system(['cd ' run.folder ' && ' run.exePath '\preProcessor.exe && ' run.exePath '\Solver.exe && ' run.exePath '\postProcessor.exe'])
-                else
-                    system(['cd ' run.folder ' && nem_run.bat']);
-                end
-            end
-        end
-        
-         function [A, B, Fe] = ReadNemoh(run)
-             % Lecture des resultats CA CM Fe
-             clear Periode A B Famp Fphi Fe;
-             fid = fopen([run.folder,'\Nemoh.cal'],'r');
-             for n = 1:6
-                 fgetl(fid);
-             end
-             nBodies=fscanf(fid,'%g',1);
-             for n = 1:(2 + 18*nBodies)
-                 fgetl(fid);
-             end
-             nw=fscanf(fid,'%g',1);
-             fclose(fid);
-             
-             fid = fopen([run.folder,'\Results\ExcitationForce.tec'],'r');
-             fgetl(fid);
-             for c=1:6*nBodies
-                 fgetl(fid);
-             end;
-             
-             fgetl(fid);
-             for k=1:nw
-                 ligne = fscanf(fid,'%f',1+12*nBodies);
-                 w(n) = ligne(1);
-                 for j=1:6*nBodies
-                     Famp(k,j) = ligne(2*j);
-                     Fphi(k,j) = ligne(2*j+1);
-                 end;
-             end;
-             
-             fclose(fid);
-             
-             fid = fopen([run.folder,'\Results\RadiationCoefficients.tec'],'r');
-             fgetl(fid);
-             for n=1:6*nBodies
-                fgetl(fid);
-             end;
-             
-             for n=1:nBodies*6
-                 fgetl(fid);
-                 for k=1:nw
-                     ligne=fscanf(fid,'%f',1+12*nBodies);
-                     for j=1:6*nBodies
-                         A(n,j,k)=ligne(2*j);
-                         B(n,j,k)=ligne(2*j+1);
-                     end;
-                     fgetl(fid);
-                 end;
-             end;
-             fclose(fid);
-             
-             % Expression des efforts d excitation de houle sous la forme Famp*exp(i*Fphi)
-             Fe = Famp.*(cos(Fphi)+1i*sin(Fphi));
-             
-         end
     end
     
     methods (Access = protected)
@@ -592,9 +504,222 @@ classdef NemohRunCondition < IBemRunCondition
                 system(['mkdir ', fold, '\Results']);
             end
             
-            fid = fopen([fold '\ID.dat'],'wt');
+            % Write ID file
+            fid = fopen([run.folder '\ID.dat'],'wt');
             fprintf(fid, '1\n.');
             fclose(fid);
+        end
+    end
+    
+    methods (Access = private)
+        function [] = writeCal(run)
+            if (run.nOmega < 1)
+                error('The number of frequencies must be greater than 0');
+            end
+            
+            if (run.nBeta < 1)
+                error('The number of directions must be greater than 0');
+            end
+            
+            if (isempty(run.omegaLim))
+                error('It does not appear that the frequency limits have been set.');
+            end
+            
+            if (isempty(run.betaLim))
+                error('It does not appear that the direction limits have been set.');
+            end
+            
+            if (isempty(run.h))
+                error('Depth has not been set');
+            end
+            
+            if (isempty(run.floatBods))
+                error('It does not appear that the Floating bodies have been set');
+            end
+            
+            nbod = length(run.floatBods);
+            
+            if (nbod > 1)
+                error('NemohRunCondition not set up for multiple floating bodies yet');
+            end
+            
+            run.geoFiles = cell(1, nbod);
+            for n = 1:nbod
+                geoFile = run.writeMeshFile(run.floatBods(n), false);
+                run.geoFiles{n} = geoFile;
+            end
+            
+            % write Cal file
+            fid = fopen([run.folder, '\Nemoh.cal'],'wt');
+                      
+            fprintf(fid,'--- Environment ------------------------------------------------------------------------------------------------------------------ \n');
+            fprintf(fid,'%8.4f				! RHO 			! KG/M**3 	! Fluid specific volume \n', run.rho);
+            fprintf(fid,'9.81				! G			! M/S**2	! Gravity \n');
+            fprintf(fid,'%8.4f                 ! DEPTH			! M		! Water depth\n', run.h);
+            fprintf(fid,'0.	0.              ! XEFF YEFF		! M		! Wave measurement point\n');
+            fprintf(fid,'--- Description of floating bodies -----------------------------------------------------------------------------------------------\n');
+            fprintf(fid,'1				! Number of bodies\n');
+            
+            for n = 1:nbod
+                run.writeBodyCal(fid, n, run.floatBods(n), run.geoFiles{n});
+            end
+            betad1 = round(1e4*180/pi*run.betaLim(1))/1e4;
+            betad2 = round(1e4*180/pi*run.betaLim(2))/1e4;
+            fprintf(fid,'--- Load cases to be solved -------------------------------------------------------------------------------------------------------\n');
+            fprintf(fid,'%i	%8.4f %8.4f		! Number of wave frequencies, Min, and Max (rad/s)\n', run.nOmega, run.omegaLim(1), run.omegaLim(2));
+            fprintf(fid,'%i	%8.4f %8.4f		! Number of wave directions, Min and Max (degrees)\n', run.nBeta, betad1, betad2);
+            fprintf(fid,'--- Post processing ---------------------------------------------------------------------------------------------------------------\n');
+            fprintf(fid,'1	0.1	10.		! IRF 				! IRF calculation (0 for no calculation), time step and duration\n');
+            fprintf(fid,'0				! Show pressure\n');
+            fprintf(fid,'0	0.	180.		! Kochin function 		! Number of directions of calculation (0 for no calculations), Min and Max (degrees)\n');
+            
+            if (~isempty(run.fieldArray))
+                nps = run.fieldArray.NumberPoints;
+                lens = run.fieldArray.Lengths;
+            else
+                nps = [0 0];
+                lens = [0 0 0];
+            end
+            fprintf(fid,'%i	%i	%8.4f	%8.4f	! Free surface elevation 	! Number of points in x direction (0 for no calcutions) and y direction and dimensions of domain in x and y direction\n', nps(1), nps(2), lens(1), lens(2));	
+            if (run.useCylSurf)
+                if (~isempty(run.cylArray))
+                    r = run.cylArray.Radius;
+                    nth = run.cylArray.Ntheta;
+                    nz = run.cylArray.Nz;
+                else
+                    r = 0;
+                    nth = 1;
+                    nz = 1;
+                end
+                fprintf(fid,'%8.4f	%i	%i	! Cylindrical surface for diffraction transfer matrixn 	! Radius (0 for no calculations), Number of points in theta direction, Number of points in z direction\n', r, nth, nz);	
+            end
+            fprintf(fid,'---');
+            
+            fclose(fid);
+        end
+        
+        function [] = writeBodyCal(run, fid, n, floatBod, geoFile)
+            cg = floatBod.Cg;
+            modes = floatBod.Modes;
+            vector = modes.Vector;
+            
+            fprintf(fid,'--- Body %i -----------------------------------------------------------------------------------------------------------------------\n', n);
+            fprintf(fid,'%s\\Mesh\\%s		! Name of mesh file\n', run.folder, geoFile);
+            fprintf(fid,'%i %i			! Number of points and number of panels 	\n', run.nNode, run.nPan);
+            fprintf(fid,'%i				! Number of degrees of freedom\n', modes.DoF);
+            
+            if (vector(1))
+                fprintf(fid,'1 1. 0. 0. %8.4f %8.4f %8.4f		! Surge\n', cg);
+            end
+            if (vector(2))
+                fprintf(fid,'1 0. 1. 0. %8.4f %8.4f %8.4f		! Sway\n', cg);
+            end
+            if (vector(3))
+                fprintf(fid,'1 0. 0. 1. %8.4f %8.4f %8.4f		! Heave\n', cg);
+            end
+            if (vector(4))
+                fprintf(fid,'2 1. 0. 0. %8.4f %8.4f %8.4f		! Roll about a point\n', cg);
+            end
+            if (vector(5))
+                fprintf(fid,'2 0. 1. 0. %8.4f %8.4f %8.4f		! Pitch about a point\n', cg);
+            end
+            if (vector(6))
+                fprintf(fid,'2 0. 0. 1. %8.4f %8.4f %8.4f		! Yaw about a point\n', cg);
+            end
+            
+            fprintf(fid,'%i				! Number of resulting generalised forces\n', modes.DoF);
+            if (vector(1))
+                fprintf(fid,'1 1. 0. 0. %8.4f %8.4f %8.4f		! Force in x direction\n', cg);
+            end
+            if (vector(2))
+                fprintf(fid,'1 0. 1. 0. %8.4f %8.4f %8.4f		! Force in y direction\n', cg);
+            end
+            if (vector(3))
+                fprintf(fid,'1 0. 0. 1. %8.4f %8.4f %8.4f		! Force in z direction\n', cg);
+            end
+            if (vector(4))
+                fprintf(fid,'2 1. 0. 0. %8.4f %8.4f %8.4f		! Moment force in x direction about a point\n', cg);
+            end
+            if (vector(5))
+                fprintf(fid,'2 0. 1. 0. %8.4f %8.4f %8.4f		! Moment force in y direction about a point\n', cg);
+            end
+            if (vector(6))
+                fprintf(fid,'2 0. 0. 1. %8.4f %8.4f %8.4f		! Moment force in z direction about a point\n', cg);
+            end
+            
+            fprintf(fid,'0				! Number of lines of additional information \n');
+            
+        end
+        
+        function [] = writeMeshCalAndFile(run, floatBod)
+            
+            geoFile = run.writeMeshFile(floatBod, true);
+            
+            fid = fopen([run.folder '\mesh.cal'],'wt');
+            fprintf(fid, '%s \n', geoFile);
+            fprintf(fid, '1 \n 0. 0. \n ');
+            
+            fprintf(fid, '%f %f %f \n', floatBod.Cg);
+            fprintf(fid,'%g \n 2 \n 0. \n 1.\n', floatBod.PanelGeo.Count);
+            
+            fclose(fid);
+        end
+        
+        function [geoFile] = writeMeshFile(run, floatBod, forMesh)
+            geo = floatBod.PanelGeo;
+            
+            if (geo.Ysymmetry)
+                error('Body Y-symmetry not allowed in Nemoh');
+            end
+            
+            geoPans = geo.Panels;
+            npan = geo.Count;
+            
+            % write it the simple way first (multiples of same nodes)
+            nodes = zeros(npan*4, 3);
+            pans = zeros(npan, 4);
+            
+            for m = 1:npan
+                pan = geoPans(m);
+                verts = pan.Vertices;
+                nstart = (m - 1)*4;
+                
+                for n = 1:4
+                    inode = nstart + n;
+                    nodes(inode,:) = verts(n,:);
+                    pans(m, n) = inode;
+                end
+            end
+            
+            geoFile = [floatBod.Handle '.dat'];
+            
+            fid = fopen([run.folder, '\Mesh\' geoFile],'wt');
+            
+            if (forMesh)
+                fprintf(fid,' %i \n', npan*4);
+                fprintf(fid,' %i \n', npan);
+            else
+                fprintf(fid,' 2 %i \n', geo.Xsymmetry);
+            end
+            
+            for n = 1:npan*4
+                if (forMesh)
+                    fprintf(fid, '%8.4f %8.4f %8.4f \n', nodes(n,:));
+                else
+                    fprintf(fid, '%i %8.4f %8.4f %8.4f \n', n, nodes(n,:));
+                end
+            end
+            if (~forMesh)
+                fprintf(fid, '0 0.0 0.0 0.0 \n');
+            end
+            for n = 1:npan
+                fprintf(fid, '%i %i %i %i \n', pans(n,:));
+            end
+            
+            fclose(fid);
+            
+            run.nNode = size(nodes, 1);
+            run.nPan = size(pans, 1);
         end
     end
 end
