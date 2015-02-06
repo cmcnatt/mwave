@@ -30,6 +30,7 @@ classdef FuncWaveField < WaveField & handle
         
         % Constructor
         function [wf] = FuncWaveField(rho, compVel, waves, waveFunc, isarray, varargin)
+                        
             if (length(waves) > 1)
                 error('Only one IWaves object as an input to a FuncWaveField');
             end

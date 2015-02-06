@@ -27,15 +27,15 @@
  Low-order panel method  (ILOWHI=0)                                     
                                                                         
  Input from Geometric Data File:         ver11.gdf                      
- Model ver1110-Mar-2014                                                 
+ Model ver11, created: 02-Feb-2015                                      
                                                                         
  Input from Potential Control File:      ver1.pot                       
  .pot file   Series:     Run: ver1                                      
                                                                         
                                                                         
- POTEN run date and starting time:        10-Mar-2014  --  15:37:20     
+ POTEN run date and starting time:        02-Feb-2015  --  15:06:16     
    Period       Time           RAD      DIFF  (max iterations)          
-    2.5312    15:37:20           9       9                              
+    2.5312    15:06:18           9       9                              
 
  Gravity:     9.80660                Length scale:        1.00000
  Water depth:        10.00000       Water density:     1000.00000
@@ -43,27 +43,27 @@
  Source formulation index:                   ISOR =     0
  Diffraction/scattering formulation index: ISCATT =     0
  Number of blocks used in linear system:   ISOLVE =     0
- Number of unknowns in linear system:        NEQN =   320
+ Number of unknowns in linear system:        NEQN =  1280
 
  BODY PARAMETERS:
 
- Total panels:    1280  Waterline panels:     64  Symmetries:  X=0,Y=0    
+ Total panels:    1280  Waterline panels:     64      Symmetries: none    
  Irregular frequency index: IRR = 0
 
  XBODY =    0.0000 YBODY =    0.0000 ZBODY =   -0.2500 PHIBODY =   0.0
- Volumes (VOLX,VOLY,VOLZ):           3.13658      3.13658      3.13658    
- Center of Buoyancy (Xb,Yb,Zb):     0.000000     0.000000    -0.250000
+ Volumes (VOLX,VOLY,VOLZ):           3.13657      3.13657      3.13658    
+ Center of Buoyancy (Xb,Yb,Zb):     0.000000     0.000000    -0.250001
  Hydrostatic and gravitational restoring coefficients: 
- C(3,3),C(3,4),C(3,5):   3.1366       0.0000       0.0000    
- C(4,4),C(4,5),C(4,6):              -0.38967E-02   0.0000       0.0000    
-        C(5,5),C(5,6):                           -0.38969E-02   0.0000    
+ C(3,3),C(3,4),C(3,5):   3.1366     -0.69411E-07 -0.98298E-08
+ C(4,4),C(4,5),C(4,6):              -0.38985E-02 -0.31346E-07  0.17695E-07
+        C(5,5),C(5,6):                           -0.38987E-02 -0.30600E-07
  Center of Gravity  (Xg,Yg,Zg):     0.000000     0.000000     0.000000
 
 
  ------------------------------------------------------------------------
                             Output from  WAMIT
  ------------------------------------------------------------------------
- FORCE run date and starting time:                10-Mar-2014 -- 15:37:20
+ FORCE run date and starting time:                02-Feb-2015 -- 15:06:18
  ------------------------------------------------------------------------
  I/O Filenames:  ver1.frc            ver1.p2f            ver1.out            
  .frc file   Series:     Run: ver1                                       

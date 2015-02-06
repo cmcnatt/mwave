@@ -316,7 +316,7 @@ classdef HydroBodyCompUT < matlab.unittest.TestCase
             bComp = HydroBodyComp(hb, iwaves);
             
             % Round the values to get rid of erroneous small values
-            pwr10 = -2;
+            pwr10 = -1;
             
             A = round2val(squeeze(bComp.A), pwr10);
             B = round2val(squeeze(bComp.B), pwr10);

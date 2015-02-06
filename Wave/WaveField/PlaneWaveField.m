@@ -34,7 +34,7 @@ classdef PlaneWaveField < FuncWaveField
     
     methods
         % Constructor
-        function [wf] = PlaneWaveField(rho, waves, isarray, varargin)   
+        function [wf] = PlaneWaveField(rho, waves, isarray, varargin)  
             if(checkOptions({{'NoVel'}}, varargin))
                 compVel = false;
             else

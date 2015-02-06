@@ -65,6 +65,6 @@
 1		Number of direction headdings to be analyzed
   0.0000
 1
-ut6.gdf
+ut61.gdf
   0.0000	  0.0000	  0.0000	  0.0000
 0 0 1 0 0 0

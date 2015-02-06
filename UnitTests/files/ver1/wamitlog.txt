@@ -1,11 +1,11 @@
 
-WAMITLOG.TXT file from WAMIT run:  10-Mar-2014 15:37:19
+WAMITLOG.TXT file from WAMIT run:  02-Feb-2015 15:06:16
 
  Input file config.wam          
 ! generic configuration file:  config.wam
 RAMGBMAX= 2.0
 NCPU=1
-USERID_PATH = C:\wamitv7
+USERID_PATH = N:\wamitv7
 LICENSE_PATH=\wamitv7\license
 
  Input file ver1.cfg            
@@ -29,9 +29,9 @@ MONITR = 0
 NOOUT = 0  0  0  0  0  0  0  0  0
 NUMHDR = 1
 NUMNAM = 0
-SCRATCH_PATH = C:\wamitv7\scratch
+SCRATCH_PATH = N:\wamitv7\scratch
 
-POTEN run started:  10-Mar-2014 15:37:20
+POTEN run started:  02-Feb-2015 15:06:16
 
  Input file ver1.pot            
 .pot file   Series:     Run: ver1
@@ -51,10 +51,10 @@ ver11.gdf
 1 1 1 1 1 1
 
  First    10 lines of input file ver11.gdf           
-Model ver1110-Mar-2014
+Model ver11, created: 02-Feb-2015
   1.0000   9.8066
-1 1
-320
+0 0
+1280
 	  1.0000	  0.0000	  0.2500
 	  1.0000	  0.0000	  0.1667
 	  0.9952	  0.0980	  0.1667
@@ -65,13 +65,13 @@ Model ver1110-Mar-2014
 
  Number of processors used :   1
 
- Estimated RAM used :  3.4E-03 Gigabytes
+ Estimated RAM used :  1.3E-02 Gigabytes
 
   POTEN module run completed
 
-POTEN run completed:  10-Mar-2014 15:37:20
+POTEN run completed:  02-Feb-2015 15:06:18
 
-FORCE run started:  10-Mar-2014 15:37:20
+FORCE run started:  02-Feb-2015 15:06:18
 
  Input file ver1.frc            
 .frc file   Series:     Run: ver1
@@ -107,6 +107,6 @@ FORCE run started:  10-Mar-2014 15:37:20
 101	-20.0000	  0.4000
 1	  0.0000	  1.0000
 
-FORCE run completed:  10-Mar-2014 15:38:47
+FORCE run completed:  02-Feb-2015 15:06:34
 
   WAMIT run completed

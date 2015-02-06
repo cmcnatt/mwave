@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Contributors:
     C. McNatt
 %}
-classdef WamitResult < handle
+classdef WamitResult < IBemResult
     % Reads Wamit output files
     %
     % It can be set up by using the WamitRunConditions used to create the 
@@ -28,42 +28,15 @@ classdef WamitResult < handle
     % files are located and it 
     
     properties (Access = private)
-        rho;
-        g;
-        h;
-        folder;
         runName;
-        floatingbodies;
-        t;
-        nT;
-        beta;
-        nB;
-        dof;
-        fieldPoints;
-        fieldArray;
         solveForces;
-        solveField;
         solveBody;
-        hydroForces;
         waveBody;
-        wavePoints;
-        waveArray;
         readVelocity;
-        hasBeenRead;
     end
 
     properties (Dependent)
-        Rho;                % Fluid density
-        G;                  % Gravitational constant
-        H;                  % Depth
-        Folder;             % Folder location of run (string)
         RunName;            % Name of Run (string)
-        FloatingBodies;     % FloatingBodies (plural because of multiple bodies)
-        T;                  % Periods (s)
-        Beta;               % Directions (deg)
-        HydroForces;        % Hydrodynamic forces computed by WAMIT
-        WavePoints;         % Wave field at field points
-        WaveArray;          % Wave field at array locations
         WaveBody;           % Wave field on surface of body
     end
 
@@ -90,7 +63,8 @@ classdef WamitResult < handle
                     result.solveBody = runCondition.ComputeBodyPoints;
                     result.fieldPoints = runCondition.FieldPoints;
                     result.fieldArray = runCondition.FieldArray;
-                    if (~isempty(result.fieldPoints) || ~isempty(result.fieldArray))
+                    result.cylArray = runCondition.CylArray;
+                    if (~isempty(result.fieldPoints) || ~isempty(result.fieldArray) || ~isempty(result.cylArray))
                         result.solveField = true;
                     end
                     result.readVelocity = runCondition.ComputeVelocity;
@@ -100,21 +74,7 @@ classdef WamitResult < handle
             end
             result.hasBeenRead = 0;
         end
-        
-        function [fol] = get.Folder(result)
-            % Get the folder location where the output files are found
-            fol = result.folder;
-        end
-        function [] = set.Folder(result, fol)
-            % Set the folder location where the output files are found
-            if (ischar(fol))
-                result.folder = fol;
-            else
-                error('Folder must be a string');
-            end
-            result.hasBeenRead = 0;
-        end
-        
+                
         function [rn] = get.RunName(result)
             % Get the name of the run - if Wamit_RunCondition is used,
             % .cfg, .pot, and .frc all have the same file name which is the
@@ -133,94 +93,6 @@ classdef WamitResult < handle
                 error('RunName must be a string');
             end
             result.hasBeenRead = 0;
-        end
-
-        function [fbs] = get.FloatingBodies(result)
-            % Get the array of floating bodies
-            fbs = result.floatingbodies;
-        end
-        function [] = set.FloatingBodies(result, fbs)
-            % Set the array of floating bodies
-            for n = 1:length(fbs)
-                if (~isa(fbs(n), 'FloatingBody'))
-                    error('All Floating Bodies must be of type FloatingBody');
-                end
-            end
-            
-            result.floatingbodies = fbs;
-            result.hasBeenRead = 0;
-        end
-        
-        function [rh] = get.Rho(result)
-            % The water density
-            if (result.hasBeenRead)
-                rh = result.rho;
-            else
-                rh = [];
-            end
-        end
-        
-        function [g_] = get.G(result)
-            % The gravitational constant
-            if (result.hasBeenRead)
-                g_ = result.g;
-            else
-                g_ = [];
-            end
-        end
-        
-        function [t_] = get.T(result)
-            % The wave periods
-            if (result.hasBeenRead)
-                t_ = result.t;
-            else
-                t_ = [];
-            end
-        end
-
-        function [bet] = get.Beta(result)
-            % The wave headings
-            if (result.hasBeenRead)
-                bet = result.beta;
-            else
-                bet = [];
-            end
-        end
-               
-        function [h_] = get.H(result)
-            % The water depth
-            if (result.hasBeenRead)
-                h_ = result.h;
-            else
-                h_ = [];
-            end
-        end
-        
-        function [hf] = get.HydroForces(result)
-            % The HydroForces object
-            if (result.hasBeenRead)
-                hf = result.hydroForces;
-            else
-                hf = [];
-            end
-        end
-        
-        function [wp] = get.WavePoints(result)
-            % Wave field points, not in an array
-            if (result.hasBeenRead)
-                wp = result.wavePoints;
-            else
-                wp = [];
-            end
-        end
-        
-        function [wa] = get.WaveArray(result)
-            % Wave field points in an array
-            if (result.hasBeenRead)
-                wa = result.waveArray;
-            else
-                wa = [];
-            end
         end
         
         function [wb] = get.WaveBody(result)
@@ -534,6 +406,10 @@ classdef WamitResult < handle
                 
                 if (~isempty(result.fieldPoints))
                     nPoints = size(result.fieldPoints, 1);
+                    fpoints = result.fieldPoints;
+                elseif (~isempty(result.cylArray))
+                    nPoints = result.cylArray.Ntheta*result.cylArray.Nz;
+                    fpoints = result.cylArray.GetPoints(result.h);
                 elseif(~isempty(result.fieldArray))
                     nPoints = 0;
                 else
@@ -541,6 +417,7 @@ classdef WamitResult < handle
                     data = importdata([result.folder '\' result.runName '.fpt']);
                     data = data.data;
                     result.fieldPoints = squeeze(data(:,2:4));
+                    fpoints = result.fieldPoints;
                 end
                 
                 % Field Points
@@ -574,9 +451,9 @@ classdef WamitResult < handle
                             end
                         end
 
-                        dwfn = WaveField(result.rho, result.g, result.h, result.t, thisP, thisV, 0, result.fieldPoints);
+                        dwfn = WaveField(result.rho, result.g, result.h, result.t, thisP, thisV, 0, fpoints);
                         wcs = PlaneWaves(ones(size(result.t)), result.t, result.beta(n)*ones(size(result.t)), result.h);
-                        iwfn = PlaneWaveField(result.rho, wcs, false, result.fieldPoints);
+                        iwfn = PlaneWaveField(result.rho, wcs, false, fpoints);
                         iwfs(n) = iwfn;
                         swfs(n) = dwfn - iwfn;
                     end
@@ -603,7 +480,7 @@ classdef WamitResult < handle
                             end
                         end
 
-                        rwfs(n) = WaveField(result.rho, result.g, result.h, result.t, thisP, thisV, 0, result.fieldPoints);
+                        rwfs(n) = WaveField(result.rho, result.g, result.h, result.t, thisP, thisV, 0, fpoints);
                     end
                     rwavefield = WaveFieldCollection(rwfs, 'MotionIndex', (1:result.dof));
 

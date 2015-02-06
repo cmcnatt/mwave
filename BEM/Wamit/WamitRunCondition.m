@@ -18,24 +18,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Contributors:
     C. McNatt
 %}
-classdef WamitRunCondition
+classdef WamitRunCondition < IBemRunCondition
     % Creates input files to a Wamit run
     
     properties (Access = private)
+        runName;
         solveDiff;
         solveRad;
-        rho;
-        folder;
-        runName;
-        floatBods;
         t;
         beta;
-        h;
         fieldPoints;
-        fieldArray;
         computeVelocity;
         computeBody;
-        wamitPath;
         scratchPath;
         useridPath;
         ncpu;
@@ -43,17 +37,13 @@ classdef WamitRunCondition
     end
 
     properties (Dependent)
+        RunName;            % Name of Run (string) (Nemoh?)
         SolveDiff;          % Solve the diffraction problem
         SolveRad;           % Solve the radiation problem
-        Rho;                % Fluid density
-        Folder;             % Folder location of run (string)
-        RunName;            % Name of Run (string)
-        FloatingBodies;     % FloatingBodies (plural because of multiple bodies)
         T;                  % Periods (s)
         Beta;               % Directions (radians)
-        H;                  % Depth
+        FloatingBodies;     % FloatingBodies (plural because of multiple bodies)
         FieldPoints;        % Arbitrary field points (Nx3 array)
-        FieldArray;         % Array of field points (Input is a WamitFieldArray)
         ComputeBodyPoints;  % Indicates whether pressure and velocity on the body surface will be computed
         ComputeVelocity;    % Indicates whether velocity should be computed at field points
         WamitPath;          % Path location of wamit.exe
@@ -66,22 +56,40 @@ classdef WamitRunCondition
     methods
         
         function [run] = WamitRunCondition(folder, runName)
-            run.Rho = 1000;
+            run.rho = 1000;
             run.computeVelocity = false;
             run.computeBody = false;
             run.solveDiff = true;
             run.solveRad = true;
-            run.wamitPath = 'N:\wamitv7';
+            run.exePath = 'N:\wamitv7';
             run.scratchPath = 'N:\wamitv7\scratch';
             run.useridPath = 'N:\wamitv7';
             run.ncpu = 1;
             run.ramGB = 2;
+            run.geoFiles = [];
             if (nargin == 0)
                 run.folder = ' ';
                 run.runName = 'newRun';
             else 
                 run.folder = folder;
                 run.runName = runName;
+            end
+        end
+        
+        function [rn] = get.RunName(run)
+            % Get the run name, which is the name that will be given to all
+            % of the input files except if they have thier own name, the
+            % geometry files
+            rn = run.runName;
+        end
+        function [run] = set.RunName(run, rn)
+            % Set the run name, which is the name that will be given to all
+            % of the input files except if they have thier own name, the
+            % geometry files
+            if (ischar(rn))
+                run.runName = rn;
+            else
+                error('RunName must be a string');
             end
         end
         
@@ -110,47 +118,35 @@ classdef WamitRunCondition
             
             run.solveRad = sr;
         end
-
-        function [rh] = get.Rho(run)
-            % Get the water density
-            rh = run.rho;
+                
+        function [t_] = get.T(run)
+            % Get the wave periods to be run in wamit
+            t_ = run.t;
         end
-        function [run] = set.Rho(run, rh)
-            % Set the water density
-            if (rh > 0)
-                run.rho = rh;
+        function [run] = set.T(run, t_)
+            % Set the wave periods to be run in wamit
+            if (isnumeric(t_))
+                run.t = t_;
             else
-                error('Rho must be a positive number');
-            end
-        end
-
-        function [fol] = get.Folder(run)
-            % Get the folder location where the input files will go
-            fol = run.folder;
-        end
-        function [run] = set.Folder(run, fol)
-            % Set the folder location where the input files will go
-            if (ischar(fol))
-                run.folder = fol;
-            else
-                error('Folder must be a string');
+                error('The periods must be numbers');
             end
         end
         
-        function [rn] = get.RunName(run)
-            % Get the run name, which is the name that will be given to all
-            % of the input files except if they have thier own name, the
-            % geometry files
-            rn = run.runName;
+        function [bet] = get.Beta(run)
+            % Get the wave headings to be run in wamit (radians)
+            bet = run.beta;
         end
-        function [run] = set.RunName(run, rn)
-            % Set the run name, which is the name that will be given to all
-            % of the input files except if they have thier own name, the
-            % geometry files
-            if (ischar(rn))
-                run.runName = rn;
+        function [run] = set.Beta(run, bet)
+            % Set the wave headings to be run in wamit (radians)
+            if (isnumeric(bet))
+                for n = 1:length(bet)
+                    if(bet(n) < 0 || bet(n) > 2*pi)
+                        error('All wave headings must be between 0 and 2pi radians');
+                    end
+                end
+                run.beta = bet;
             else
-                error('RunName must be a string');
+                error('The wave headings must be numbers');
             end
         end
         
@@ -185,57 +181,7 @@ classdef WamitRunCondition
                 error('All Floating Bodies must be of type FloatingBody');
             end    
         end
-        
-        function [t_] = get.T(run)
-            % Get the wave periods to be run in wamit
-            t_ = run.t;
-        end
-        function [run] = set.T(run, t_)
-            % Set the wave periods to be run in wamit
-            if (isnumeric(t_))
-                run.t = t_;
-            else
-                error('The periods must be numbers');
-            end
-        end
-        
-        function [bet] = get.Beta(run)
-            % Get the wave headings to be run in wamit (radians)
-            bet = run.beta;
-        end
-        function [run] = set.Beta(run, bet)
-            % Set the wave headings to be run in wamit (radians)
-            if (isnumeric(bet))
-                for n = 1:length(bet)
-                    if(bet(n) < 0 || bet(n) > 360)
-                        error('All wave headings must be between 0 and 360 degrees');
-                    end
-                end
-                run.beta = bet;
-            else
-                error('The wave headings must be numbers');
-            end
-        end
-        
-        function [h_] = get.H(run)
-            % Get the water depth to be run in wamit
-            h_ = run.h;
-        end
-        function [run] = set.H(run, h_)
-            % Set the water depth to be run in wamit
-            if (isnumeric(h_))
-                if (length(h_) > 1)
-                    error('The depth must be a single value');
-                end
-                if (h_ <= 0)
-                    error('The depth must be greater than zero');
-                end
-                run.h = h_;
-            else
-                error('The depth must be a number');
-            end
-        end
-        
+              
         function [fp] = get.FieldPoints(run)
             % Get the field points to be evaluated in wamit
             fp = run.fieldPoints;
@@ -254,19 +200,7 @@ classdef WamitRunCondition
             end
             run.fieldPoints = fp;
         end
-        
-        function [fa] = get.FieldArray(run)
-            % Get the field point array to be evaluated in wamit
-            fa = run.fieldArray;
-        end
-        function [run] = set.FieldArray(run, fa)
-            % Set the field point array to be evaluated in wamit
-            if(~isa(fa, 'WamitFieldArray'))
-                error('Field array must be of type WamitFieldArray');
-            end
-            run.fieldArray = fa;
-        end
-        
+                
         function [cb] = get.ComputeBodyPoints(run)
             % Get whether or not pressure and velocity is evaluated on the
             % body
@@ -297,19 +231,6 @@ classdef WamitRunCondition
             end
             
             run.computeVelocity = cv;
-        end
-
-        function [wp] = get.WamitPath(run)
-            % Path location of wamit.exe
-            wp = run.wamitPath;
-        end
-        function [run] = set.WamitPath(run, wp)
-            % Path location of wamit.exe
-            if (ischar(wp))
-                run.wamitPath = wp;
-            else
-                error('WamitPath must be a string');
-            end
         end
         
         function [sp] = get.ScratchPath(run)
@@ -379,10 +300,15 @@ classdef WamitRunCondition
                         
             % .gdf
             nbody = length(run.floatBods);
+            run.geoFiles = cell(1, nbody);
             for n = 1:nbody
                 if (isempty(run.floatBods(n).GeoFile))
-                    fileName = [run.runName num2str(n)];
-                    run.floatBods(n).WriteGdf(run.folder, fileName);
+                    geoFile = [run.runName num2str(n)];
+                    run.writeGdf(run.floatBods(n), geoFile);
+                    run.geoFiles{n} = geoFile;
+                    %run.floatBods(n).WriteGdf(run.folder, fileName);
+                else
+                    run.geoFiles{n} = run.floatBods(1).GeoFile;
                 end
             end
             
@@ -401,19 +327,19 @@ classdef WamitRunCondition
                     end
                     fprintf(fileID, 'set "t0=%%Time%%"\n');
                     fprintf(fileID, 'set "d0=%%Date%%"\n\n');
-                    fprintf(fileID, '%s\\wamit\n\n', run.wamitPath);
+                    fprintf(fileID, '%s\\wamit\n\n', run.exePath);
                     fprintf(fileID, ':looppre\n');
                     fprintf(fileID, 'If not exist %%fN%%.pre then goto looppre\n\n');
-                    fprintf(fileID, '%s\\defmod\n\n', run.wamitPath);
+                    fprintf(fileID, '%s\\defmod\n\n', run.exePath);
                     fprintf(fileID, ':loopmod\n');
                     fprintf(fileID, 'If not exist %%fN%%.mod then goto loopmod\n\n');
-                    fprintf(fileID, '%s\\wamit\n\n', run.wamitPath);
+                    fprintf(fileID, '%s\\wamit\n\n', run.exePath);
                     fprintf(fileID, 'set "t1=%%Time%%"\n');
                     fprintf(fileID, 'set "d1=%%Date%%"\n\n');
                 else
                     fprintf(fileID, 'set "t0=%%Time%%"\n');
                     fprintf(fileID, 'set "d0=%%Date%%"\n\n');
-                    fprintf(fileID, '%s\\wamit\n\n', run.wamitPath);
+                    fprintf(fileID, '%s\\wamit\n\n', run.exePath);
                     fprintf(fileID, 'set "t1=%%Time%%"\n');
                     fprintf(fileID, 'set "d1=%%Date%%"\n\n');
                 end
@@ -432,7 +358,7 @@ classdef WamitRunCondition
             fprintf(fileID, [run.runName '.cfg\n']);
             fprintf(fileID, [run.runName '.pot\n']);
             fprintf(fileID, [run.runName '.frc\n']);
-            fprintf(fileID, [run.floatBods(1).GeoFile '.gdf\n']);
+            fprintf(fileID, [run.geoFiles{1} '.gdf\n']);
             
             fclose(fileID);
                         
@@ -442,7 +368,7 @@ classdef WamitRunCondition
             run.writeFrc;
         end
         
-        function [] = RunWamit(run, varargin)
+        function [] = Run(run, varargin)
             % Runs the batch file created to run Wamit with the system
             % command.
             % By default, Matlab waits for Wamit to finish running before
@@ -460,7 +386,48 @@ classdef WamitRunCondition
         end
     end
     
+    methods (Access = protected)
+        
+        function [] = makeFolderAndSub(run, fold)
+            % do nothing
+        end
+        
+    end
+    
     methods (Access = private)
+        
+        function [] = writeGdf(run, fb, geoFile)
+            
+            geo = fb.PanelGeo;
+            filename = [run.folder '\' geoFile '.gdf'];
+            fileID = fopen(filename, 'wt');
+            
+            ulen = 1;
+            g = 9.806650;
+            
+            fprintf(fileID, ['Model ' geoFile ', created: ' date '\n']);
+            fprintf(fileID, '%8.4f %8.4f\n', ulen, g);
+            fprintf(fileID, '%i %i \n', geo.Xsymmetry, geo.Ysymmetry);
+            fprintf(fileID, '%i\n', geo.Count);
+            
+            pans = geo.Panels;
+            
+            for n = 1:geo.Count
+                pan = pans(n);
+                verts = pan.Vertices;
+                for m = 1:4
+                    fprintf(fileID, '\t%8.4f\t%8.4f\t%8.4f\n', verts(m,1), verts(m,2), verts(m,3));
+                end
+            end
+            
+            fclose(fileID);
+            
+            % write other files needed for the gdf (i.e. for new modes)
+            if (~isempty(fb.WriteFileMeth))
+                params = {fb.WriteParams, [fb.XYpos, fb.Zpos], fb.Angle};
+                fb.WriteFileMeth(run.folder, geoFile, params);
+            end
+        end
         
         function [] = writeWamConfig(run)
             filename = [run.folder '\config.wam'];
@@ -495,7 +462,7 @@ classdef WamitRunCondition
             if (run.floatBods(1).WamILowHi)
                 fprintf(fileID, 'ILOWGDF = 0\n');
             end
-            if (~all([isempty(run.fieldArray) isempty(run.fieldPoints)]))
+            if (~all([isempty(run.fieldArray) isempty(run.fieldPoints) isempty(run.cylArray)]))
                 fprintf(fileID, 'INUMOPT6 = 1 \n');
             end
             if (run.computeBody)
@@ -548,7 +515,7 @@ classdef WamitRunCondition
             if (~run.computeBody)
                 ibp = 0;
             end
-            if (all([isempty(run.fieldArray) isempty(run.fieldPoints)]))
+            if (all([isempty(run.fieldArray) isempty(run.fieldPoints) isempty(run.cylArray)]))
                 ifldp = 0;
             end
             % 1 - added mass and damping
@@ -570,7 +537,7 @@ classdef WamitRunCondition
             end
             fprintf(fileID, '%i  %i  %i  0  %i  %i  0 0  0\n', iradf, iexH, iexD, ibp, ifldp);  
             % rho
-            fprintf(fileID, '%8.4f\n', run.Rho);
+            fprintf(fileID, '%8.4f\n', run.rho);
             % cg
             nbody = length(run.floatBods);
             ndof = 0;
@@ -654,7 +621,14 @@ classdef WamitRunCondition
             
             % Field points Method for 6.4 and above...
             % NFIELD - number of explicitly specified field points
-            points = run.fieldPoints;
+            if (~isempty(run.cylArray))
+                if (~isempty(run.fieldPoints))
+                    error('Cannot create WAMIT run with cylinder array and field points');
+                end
+                points = run.cylArray.GetPoints(run.h);
+            else
+                points = run.fieldPoints;
+            end
             N = size(points, 1);
             fprintf(fileID, '%i\n', N);
             % explicit field points
@@ -726,7 +700,7 @@ classdef WamitRunCondition
             for n = 1:nbody
                 % Name of gdf
                 fb = run.floatBods(n);
-                fprintf(fileID, [fb.GeoFile '.gdf\n']);
+                fprintf(fileID, [run.geoFiles{n} '.gdf\n']);
                 % x, y, z, and angle (degrees of body x-axis relative to global x-axis) of
                 % body n
                 fprintf(fileID, '%8.4f\t%8.4f\t%8.4f\t%8.4f\n', fb.XYpos(1), fb.XYpos(2), fb.Zpos, fb.Angle);

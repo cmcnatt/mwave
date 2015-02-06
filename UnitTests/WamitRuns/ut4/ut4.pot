@@ -6,9 +6,9 @@
 1		Number of direction headdings to be analyzed
   0.0000
 2
-ut4.gdf
+ut41.gdf
  -2.5000	  0.0000	 -0.7500	  0.0000
 0 0 1 0 0 0
-ut4.gdf
+ut42.gdf
   2.5000	  0.0000	 -0.7500	  0.0000
 0 0 1 0 0 0

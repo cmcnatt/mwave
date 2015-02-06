@@ -62,7 +62,7 @@ start = [-40 -40 0];    % start location, [x, y, z]
 delta = [0.8 0.8 1];    % delta (point spacing) in [x, y, z]
 nPoint = [101 101 1];   % Number of points in [x, y, z]. Having only 1  
                         % point in the z direction creates a 2D array
-wam_run.FieldArray = WamitFieldArray(start, delta, nPoint);
+wam_run.FieldArray = BemFieldArray(start, delta, nPoint);
 wam_run.ComputeVelocity = true; % Here we're telling Wamit to compute the 
                                 % velocity at the field points. The default
                                 % is not to. It does make it take longer,
@@ -73,8 +73,8 @@ wam_run.WriteRun;
                                     
 %% Run Wamit
 
-% wam_run.RunWamit();
-wam_run.RunWamit('Background');             
+% wam_run.Run;
+wam_run.Run('Background');             
 
 %% Read results
 

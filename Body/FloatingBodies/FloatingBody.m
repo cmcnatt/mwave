@@ -58,7 +58,9 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
         Ngen;           % The number of generalized modes;
         WamIGenMds;     % Integer that specifies which NEWMODES subroutine to call.  All bodies in a given run must have the same value.
         WamILowHi;      % Indicates whether the geometry file is low-order (0) or high-order (1) (for WAMIT)
-        ISurfPan;    % Indicates whether the geometry has interior surface panels
+        ISurfPan;       % Indicates whether the geometry has interior surface panels
+        WriteFileMeth;  % Additional methods to support the writing of a geometry file
+        WriteParams;    % Parameters of the WriteFileMeth
     end
  
     methods
@@ -66,6 +68,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
         function [fb] = FloatingBody(varargin)
             % Constructor
             if (nargin == 0)
+                fb.handle = 'newFB';
                 fb.geoFile = [];
                 fb.panelGeo = [];
                 fb.cg = zeros(1, 3);
@@ -152,24 +155,6 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
                 error('Input must be a PanelGeo');
             end
             fb.panelGeo = panGeo;
-        end
-        
-        function [fb] = WriteGdf(fb, path, fileName)
-            % Write the geometry object to geometry file.  The PanelGeo
-            % creates a geometry file with the name GeoFile.
-            if (isempty(fb.panelGeo))
-                error('No panel geomerty exists. Cannot create .gdf file.');
-            else
-                fb.geoFile = fileName;
-                fb.panelGeo.WriteGdf(path, fileName);
-            end
-            
-            % write other files needed for the gdf (i.e. for new modes)
-            if (~isempty(fb.writeFileMeth))
-                params = {fb.writeParams, fb.position, fb.angle};
-                fb.writeFileMeth(path, fileName, params);
-            end
-                
         end
         
         function [C_g] = get.Cg(fb)
@@ -347,6 +332,16 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
                 error('value must be boolean, 1 or 0');
             end
             fb.iSurfPan = isp;
+        end
+        
+        function [wfm] = get.WriteFileMeth(fb)
+            % Additional methods to support the writing of a geometry file
+            wfm = fb.writeFileMeth;
+        end
+        
+        function [wpar] = get.WriteParams(fb)
+            % Additional methods to support the writing of a geometry file
+            wpar = fb.writeParams;
         end
     end
    

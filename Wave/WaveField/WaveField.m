@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Contributors:
     C. McNatt
 %}
-classdef WaveField < IWaveField & handle
+classdef WaveField < IWaveField & matlab.mixin.Heterogeneous
     % A wave field provides information (pressure, elevation, velocity,
     % significant wave height, spectrums) at discrete points in space
     % specified on either a grid (array) or at arbitrary (x,y,z) points.  

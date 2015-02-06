@@ -79,6 +79,10 @@ wam_run.FieldPoints = points;
 
 wam_run.WriteRun;   
 
+%% Run Wamit
+
+wam_run.Run;
+
 %% Read run f
 
 wam_result = WamitResult(wam_run);                   
@@ -147,9 +151,14 @@ wam_run.T = T;
 wam_run.Beta = Beta;                                   
 wam_run.H = h;
 
-wam_run.FieldArray = WamitFieldArray([-20 -20 0], [0.4 0.4 1], [101 101 1]);
+wam_run.FieldArray = BemFieldArray([-20 -20 0], [0.4 0.4 1], [101 101 1]);
 
 wam_run.WriteRun;   
+
+%% Run Wamit
+
+wam_run.Run;
+
 
 %% Read run f
 
@@ -209,9 +218,14 @@ wam_run.T = T;
 wam_run.Beta = Beta;                                   
 wam_run.H = h;
 
-wam_run.FieldArray = WamitFieldArray([-20 -20 0], [0.4 0.4 1], [101 101 1]);
+wam_run.FieldArray = BemFieldArray([-20 -20 0], [0.4 0.4 1], [101 101 1]);
 
 wam_run.WriteRun;   
+
+%% Run Wamit
+
+wam_run.Run;
+
 
 %% Read run f
 

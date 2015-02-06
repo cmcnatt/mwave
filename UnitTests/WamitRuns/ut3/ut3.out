@@ -27,23 +27,23 @@
  Low-order panel method  (ILOWHI=0)                                     
                                                                         
  Input from Geometric Data File:         ut31.gdf                       
- Model ut31, created: 07-Oct-2014                                       
+ Model ut31, created: 03-Feb-2015                                       
                                                                         
  Input from Potential Control File:      ut3.pot                        
  .pot file   Series:     Run: ut3                                       
                                                                         
                                                                         
- POTEN run date and starting time:        07-Oct-2014  --  11:41:50     
+ POTEN run date and starting time:        03-Feb-2015  --  14:06:01     
    Period       Time           RAD      DIFF  (max iterations)          
-    5.0000    11:41:52           9       9                              
-    4.5000    11:41:52           9       9                              
-    4.0000    11:41:52           9       9                              
-    3.5000    11:41:52           9       9                              
-    3.0000    11:41:52           9       9                              
-    2.5000    11:41:53           9       9                              
-    2.0000    11:41:53           9       9                              
-    1.5000    11:41:53           9       9                              
-    1.0000    11:41:53          10       9                              
+    5.0000    14:06:03           9       9                              
+    4.5000    14:06:03           9       9                              
+    4.0000    14:06:03           9       9                              
+    3.5000    14:06:04           9       9                              
+    3.0000    14:06:04           9       9                              
+    2.5000    14:06:04           9       9                              
+    2.0000    14:06:04           9       9                              
+    1.5000    14:06:04           9       9                              
+    1.0000    14:06:05          10       9                              
 
  Gravity:     9.80660                Length scale:        1.00000
  Water depth:        infinite       Water density:     1000.00000
@@ -71,7 +71,7 @@
  ------------------------------------------------------------------------
                             Output from  WAMIT
  ------------------------------------------------------------------------
- FORCE run date and starting time:                07-Oct-2014 -- 11:41:53
+ FORCE run date and starting time:                03-Feb-2015 -- 14:06:05
  ------------------------------------------------------------------------
  I/O Filenames:  ut3.frc             ut3.p2f             ut3.out             
  .frc file   Series:     Run: ut3                                        
