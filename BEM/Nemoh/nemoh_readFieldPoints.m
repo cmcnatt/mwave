@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Contributors:
     C. McNatt
 %}
-function [eta, xy] = nemoh_readFieldPoints(fullPath)
+function [eta, points] = nemoh_readFieldPoints(fullPath, isFS)
 
 fid = fopen(fullPath);
 
@@ -27,16 +27,22 @@ lin = fgetl(fid);
 
 npts = str2double(lin(8:15));
 
-xy = zeros(npts, 2);
+if (isFS)
+    pntsInd = 2;
+else
+    pntsInd = 3;
+end
+
+points = zeros(npts, 3);
 eta = zeros(npts, 1);
 
 for n = 1:npts
-    lin = fscanf(fid,'%f', 6);
-    xy(n,:) = lin(1:2);
+    lin = fscanf(fid,'%f', pntsInd+4);
+    points(n,1:pntsInd) = lin(1:pntsInd);
     % Note that the complex conjuage is taken here because Nemoh
     % computes for a time depedence of exp(-i*omega*t), while
     % mwave assumes a time depedent of exp(i*omega*t);
-    eta(n) = lin(3)*exp(-1i*lin(4));
+    eta(n) = lin(pntsInd+1)*exp(-1i*lin(pntsInd+2));
 end
 
 fclose(fid);

@@ -160,10 +160,6 @@ classdef NemohRunCondition < IBemRunCondition
         function [run] = set.FloatingBodies(run, fbs)
             % Set the array of floating bodies
             pass = 1;
-
-            if (length(fbs) > 1)
-                error('Multiple bodies not yet implemented with Nemoh');
-            end
             
             for n = 1:length(fbs)
                 if (~isa(fbs(n), 'FloatingBody'))
@@ -539,10 +535,6 @@ classdef NemohRunCondition < IBemRunCondition
             
             nbod = length(run.floatBods);
             
-            if (nbod > 1)
-                error('NemohRunCondition not set up for multiple floating bodies yet');
-            end
-            
             run.geoFiles = cell(1, nbod);
             for n = 1:nbod
                 geoFile = run.writeMeshFile(run.floatBods(n), false);
@@ -558,7 +550,7 @@ classdef NemohRunCondition < IBemRunCondition
             fprintf(fid,'%8.4f                 ! DEPTH			! M		! Water depth\n', run.h);
             fprintf(fid,'0.	0.              ! XEFF YEFF		! M		! Wave measurement point\n');
             fprintf(fid,'--- Description of floating bodies -----------------------------------------------------------------------------------------------\n');
-            fprintf(fid,'1				! Number of bodies\n');
+            fprintf(fid,'%i				! Number of bodies\n', nbod);
             
             for n = 1:nbod
                 run.writeBodyCal(fid, n, run.floatBods(n), run.geoFiles{n});
@@ -599,7 +591,7 @@ classdef NemohRunCondition < IBemRunCondition
         end
         
         function [] = writeBodyCal(run, fid, n, floatBod, geoFile)
-            cg = floatBod.Cg;
+            pos = [floatBod.XYpos floatBod.Zpos];
             modes = floatBod.Modes;
             vector = modes.Vector;
             
@@ -609,42 +601,42 @@ classdef NemohRunCondition < IBemRunCondition
             fprintf(fid,'%i				! Number of degrees of freedom\n', modes.DoF);
             
             if (vector(1))
-                fprintf(fid,'1 1. 0. 0. %8.4f %8.4f %8.4f		! Surge\n', cg);
+                fprintf(fid,'1 1. 0. 0. %8.4f %8.4f %8.4f		! Surge\n', pos);
             end
             if (vector(2))
-                fprintf(fid,'1 0. 1. 0. %8.4f %8.4f %8.4f		! Sway\n', cg);
+                fprintf(fid,'1 0. 1. 0. %8.4f %8.4f %8.4f		! Sway\n', pos);
             end
             if (vector(3))
-                fprintf(fid,'1 0. 0. 1. %8.4f %8.4f %8.4f		! Heave\n', cg);
+                fprintf(fid,'1 0. 0. 1. %8.4f %8.4f %8.4f		! Heave\n', pos);
             end
             if (vector(4))
-                fprintf(fid,'2 1. 0. 0. %8.4f %8.4f %8.4f		! Roll about a point\n', cg);
+                fprintf(fid,'2 1. 0. 0. %8.4f %8.4f %8.4f		! Roll about a point\n', pos);
             end
             if (vector(5))
-                fprintf(fid,'2 0. 1. 0. %8.4f %8.4f %8.4f		! Pitch about a point\n', cg);
+                fprintf(fid,'2 0. 1. 0. %8.4f %8.4f %8.4f		! Pitch about a point\n', pos);
             end
             if (vector(6))
-                fprintf(fid,'2 0. 0. 1. %8.4f %8.4f %8.4f		! Yaw about a point\n', cg);
+                fprintf(fid,'2 0. 0. 1. %8.4f %8.4f %8.4f		! Yaw about a point\n', pos);
             end
             
             fprintf(fid,'%i				! Number of resulting generalised forces\n', modes.DoF);
             if (vector(1))
-                fprintf(fid,'1 1. 0. 0. %8.4f %8.4f %8.4f		! Force in x direction\n', cg);
+                fprintf(fid,'1 1. 0. 0. %8.4f %8.4f %8.4f		! Force in x direction\n', pos);
             end
             if (vector(2))
-                fprintf(fid,'1 0. 1. 0. %8.4f %8.4f %8.4f		! Force in y direction\n', cg);
+                fprintf(fid,'1 0. 1. 0. %8.4f %8.4f %8.4f		! Force in y direction\n', pos);
             end
             if (vector(3))
-                fprintf(fid,'1 0. 0. 1. %8.4f %8.4f %8.4f		! Force in z direction\n', cg);
+                fprintf(fid,'1 0. 0. 1. %8.4f %8.4f %8.4f		! Force in z direction\n', pos);
             end
             if (vector(4))
-                fprintf(fid,'2 1. 0. 0. %8.4f %8.4f %8.4f		! Moment force in x direction about a point\n', cg);
+                fprintf(fid,'2 1. 0. 0. %8.4f %8.4f %8.4f		! Moment force in x direction about a point\n', pos);
             end
             if (vector(5))
-                fprintf(fid,'2 0. 1. 0. %8.4f %8.4f %8.4f		! Moment force in y direction about a point\n', cg);
+                fprintf(fid,'2 0. 1. 0. %8.4f %8.4f %8.4f		! Moment force in y direction about a point\n', pos);
             end
             if (vector(6))
-                fprintf(fid,'2 0. 0. 1. %8.4f %8.4f %8.4f		! Moment force in z direction about a point\n', cg);
+                fprintf(fid,'2 0. 0. 1. %8.4f %8.4f %8.4f		! Moment force in z direction about a point\n', pos);
             end
             
             fprintf(fid,'0				! Number of lines of additional information \n');
@@ -666,11 +658,14 @@ classdef NemohRunCondition < IBemRunCondition
         end
         
         function [geoFile] = writeMeshFile(run, floatBod, forMesh)
-            geo = floatBod.PanelGeo;
+            geo = PanelGeo(floatBod.PanelGeo);
             
             if (geo.Ysymmetry)
                 error('Body Y-symmetry not allowed in Nemoh');
             end
+            
+            pos = [floatBod.XYpos floatBod.Zpos];
+            geo.Translate(pos);
             
             geoPans = geo.Panels;
             npan = geo.Count;

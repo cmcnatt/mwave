@@ -47,6 +47,6 @@ else
 end
 
 dtheta = theta(2) - theta(1);
-theta = 0:dtheta:(2*pi - dtheta);
+theta = linspace(0,(2*pi - dtheta),64);
 
 eta = reshape(eta0, Ntheta, Nz).';

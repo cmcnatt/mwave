@@ -54,7 +54,8 @@ classdef FloatingFlap < FloatingBody
                 Nx = varargin{1};
                 Ny = varargin{2};
                 Nz = varargin{3};
-                panGeo = makePanel_box(len, beam, draft, Nx, Ny, Nz, 'Quarter');
+                %panGeo = makePanel_box(len, beam, draft, Nx, Ny, Nz, 'Quarter');
+                panGeo = makePanel_box(len, beam, draft, Nx, Ny, Nz);
                 panGeo.Translate(-fb.position);
                 fb.panelGeo = panGeo;
                 fb.iLowHi = 0;

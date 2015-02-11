@@ -48,8 +48,8 @@ classdef NemohResult < IBemResult
                     %result.fieldPoints = runCondition.FieldPoints;
                     result.fieldArray = runCondition.FieldArray;
                     result.fieldPoints = [];
-                    result.cylArray = runCondition.cylArray;
-                    if (~isempty(result.fieldPoints) || ~isempty(result.fieldArray))
+                    result.cylArray = runCondition.CylArray;
+                    if (~isempty(result.fieldPoints) || ~isempty(result.fieldArray) || ~isempty(result.cylArray))
                         result.solveField = true;
                     end
                 else
@@ -64,11 +64,11 @@ classdef NemohResult < IBemResult
 
             useSing = false;
             removeBodies = false;
-            for l = 1:length(varargin)
-                if (strcmp(varargin{l}, 'UseSingle'))
+            for m = 1:length(varargin)
+                if (strcmp(varargin{m}, 'UseSingle'))
                     useSing = true;
                 end
-                if (strcmp(varargin{l}, 'RemoveBodies'))
+                if (strcmp(varargin{m}, 'RemoveBodies'))
                     removeBodies = true;
                 end
             end
@@ -86,9 +86,9 @@ classdef NemohResult < IBemResult
             fid = fopen([result.folder,'\Results\ExcitationForce.tec'],'r');
             fgetl(fid);             % read header lines
             dofs = zeros(1, nbod);
-            for m = 1:nbod
-                dofs(m) = result.floatingbodies(m).Modes.DoF;
-                for l = 1:dofs(m)
+            for l = 1:nbod
+                dofs(l) = result.floatingbodies(l).Modes.DoF;
+                for m = 1:dofs(l)
                     fgetl(fid);     % read header lines
                 end
             end
@@ -97,14 +97,14 @@ classdef NemohResult < IBemResult
             Famp = zeros(nT, nB, doft);
             Fphi = zeros(nT, nB, doft);
 
-            for l = 1:nB
+            for m = 1:nB
                 fgetl(fid);             % read header lines
-                for m = 1:nT
+                for l = 1:nT
                     ligne = fscanf(fid,'%f', 1 + 2*doft);
                     % omega(n) = ligne(1);
                     for n = 1:doft
-                        Famp(m, l, n) = ligne(2*n);
-                        Fphi(m, l, n) = ligne(2*n+1);
+                        Famp(l, m, n) = ligne(2*n);
+                        Fphi(l, m, n) = ligne(2*n+1);
                     end;
                 end;
                 fgetl(fid);         % for some reason need to read a blank line here
@@ -119,8 +119,8 @@ classdef NemohResult < IBemResult
             % Radiation forces
             fid = fopen([result.folder,'\Results\RadiationCoefficients.tec'],'r');
             fgetl(fid);             % read header lines
-            for m = 1:nbod
-                for l = 1:dofs(m)
+            for l = 1:nbod
+                for m = 1:dofs(l)
                     fgetl(fid);     % read header lines
                 end
             end
@@ -128,13 +128,13 @@ classdef NemohResult < IBemResult
             A = zeros(nT, doft, doft);
             B = zeros(nT, doft, doft);
             
-            for l = 1:doft
+            for m = 1:doft
                 fgetl(fid);         % read header lines
-                for m = 1:nT
+                for l = 1:nT
                     ligne = fscanf(fid,'%f',1 + 2*doft);
                     for n = 1:doft
-                        A(m, l, n) = ligne(2*n);
-                        B(m, l, n) = ligne(2*n + 1);
+                        A(l, m, n) = ligne(2*n);
+                        B(l, m, n) = ligne(2*n + 1);
                     end;
                     fgetl(fid);
                 end;
@@ -156,89 +156,135 @@ classdef NemohResult < IBemResult
             
             result.hydroForces = HydroForces(result.t, result.beta, A, B, C, Fe, result.h, result.rho);
                         
-            % Wave array
-            if (~isempty(result.fieldArray))
-                nProb = nT*(doft + nB);
-                fsfiles = dir([result.folder,'\Results\freesurface.*.dat']);
-                fsfiles = {fsfiles.name};
+            % Wave array and cylinder array
+            rho = result.rho;
+            g = result.g;
+            h = result.h;
+            t = result.t;
+            beta = result.beta;
+            
+            for j = 1:2
                 
-                if (length(fsfiles) ~= nProb)
-                    error('The number of free surface files does not match the expected number of problems');
+                if (j == 1)
+                    fsfiles = dir([result.folder,'\Results\freesurface.*.dat']);
+                    fsfiles = {fsfiles.name};
+                    isFS = true;
+                else
+                    fsfiles = dir([result.folder,'\Results\cylsurface.*.dat']);
+                    fsfiles = {fsfiles.name};
+                    isFS = false;
                 end
                 
-                probn = 0;
-                
-                rho = result.rho;
-                g = result.g;
-                h = result.h;
-                t = result.t;
-                beta = result.beta;
-                
-                EtaS = cell(nT, nB);
-                EtaR = cell(nT, doft);
-                
-                
-                % not sure about the body order
-                for l = 1:nbod
+                if (~isempty(fsfiles))
+                    nProb = nT*(doft + nB);
+                    
+                    if (length(fsfiles) ~= nProb)
+                        error('The number of free surface files does not match the expected number of problems');
+                    end
+
+                    probn = 0;
+
+                    EtaS = cell(nT, nB);
+                    EtaR = cell(nT, doft);
+
+
+                    % not sure about the body order
+                    
                     for m = 1:nT
                         % Diffraction
                         for n = 1:nB
                             probn = probn + 1;
-                            [eta, xy] = nemoh_readFieldPoints([result.folder,'\Results\' fsfiles{probn}]);
+                            [eta, points] = nemoh_readFieldPoints([result.folder,'\Results\' fsfiles{probn}], isFS);
+                            npts = size(points, 1);
                             %eta = conj(eta);
-                            [Eta, X, Y] = result.reshapeGrid(eta, xy);
-                            
+                            if (j == 1)
+                                [Eta, X, Y] = result.reshapeGrid(eta, points);
+                            else
+                                Eta = eta;
+                            end
+
                             EtaS{m, n} = Eta;
                         end
-                        
-                        % Radiation
-                        for n = 1:dofs(l)
+
+                            % Radiation
+                        for n = 1:doft
                             probn = probn + 1;
-                            [eta, xy] = nemoh_readFieldPoints([result.folder,'\Results\' fsfiles{probn}]);
+                            [eta, points] = nemoh_readFieldPoints([result.folder,'\Results\' fsfiles{probn}], isFS);
+                            npts = size(points, 1);
                             %eta = conj(eta);
-                            [Eta, X, Y] = result.reshapeGrid(eta, xy);
-                            
+                            if (j == 1)
+                                [Eta, X, Y] = result.reshapeGrid(eta, points);
+                            else 
+                                Eta = eta;
+                            end
+
                             EtaR{m, n} = Eta;
                         end
                     end
-                end
-                
-                rwfs(result.dof, 1) = WaveField;
-                V = [];
-                
-                for m = 1:doft
-                    P = zeros([nT, size(X)]);
-                    for n = 1:nT
-                        P(n,:,:) = rho*g*EtaR{n, m};
-                    end
-                    
-                    rwfs(m) = WaveField(rho, g, h, t, P, V, 1, X, Y);
-                end
-                rwavefield = WaveFieldCollection(rwfs, 'MotionIndex', (1:result.dof));
-                
-                swfs(nB, 1) = WaveField;
-                iwfs(nB, 1) = WaveField;
-                
-                for m = 1:nB
-                    P = zeros([nT, size(X)]);
-                    for n = 1:nT
-                        P(n,:,:) = rho*g*EtaS{n, m};
-                    end
-                    
-                    swf = WaveField(rho, g, h, t, P, V, 1, X, Y);
-                    wcs = PlaneWaves(ones(size(t)), t, beta(m)*ones(size(t)), h);
-                    iwf = PlaneWaveField(rho, wcs, 1, X, Y);
-                    iwfs(m) = iwf;
-                    swfs(m) = swf;
-                end
-                
-                iwavefield = WaveFieldCollection(iwfs, 'Direction', beta);
-                swavefield = WaveFieldCollection(swfs, 'Direction', beta);
 
-                result.waveArray = FBWaveField(iwavefield, swavefield, rwavefield);
-                    
+                    rwfs(result.dof, 1) = WaveField;
+                    V = [];
+
+                    for m = 1:doft
+                        if (j == 1)
+                            P = zeros([nT, size(X)]);
+                            for n = 1:nT
+                                P(n,:,:) = rho*g*EtaR{n, m};
+                            end
+                        else
+                            P = zeros(nT, npts);
+                            for n = 1:nT
+                                P(n,:) = rho*g*EtaR{n, m};
+                            end
+                        end
+
+                        if (j == 1)
+                            rwfs(m) = WaveField(rho, g, h, t, P, V, 1, X, Y);
+                        else
+                            rwfs(m) = WaveField(rho, g, h, t, P, V, 0, points);
+                        end
+                    end
+                    rwavefield = WaveFieldCollection(rwfs, 'MotionIndex', (1:result.dof));
+
+                    swfs(nB, 1) = WaveField;
+                    iwfs(nB, 1) = WaveField;
+
+                    for m = 1:nB
+                        if (j == 1)
+                            P = zeros([nT, size(X)]);
+                            for n = 1:nT
+                                P(n,:,:) = rho*g*EtaS{n, m};
+                            end
+                        else
+                            P = zeros(nT, npts);
+                            for n = 1:nT
+                                P(n,:) = rho*g*EtaS{n, m};
+                            end
+                        end
+                        
+                        wcs = PlaneWaves(ones(size(t)), t, beta(m)*ones(size(t)), h);
+                        if (j == 1)
+                            swf = WaveField(rho, g, h, t, P, V, 1, X, Y);
+                            iwf = PlaneWaveField(rho, wcs, 1, X, Y);
+                        else
+                            swf = WaveField(rho, g, h, t, P, V, false, points);
+                            iwf = PlaneWaveField(rho, wcs, false, points);
+                        end
+                        iwfs(m) = iwf;
+                        swfs(m) = swf;
+                    end
+
+                    iwavefield = WaveFieldCollection(iwfs, 'Direction', beta);
+                    swavefield = WaveFieldCollection(swfs, 'Direction', beta);
+
+                    if (j == 1)
+                        result.waveArray = FBWaveField(iwavefield, swavefield, rwavefield);
+                    elseif (j ==  2)
+                        result.wavePoints = FBWaveField(iwavefield, swavefield, rwavefield);
+                    end
+
+                end
             end
-            % Wave points
             
             result.hasBeenRead = 1;
         end
@@ -246,7 +292,8 @@ classdef NemohResult < IBemResult
     
     methods (Access = private)
         
-        function [Eta, X, Y] = reshapeGrid(result, eta, xy)
+        function [Eta, X, Y] = reshapeGrid(result, eta, points)
+            xy = points(:, 1:2);
             nx = length(unique(xy(:,1)));
             ny = length(unique(xy(:,2)));
             X = reshape(xy(:,1), nx, ny);
