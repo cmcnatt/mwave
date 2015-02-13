@@ -144,26 +144,31 @@ classdef FloatingSphereEndCyl < FloatingBody
         end
         
         function [modes, Nh] = CreateHingeModes(length, hingePos)
-            [Nh, col] = size(hingePos);
-            if (col > 1)
-                error('HingePos is an Nx1 vector of the x-position of the hinges');
-            end
-            for n = 1:Nh
-                if (abs(hingePos(n)) >= length/2)
-                    error('The hinge position must be within the body length');
+            if (~isempty(hingePos))
+                [Nh, col] = size(hingePos);
+                if (col > 1)
+                    error('HingePos is an Nx1 vector of the x-position of the hinges');
                 end
-            end
+                for n = 1:Nh
+                    if (abs(hingePos(n)) >= length/2)
+                        error('The hinge position must be within the body length');
+                    end
+                end
 
-            modes = ModesOfMotion();
-            modes.Generalized = ones(1,Nh);
-                        
-            for n = 1:Nh
-                hfunc = HingeYFunc();
-                hfunc.HingePos = [hingePos(n) 0];
-                hfuncs(n) = hfunc;
-            end
+                modes = ModesOfMotion();
+                modes.Generalized = ones(1,Nh);
 
-            modes.GenMotFuncs = hfuncs;
+                for n = 1:Nh
+                    hfunc = HingeYFunc();
+                    hfunc.HingePos = [hingePos(n) 0];
+                    hfuncs(n) = hfunc;
+                end
+
+                modes.GenMotFuncs = hfuncs;
+            else
+                modes = ModesOfMotion();
+                Nh = 0;
+            end
         end
     end
     
