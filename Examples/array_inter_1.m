@@ -29,7 +29,7 @@ Contributors:
 % load 'wam_hb1_1_hb';    % Load the HydroBody based on its name..
 
 run_name = 'wam_hb_1';  % Or we can be more explicit if necessary         
-folder = [mwavePath '\Examples\WamitRuns\' run_name];  
+folder = [mwavePath '\Examples\BemRuns\' run_name];  
 load([folder '\wam_hb1_1_hb']);
 
 %% Create an array

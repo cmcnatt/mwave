@@ -31,7 +31,7 @@ run_name = 'wam_1b_6dof_1';
 % This is the folder where all the Wamit input and output files go (You 
 % need to make this folder!). It is good practise to name the folder the 
 % same as the run name.
-folder = [mwavePath '\Examples\WamitRuns\' run_name];  
+folder = [mwavePath '\Examples\BemRuns\' run_name];  
                                                     
 % mwavePath is a function that returns the path to the to the folder where
 % mwave is kept it locates this by finding a file called mwave.home     

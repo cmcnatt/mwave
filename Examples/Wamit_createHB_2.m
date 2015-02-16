@@ -27,7 +27,7 @@ Contributors:
 %% Set up run
 
 run_name = 'wam_hb_2';         
-folder = [mwavePath '\Examples\WamitRuns\' run_name];  
+folder = [mwavePath '\Examples\BemRuns\' run_name];  
 
 rho = 1025;     % water density
 h = 8;          % water depth
@@ -51,16 +51,20 @@ wec.Modes = ModesOfMotion([0 0 1 0 0 0]);   % compute for heave only
 N = 40;                         % 40 directions
 Beta = 0:2*pi/N:2*pi*(1-1/N);   % from 0 to 2pi
 
+% In Wamit_createHB_1, the cylindrical array of points was created
+% manually. However, in WamitRunCondition, one may also use BemCylArray, 
+% which automatically creates the points with a cos spacing in z. For
+% NemohRunCondition, only BemCylArray is valid (i.e. it doesn't take a list
+% of points) - see Nemoh_createHB_1
+
 r = wec.Rcir;                   
 dr = 0.1;                       
 r = r + dr;                     
 
 nZ = 200;                       
-nTheta = 2^8;                   
+nTheta = 2^8;  
 
-z = -h*(1-cos(0:pi/2/nZ:pi/2)); 
-z = round(z*10^6)/10^6;         
-points = makeCirWFPoints(r, nTheta, z); 
+cylArray = BemCylArray(r, nTheta, nZ);                 
 
 wam_run = WamitRunCondition(folder, run_name);  
 
@@ -70,7 +74,7 @@ wam_run.Beta = Beta;
 wam_run.H = h;        
 wam_run.FloatingBodies = wec;       
 
-wam_run.FieldPoints = points;   
+wam_run.CylArray = cylArray;   
 wam_run.WriteRun;               
 
 %% Run Wamit
