@@ -1,0 +1,111 @@
+
+WAMITLOG.TXT file from WAMIT run:  17-Feb-2015 16:31:08
+
+ Input file config.wam          
+! generic configuration file:  config.wam
+RAMGBMAX= 2.0
+NCPU=1
+USERID_PATH = N:\wamitv7
+LICENSE_PATH=\wamitv7\license
+
+ Input file nem_1b_1dof_1w.cfg  
+IALTPOT = 2
+IRR = 0
+ILOG = 1
+IALTFRC = 2
+IFIELD_ARRAYS = 1
+IFORCE = 1
+ILOWHI = 0
+INUMOPT6 = 1
+NEWMDS = 0
+IGENMDS = 0
+IPOTEN = 1
+ISCATT = 0
+ISOLVE = 0
+ISOR = 0
+MAXITT = 100
+MAXMIT = 8
+MONITR = 0
+NOOUT = 0  0  0  0  0  0  0  0  0
+NUMHDR = 1
+NUMNAM = 0
+SCRATCH_PATH = N:\wamitv7\scratch
+
+POTEN run started:  17-Feb-2015 16:31:08
+
+ Input file nem_1b_1dof_1w.pot  
+.pot file   Series:     Run: nem_1b_1dof_1w
+ 50.0000
+0           1
+3		Number of periods to be analyzed
+ 12.5664
+  6.2832
+  4.1888
+2		Number of direction headdings to be analyzed
+  0.0000
+ 45.0000
+1
+nem_1b_1dof_1w1.gdf
+  0.0000	  0.0000	-20.0000	  0.0000
+0 0 0 0 1 0
+
+ First    10 lines of input file nem_1b_1dof_1w1.gdf 
+Model nem_1b_1dof_1w1, created: 17-Feb-2015
+  1.0000   9.8066
+0 0
+1550
+	  2.5000	-14.0000	 20.0000
+	  2.5000	-15.0000	 20.0000
+	  2.5000	-15.0000	 19.0000
+	  2.5000	-14.0000	 19.0000
+	  2.5000	-13.0000	 20.0000
+	  2.5000	-14.0000	 20.0000
+
+
+ Number of processors used :   1
+
+ Estimated RAM used :  1.9E-02 Gigabytes
+
+  POTEN module run completed
+
+POTEN run completed:  17-Feb-2015 16:31:11
+
+FORCE run started:  17-Feb-2015 16:31:11
+
+ Input file nem_1b_1dof_1w.frc  
+.frc file   Series:     Run: nem_1b_1dof_1w
+1  1  0  0  0  1  0 0  0
+1000.0000
+  0.0000	  0.0000	 10.0000	
+1
+3000000.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	
+  0.0000	3000000.0000	  0.0000	  0.0000	  0.0000	  0.0000	
+  0.0000	  0.0000	3000000.0000	  0.0000	  0.0000	  0.0000	
+  0.0000	  0.0000	  0.0000	625000000.0000	  0.0000	  0.0000	
+  0.0000	  0.0000	  0.0000	  0.0000	406250000.0000	  0.0000	
+  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	231250000.0000	
+1
+  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	
+  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	
+  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	
+  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	
+  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	
+  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	
+1
+  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	
+  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	
+  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	
+  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	
+  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	
+  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	
+0
+0
+1
+0
+101	-50.0000	  1.0000
+101	-50.0000	  1.0000
+1	  0.0000	  1.0000
+
+FORCE run completed:  17-Feb-2015 16:32:11
+
+  WAMIT run completed
