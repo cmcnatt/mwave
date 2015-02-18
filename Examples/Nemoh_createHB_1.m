@@ -60,7 +60,7 @@ nem_run.FloatingBodies = wec;
 
 % The NemohRunCondition creates a Nemoh.cal file, which is used by the
 % preProcessor. The Nemoh.cal file takes radial frequency limits and count
-Tlims = [8 12];             % 4 to 12 seconds
+Tlims = [8 12];             % 8 to 12 seconds
 nem_run.OmegaLims = 2*pi./fliplr(Tlims);
 nem_run.OmegaCount = 5;     % 5 frequencies - evenly spaced in omega
 
@@ -82,10 +82,7 @@ nem_run.BetaCount = nBeta;
 %
 % This is setup in NemohRunCondition using a BemCylArray
 
-r = wec.Rcir;                   
-dr = 0.1;                       
-r = r + dr;                     
-                                                   
+r = 1.1*wec.Rcir;                                                                            
 nZ = 50;                       
 nTheta = 2^6;   
 

@@ -64,10 +64,7 @@ betaLims = [0 2*pi*(1-1./nBeta)];
 nem_run.BetaLims = betaLims;
 nem_run.BetaCount = nBeta;
   
-r = wec.Rcir;                   
-dr = 0.1;                       
-r = r + dr;                     
-                                                   
+r = 1.1*wec.Rcir;         
 nZ = 50;                       
 nTheta = 2^6;   
 

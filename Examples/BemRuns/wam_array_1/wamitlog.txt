@@ -1,5 +1,5 @@
 
-WAMITLOG.TXT file from WAMIT run:  16-Feb-2015 12:37:09
+WAMITLOG.TXT file from WAMIT run:  17-Feb-2015 10:00:05
 
  Input file config.wam          
 ! generic configuration file:  config.wam
@@ -35,7 +35,7 @@ NUMHDR = 1
 NUMNAM = 0
 SCRATCH_PATH = N:\wamitv7\scratch
 
-POTEN run started:  16-Feb-2015 12:37:09
+POTEN run started:  17-Feb-2015 10:00:05
 
  Input file wam_array_1.pot     
 .pot file   Series:     Run: wam_array_1
@@ -61,7 +61,7 @@ wam_array_13.gdf
 0 0 0 0 1 0
 
  First    10 lines of input file wam_array_11.gdf    
-Model wam_array_11, created: 16-Feb-2015
+Model wam_array_11, created: 17-Feb-2015
   1.0000   9.8066
 0 0
 1536
@@ -73,7 +73,7 @@ Model wam_array_11, created: 16-Feb-2015
 	 10.0000	  0.0000	  1.6667
 
  First    10 lines of input file wam_array_12.gdf    
-Model wam_array_12, created: 16-Feb-2015
+Model wam_array_12, created: 17-Feb-2015
   1.0000   9.8066
 0 0
 1536
@@ -85,7 +85,7 @@ Model wam_array_12, created: 16-Feb-2015
 	 10.0000	  0.0000	  1.6667
 
  First    10 lines of input file wam_array_13.gdf    
-Model wam_array_13, created: 16-Feb-2015
+Model wam_array_13, created: 17-Feb-2015
   1.0000   9.8066
 0 0
 1550
@@ -103,9 +103,9 @@ Model wam_array_13, created: 16-Feb-2015
 
   POTEN module run completed
 
-POTEN run completed:  16-Feb-2015 12:38:00
+POTEN run completed:  17-Feb-2015 10:00:56
 
-FORCE run started:  16-Feb-2015 12:38:00
+FORCE run started:  17-Feb-2015 10:00:56
 
  Input file wam_array_1.frc     
 .frc file   Series:     Run: wam_array_1
@@ -173,6 +173,10 @@ FORCE run started:  16-Feb-2015 12:38:00
 0
 1
 0
-201	-200.0000	  2.0000
-201	-200.0000	  2.0000
+101	-100.0000	  2.0000
+101	-100.0000	  2.0000
 1	  0.0000	  1.0000
+
+FORCE run completed:  17-Feb-2015 10:05:37
+
+  WAMIT run completed

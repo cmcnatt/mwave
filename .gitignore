@@ -10,3 +10,5 @@ wam_hb1_1_out.mat
 *.6vx
 *.6vy
 *.6vz
+
+# Ignore the contents of the Example BEM folders

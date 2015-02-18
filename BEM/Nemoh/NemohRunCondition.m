@@ -37,7 +37,7 @@ classdef NemohRunCondition < IBemRunCondition
     properties (Dependent)
         OmegaLims;          % Lower and upper limit of the radial frequencies
         OmegaCount;         % Number of radial frequencies
-        BetaLims;           % Lower and upper limit of the wave direction
+        BetaLims;           % Lower and upper limit of the wave direction (radians)
         BetaCount;          % Number of wave directions
         T;                  % The wave periods (can't set)
         Beta;               % The wave directions (can't set)
@@ -109,12 +109,12 @@ classdef NemohRunCondition < IBemRunCondition
             t = 2*pi./linspace(run.omegaLim(1), run.omegaLim(2), run.nOmega);
         end
         
-        function [ol] = get.BetaLims(run)
-            % Get the lower and upper incident direction limits in degrees
-            ol = run.omegaLim;
+        function [bl] = get.BetaLims(run)
+            % Set the wave headings to be run (radians)           
+            bl = run.betaLim;
         end
         function [run] = set.BetaLims(run, bl)
-            % Get the lower and upper incidnet direction limits in degrees
+            % Set the wave headings to be run (radians)
             
             if (length(bl) ~= 2)
                 error('The limits must be a vector of length 2');
@@ -537,7 +537,12 @@ classdef NemohRunCondition < IBemRunCondition
             
             run.geoFiles = cell(1, nbod);
             for n = 1:nbod
-                geoFile = run.writeMeshFile(run.floatBods(n), false);
+                if (isempty(run.floatBods(n).Handle))
+                    name = ['body'  num2str(n)];
+                else
+                    name = run.floatBods(n).Handle;
+                end
+                geoFile = run.writeMeshFile(run.floatBods(n), false, name);
                 run.geoFiles{n} = geoFile;
             end
             
@@ -545,12 +550,12 @@ classdef NemohRunCondition < IBemRunCondition
             fid = fopen([run.folder, '\Nemoh.cal'],'wt');
                       
             fprintf(fid,'--- Environment ------------------------------------------------------------------------------------------------------------------ \n');
-            fprintf(fid,'%8.4f				! RHO 			! KG/M**3 	! Fluid specific volume \n', run.rho);
-            fprintf(fid,'9.81				! G			! M/S**2	! Gravity \n');
-            fprintf(fid,'%8.4f                 ! DEPTH			! M		! Water depth\n', run.h);
-            fprintf(fid,'0.	0.              ! XEFF YEFF		! M		! Wave measurement point\n');
+            fprintf(fid,'%7.2f                                              ! RHO               ! KG/M**3       ! Fluid specific volume \n', run.rho);
+            fprintf(fid,'%7.2f                                              ! G                 ! M/S**2        ! Gravity \n', IWaves.G);
+            fprintf(fid,'%7.2f                                              ! DEPTH             ! M             ! Water depth\n', run.h);
+            fprintf(fid,'0.     0.                                            ! XEFF YEFF         ! M             ! Wave measurement point\n');
             fprintf(fid,'--- Description of floating bodies -----------------------------------------------------------------------------------------------\n');
-            fprintf(fid,'%i				! Number of bodies\n', nbod);
+            fprintf(fid,'%4i                                                 ! Number of bodies\n', nbod);
             
             for n = 1:nbod
                 run.writeBodyCal(fid, n, run.floatBods(n), run.geoFiles{n});
@@ -558,12 +563,12 @@ classdef NemohRunCondition < IBemRunCondition
             betad1 = round(1e4*180/pi*run.betaLim(1))/1e4;
             betad2 = round(1e4*180/pi*run.betaLim(2))/1e4;
             fprintf(fid,'--- Load cases to be solved -------------------------------------------------------------------------------------------------------\n');
-            fprintf(fid,'%i	%8.4f %8.4f		! Number of wave frequencies, Min, and Max (rad/s)\n', run.nOmega, run.omegaLim(1), run.omegaLim(2));
-            fprintf(fid,'%i	%8.4f %8.4f		! Number of wave directions, Min and Max (degrees)\n', run.nBeta, betad1, betad2);
+            fprintf(fid,'%4i     %7.4f   %7.4f                           ! Number of wave frequencies, Min, and Max (rad/s)\n', run.nOmega, run.omegaLim(1), run.omegaLim(2));
+            fprintf(fid,'%4i     %7.2f   %7.2f                           ! Number of wave directions, Min and Max (degrees)\n', run.nBeta, betad1, betad2);
             fprintf(fid,'--- Post processing ---------------------------------------------------------------------------------------------------------------\n');
-            fprintf(fid,'1	0.1	10.		! IRF 				! IRF calculation (0 for no calculation), time step and duration\n');
-            fprintf(fid,'0				! Show pressure\n');
-            fprintf(fid,'0	0.	180.		! Kochin function 		! Number of directions of calculation (0 for no calculations), Min and Max (degrees)\n');
+            fprintf(fid,'1  0.1     10.                                       ! IRF                     ! IRF calculation (0 for no calc), time step and duration\n');
+            fprintf(fid,'0                                                    ! Show pressure\n');
+            fprintf(fid,'0	0.	180.                                 ! Kochin function         ! Number of directions of calculation (0 for no calc), Min and Max (degrees)\n');
             
             if (~isempty(run.fieldArray))
                 nps = run.fieldArray.NumberPoints;
@@ -572,7 +577,7 @@ classdef NemohRunCondition < IBemRunCondition
                 nps = [0 0];
                 lens = [0 0 0];
             end
-            fprintf(fid,'%i	%i	%8.4f	%8.4f	! Free surface elevation 	! Number of points in x direction (0 for no calcutions) and y direction and dimensions of domain in x and y direction\n', nps(1), nps(2), lens(1), lens(2));	
+            fprintf(fid,'%5i    %5i  %7.2f   %7.2f                    ! Free surface elevation  ! Number of points in x direction (0 for no calc) and y direction and dimensions of domain in x and y direction\n', nps(1), nps(2), lens(1), lens(2));	
             if (run.useCylSurf)
                 if (~isempty(run.cylArray))
                     r = run.cylArray.Radius;
@@ -583,9 +588,9 @@ classdef NemohRunCondition < IBemRunCondition
                     nth = 1;
                     nz = 1;
                 end
-                fprintf(fid,'%8.4f	%i	%i	! Cylindrical surface for diffraction transfer matrixn 	! Radius (0 for no calculations), Number of points in theta direction, Number of points in z direction\n', r, nth, nz);	
+                fprintf(fid,'%7.3f  %5i  %5i                                ! Cylindrical surface     ! Radius (0 for no calc), Number of points in theta direction, Number of points in z direction\n', r, nth, nz);	
             end
-            fprintf(fid,'---');
+            fprintf(fid,'--- End of file -------------------------------------------------------------------------------------------------------------------\n');
             
             fclose(fid);
         end
@@ -597,55 +602,60 @@ classdef NemohRunCondition < IBemRunCondition
             
             fprintf(fid,'--- Body %i -----------------------------------------------------------------------------------------------------------------------\n', n);
             fprintf(fid,'%s\\Mesh\\%s		! Name of mesh file\n', run.folder, geoFile);
-            fprintf(fid,'%i %i			! Number of points and number of panels 	\n', run.nNode, run.nPan);
-            fprintf(fid,'%i				! Number of degrees of freedom\n', modes.DoF);
+            fprintf(fid,'%6i    %6i                                     ! Number of points and number of panels 	\n', run.nNode, run.nPan);
+            fprintf(fid,'%4i                                                 ! Number of degrees of freedom\n', modes.DoF);
             
             if (vector(1))
-                fprintf(fid,'1 1. 0. 0. %8.4f %8.4f %8.4f		! Surge\n', pos);
+                fprintf(fid,'1 1. 0. 0. %7.3f %7.3f %7.3f                   ! Surge\n', pos);
             end
             if (vector(2))
-                fprintf(fid,'1 0. 1. 0. %8.4f %8.4f %8.4f		! Sway\n', pos);
+                fprintf(fid,'1 0. 1. 0. %7.3f %7.3f %7.3f                   ! Sway\n', pos);
             end
             if (vector(3))
-                fprintf(fid,'1 0. 0. 1. %8.4f %8.4f %8.4f		! Heave\n', pos);
+                fprintf(fid,'1 0. 0. 1. %7.3f %7.3f %7.3f                   ! Heave\n', pos);
             end
             if (vector(4))
-                fprintf(fid,'2 1. 0. 0. %8.4f %8.4f %8.4f		! Roll about a point\n', pos);
+                fprintf(fid,'2 1. 0. 0. %7.3f %7.3f %7.3f                   ! Roll about a point\n', pos);
             end
             if (vector(5))
-                fprintf(fid,'2 0. 1. 0. %8.4f %8.4f %8.4f		! Pitch about a point\n', pos);
+                fprintf(fid,'2 0. 1. 0. %7.3f %7.3f %7.3f                   ! Pitch about a point\n', pos);
             end
             if (vector(6))
-                fprintf(fid,'2 0. 0. 1. %8.4f %8.4f %8.4f		! Yaw about a point\n', pos);
+                fprintf(fid,'2 0. 0. 1. %7.3f %7.3f %7.3f                   ! Yaw about a point\n', pos);
             end
             
-            fprintf(fid,'%i				! Number of resulting generalised forces\n', modes.DoF);
+            fprintf(fid,'%4i                                                 ! Number of resulting generalised forces\n', modes.DoF);
             if (vector(1))
-                fprintf(fid,'1 1. 0. 0. %8.4f %8.4f %8.4f		! Force in x direction\n', pos);
+                fprintf(fid,'1 1. 0. 0. %7.3f %7.3f %7.3f                   ! Force in x direction\n', pos);
             end
             if (vector(2))
-                fprintf(fid,'1 0. 1. 0. %8.4f %8.4f %8.4f		! Force in y direction\n', pos);
+                fprintf(fid,'1 0. 1. 0. %7.3f %7.3f %7.3f                   ! Force in y direction\n', pos);
             end
             if (vector(3))
-                fprintf(fid,'1 0. 0. 1. %8.4f %8.4f %8.4f		! Force in z direction\n', pos);
+                fprintf(fid,'1 0. 0. 1. %7.3f %7.3f %7.3f                   ! Force in z direction\n', pos);
             end
             if (vector(4))
-                fprintf(fid,'2 1. 0. 0. %8.4f %8.4f %8.4f		! Moment force in x direction about a point\n', pos);
+                fprintf(fid,'2 1. 0. 0. %7.3f %7.3f %7.3f                   ! Moment force in x direction about a point\n', pos);
             end
             if (vector(5))
-                fprintf(fid,'2 0. 1. 0. %8.4f %8.4f %8.4f		! Moment force in y direction about a point\n', pos);
+                fprintf(fid,'2 0. 1. 0. %7.3f %7.3f %7.3f                   ! Moment force in y direction about a point\n', pos);
             end
             if (vector(6))
-                fprintf(fid,'2 0. 0. 1. %8.4f %8.4f %8.4f		! Moment force in z direction about a point\n', pos);
+                fprintf(fid,'2 0. 0. 1. %7.3f %7.3f %7.3f                   ! Moment force in z direction about a point\n', pos);
             end
             
-            fprintf(fid,'0				! Number of lines of additional information \n');
+            fprintf(fid,'0                                                    ! Number of lines of additional information \n');
             
         end
         
         function [] = writeMeshCalAndFile(run, floatBod)
             
-            geoFile = run.writeMeshFile(floatBod, true);
+            if (isempty(floatBod.Handle))
+                name = 'body1';
+            else
+                name = floatBod.Handle;
+            end
+            geoFile = run.writeMeshFile(floatBod, true, name);
             
             fid = fopen([run.folder '\mesh.cal'],'wt');
             fprintf(fid, '%s \n', geoFile);
@@ -657,7 +667,7 @@ classdef NemohRunCondition < IBemRunCondition
             fclose(fid);
         end
         
-        function [geoFile] = writeMeshFile(run, floatBod, forMesh)
+        function [geoFile] = writeMeshFile(run, floatBod, forMesh, name)
             geo = PanelGeo(floatBod.PanelGeo);
             
             if (geo.Ysymmetry)
@@ -686,7 +696,7 @@ classdef NemohRunCondition < IBemRunCondition
                 end
             end
             
-            geoFile = [floatBod.Handle '.dat'];
+            geoFile = [name '.dat'];
             
             fid = fopen([run.folder, '\Mesh\' geoFile],'wt');
             

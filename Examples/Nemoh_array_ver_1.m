@@ -30,14 +30,14 @@ Contributors:
 %   - array_inter_1
 %   - array_inter_2
 
-%% Load the HydroBodies
+%% Load the Nemoh HydroBodies
 
-run_name = 'nem_hb_1';  % Or we can be more explicit if necessary         
+run_name = 'nem_hb_1';     
 load([mwavePath 'Examples\BemRuns\' run_name '\nem_hb1_1_hb']);
 
 cylHydBod = hydBody;
 
-run_name = 'nem_hb_2';  % Or we can be more explicit if necessary         
+run_name = 'nem_hb_2';    
 load([mwavePath 'Examples\BemRuns\' run_name '\nem_hb2_1_hb']);
 
 flapHydBod = hydBody;
@@ -75,62 +75,25 @@ iwaves = PlaneWaves(a, T, beta, h);
 % create the initial array computation object
 arrayComp = HydroArrayComp(hbs, iwaves);
 
+tic
 Aa = arrayComp.A;        
+acomptime = toc;
+fprintf('Array computation time: %5.3f s\n', acomptime);
 Ba = arrayComp.B;        
 Ca = arrayComp.C;        
 Fexa = arrayComp.Fex;    
 
-x = -200:2:200;
+x = -100:2:100;
 y = x;
 [X, Y] = meshgrid(x, y);
 
 wfa = arrayComp.WaveField(true, X, Y, 'NoVel');  
 
-%% Compute the same array with Nemoh
+%% Load Wamit results for same case
 
-run_name = 'nem_array_1';         
-folder = [mwavePath 'Examples\BemRuns\' run_name];  
+load wam_array_ver_res
 
-nem_run = NemohRunCondition(folder);    
-
-nem_run.Rho = hbs(1).Rho;      
-nem_run.H = hbs(1).H;        
-nem_run.FloatingBodies = hbs;       
-
-T = hbs.T;        
-nem_run.OmegaLims = 2*pi./[T(1) T(end)];
-nem_run.OmegaCount = length(T);
-nem_run.BetaLims = [beta beta];
-nem_run.BetaCount = 1;
-
-nps = [length(x) length(y) 1];
-lens = [(x(end) - x(1)) (y(end) - y(1)) 1];
-dels = lens./(nps - [1 1 0]);
-starts = -lens./2;
-starts(3) = 0;
-
-nem_run.FieldArray = BemFieldArray(starts, dels, nps);
-nem_run.ExePath = 'N:\Nemoh\Nemoh_mer\my-nemoh\Release';
-nem_run.WriteRun;               
-                        
-nem_run.Run('Background');           
-
-%% Read Nemoh results
-
-nem_result = NemohResult(nem_run);  
-nem_result.ReadResult;          
-
-% Even though the field points are set up using a BemCylArray, they are
-% still read with WavePoints
-wfn = nem_result.WaveArray;
-hydroForces = nem_result.HydroForces;
-
-An = hydroForces.A;        
-Bn = hydroForces.B;        
-Cn = hydroForces.C;        
-Fexn = hydroForces.Fex;   
-
-%% And to double check, compute with Wamit
+%% Or rerun Wamit
 
 run_name = 'wam_array_1';         
 folder = [mwavePath 'Examples\BemRuns\' run_name];  
@@ -152,10 +115,8 @@ starts(3) = 0;
 
 wam_run.FieldArray = BemFieldArray(starts, dels, nps);
 wam_run.WriteRun;               
-                        
-wam_run.Run('Background');           
 
-%% Read Wamit results
+wam_run.Run;           
 
 wam_result = WamitResult(wam_run);  
 wam_result.ReadResult;          
@@ -171,9 +132,9 @@ Bw = hydroForces.B;
 Cw = hydroForces.C;        
 Fexw = hydroForces.Fex;   
 
-save([folder '\wam_array_ver_res'], 'wfw', 'wcomp');
+save([folder '\wam_array_ver_res'], 'wfw', 'wcomp', 'Aw', 'Bw', 'Cw', 'Fexw');
 
-%%
+%% Compare results
 
 type = 'Diffracted';
 iT = 4;
@@ -187,11 +148,83 @@ subplot(2,1,1);
 pcolor(X,Y,abs(etaa{iT}));
 fet;
 set(gca, 'clim', clims);
+title('Array comp (Nemoh)');
 
 subplot(2,1,2);
 pcolor(X,Y,abs(etaw{iT}));
 fet;
 set(gca, 'clim', clims);
+title('Wamit');
+
+%%
+figure;
+i1 = 1;
+i2 = 7;
+subplot(5,2,1);
+plot(T, [squeeze(Aa(:,i1,i2)) squeeze(Aw(:,i1,i2))]);
+title('Surge c1-surge c2');
+subplot(5,2,2);
+plot(T, [squeeze(Ba(:,i1,i2)) squeeze(Bw(:,i1,i2))]);
+
+i1 = 2;
+i2 = 8;
+subplot(5,2,3);
+plot(T, [squeeze(Aa(:,i1,i2)) squeeze(Aw(:,i1,i2))]);
+title('Sway c1-sway c2');
+subplot(5,2,4);
+plot(T, [squeeze(Ba(:,i1,i2)) squeeze(Bw(:,i1,i2))]);
+
+i1 = 3;
+i2 = 9;
+subplot(5,2,5);
+plot(T, [squeeze(Aa(:,i1,i2)) squeeze(Aw(:,i1,i2))]);
+title('Heave c1-heave c2');
+subplot(5,2,6);
+plot(T, [squeeze(Ba(:,i1,i2)) squeeze(Bw(:,i1,i2))]);
+
+i1 = 2;
+i2 = 13;
+subplot(5,2,7);
+plot(T, [squeeze(Aa(:,i1,i2)) squeeze(Aw(:,i1,i2))]);
+title('Surge c1-Flap');
+subplot(5,2,8);
+plot(T, [squeeze(Ba(:,i1,i2)) squeeze(Bw(:,i1,i2))]);
+
+i1 = 7;
+i2 = 13;
+subplot(5,2,9);
+plot(T, [squeeze(Aa(:,i1,i2)) squeeze(Aw(:,i1,i2))]);
+title('Surge c2-Flap');
+subplot(5,2,10);
+plot(T, [squeeze(Ba(:,i1,i2)) squeeze(Bw(:,i1,i2))]);
+
+%%
+figure;
+i1 = 1;
+subplot(5,1,1);
+plot(T, abs([squeeze(Fexa(:,1,i1)) squeeze(Fexw(:,1,i1))]));
+title('Surge c1');
+
+i1 = 7;
+subplot(5,1,2);
+plot(T, abs([squeeze(Fexa(:,1,i1)) squeeze(Fexw(:,1,i1))]));
+title('Surge c2');
+
+i1 = 3;
+subplot(5,1,3);
+plot(T, abs([squeeze(Fexa(:,1,i1)) squeeze(Fexw(:,1,i1))]));
+title('Heave c2');
+
+i1 = 11;
+subplot(5,1,4);
+plot(T, abs([squeeze(Fexa(:,1,i1)) squeeze(Fexw(:,1,i1))]));
+title('Pitch c2');
+
+i1 = 13;
+subplot(5,1,5);
+plot(T, abs([squeeze(Fexa(:,1,i1)) squeeze(Fexw(:,1,i1))]));
+title('Flap');
+
 
 
 

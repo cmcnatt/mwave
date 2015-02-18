@@ -27,6 +27,8 @@ lin = fgetl(fid);
 
 npts = str2double(lin(8:15));
 
+% Free-surface files have just (x,y) coordinates, while cylindrical surface
+% have (x,y,z) coordinates
 if (isFS)
     pntsInd = 2;
 else
@@ -39,10 +41,7 @@ eta = zeros(npts, 1);
 for n = 1:npts
     lin = fscanf(fid,'%f', pntsInd+4);
     points(n,1:pntsInd) = lin(1:pntsInd);
-    % Note that the complex conjuage is taken here because Nemoh
-    % computes for a time depedence of exp(-i*omega*t), while
-    % mwave assumes a time depedent of exp(i*omega*t);
-    eta(n) = lin(pntsInd+1)*exp(-1i*lin(pntsInd+2));
+    eta(n) = lin(pntsInd+1)*exp(1i*lin(pntsInd+2));
 end
 
 fclose(fid);

@@ -31,5 +31,5 @@ C:\Users\s1213969\Dropbox\matlab\mwave\Examples\BemRuns\nem_hb_1\Mesh\newFB.dat	
 0				! Show pressure
 0	0.	180.		! Kochin function 		! Number of directions of calculation (0 for no calculations), Min and Max (degrees)
 0	0	  0.0000	  0.0000	! Free surface elevation 	! Number of points in x direction (0 for no calcutions) and y direction and dimensions of domain in x and y direction
- 10.1000	64	50	! Cylindrical surface for diffraction transfer matrixn 	! Radius (0 for no calculations), Number of points in theta direction, Number of points in z direction
+ 11.0000	64	50	! Cylindrical surface for diffraction transfer matrixn 	! Radius (0 for no calculations), Number of points in theta direction, Number of points in z direction
 ---
