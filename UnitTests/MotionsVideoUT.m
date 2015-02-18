@@ -73,7 +73,7 @@ classdef MotionsVideoUT < matlab.unittest.TestCase
             wec.Handle = 'atten';            
             
             name = 'mv_ut1';
-            folder = [mwavePath 'UnitTests\WamitRuns\'];
+            folder = [mwavePath 'UnitTests\WamitRuns\' name];
             
             comp_run = WamitRunCondition(folder, name);
             comp_run.Rho = rho;
