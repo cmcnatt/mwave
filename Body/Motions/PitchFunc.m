@@ -28,6 +28,7 @@ classdef PitchFunc < IMotionFunc
     methods
         function [pitch] = PitchFunc(varargin)
             pitch.initCg(varargin{:});
+            pitch.isym = 5;
         end
         
         function [f] = Evaluate(pitch, pos)

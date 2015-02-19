@@ -96,6 +96,6 @@ hydroForces = wam_result.HydroForces;
 hydBody = computeHydroBody(waveCir, hydroForces, wec, 'SigFigCutoff', 5,...
     'AccTrim');
 
-save([folder '\wam_hb2_1_hb'], 'hydBody');
+save([mwavePath 'Examples\HydroBodies\wam_hb2_1_hb'], 'hydBody');
 % this HydroBody is used in example hydroBody_2
 

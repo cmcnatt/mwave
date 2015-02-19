@@ -151,7 +151,7 @@ hydBody = computeHydroBody(waveCir, hydroForces, wec, 'SigFigCutoff', 5,...
 % saving it by a name that will help us recognize it. It does take a while
 % to do these runs in Wamit, so you really only want to create a HydroBody
 % once and then save it 
-save([folder '\wam_hb1_1_hb'], 'hydBody');
+save([mwavePath 'Examples\HydroBodies\wam_hb1_1_hb'], 'hydBody');
 
 % And that's it for this example, in other examples we'll use the HydroBody
 % to see its power!!

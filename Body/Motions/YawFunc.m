@@ -28,6 +28,7 @@ classdef YawFunc < IMotionFunc
     methods
         function [yaw] = YawFunc(varargin)
             yaw.initCg(varargin{:});
+            yaw.isym = 6;
         end
         
         function [f] = Evaluate(yaw, pos)

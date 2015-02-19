@@ -110,5 +110,5 @@ hydroForces = nem_result.HydroForces;
 hydBody = computeHydroBody(waveCir, hydroForces, wec, 'SigFigCutoff', 5,...
     'AccTrim');
 
-save([folder '\nem_hb1_1_hb'], 'hydBody');
+save([mwavePath 'Examples\HydroBodies\nem_hb1_1_hb'], 'hydBody');
 

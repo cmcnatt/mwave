@@ -28,6 +28,7 @@ classdef SurgeFunc < IMotionFunc
     methods
         function [surge] = SurgeFunc(varargin)
             surge.initCg(varargin{:});
+            surge.isym = 1;
         end
         
         function [f] = Evaluate(surge, pos)

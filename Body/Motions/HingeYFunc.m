@@ -33,6 +33,7 @@ classdef HingeYFunc < IMotionFunc
         function [hinge] = HingeYFunc(varargin)
             hinge.initCg(varargin{:});
             hinge.hingePos = [0 0];
+            hinge.isym = 1;
         end
         
         function [f] = Evaluate(hinge, pos)
