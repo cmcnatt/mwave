@@ -18,4 +18,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Contributors:
     C. McNatt
 %}
-%% Nemoh single body
+% This test sets up and runs Nemoh on a 6 dof cylinder. 
+% The cylinder's geometry file is made in matlab with mwave. 
+%
+% For more information, see
+%   - Wamit_1bod_6dof_1
+%   - Wamit_1bod_6dof_2
+%   - Nemoh_createHB_1

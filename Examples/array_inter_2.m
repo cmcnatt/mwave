@@ -28,9 +28,8 @@ Contributors:
 
 % load 'wam_hb2_1_hb';    % Load the HydroBody based on its name..
 
-run_name = 'wam_hb_2';  % Or we can be more explicit if necessary         
-folder = [mwavePath '\Examples\WamitRuns\' run_name];  
-load([folder '\wam_hb2_1_hb']);
+% Or we can be more explicit if necessary         
+load([mwavePath 'Examples\HydroBodies\wam_hb2_1_hb']);
 
 %% Create an the the initial array layout and array computation object
 % The body positions and incident waves can be changed later

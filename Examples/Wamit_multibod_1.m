@@ -32,7 +32,7 @@ Contributors:
 %% Set up run
 
 run_name = 'wam_mb_1';         
-folder = [mwavePath '\Examples\WamitRuns\' run_name];  
+folder = [mwavePath '\Examples\BemRuns\' run_name];  
 
 rho = 1000;     
 

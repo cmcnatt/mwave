@@ -28,6 +28,7 @@ classdef RollFunc < IMotionFunc
     methods
         function [roll] = RollFunc(varargin)
             roll.initCg(varargin{:});
+            roll.isym = 4;
         end
         
         function [f] = Evaluate(roll, pos)

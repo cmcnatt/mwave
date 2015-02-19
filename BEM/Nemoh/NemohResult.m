@@ -196,7 +196,10 @@ classdef NemohResult < IBemResult
                             probn = probn + 1;
                             [eta, points] = nemoh_readFieldPoints([result.folder,'\Results\' fsfiles{probn}], isFS);
                             npts = size(points, 1);
-                            %eta = conj(eta);
+                            % The complex conjuage is taken here because Nemoh
+                            % computes for a time depedence of exp(-i*omega*t), while
+                            % mwave assumes a time depedent of exp(i*omega*t);
+                            eta = conj(eta);
                             if (j == 1)
                                 [Eta, X, Y] = result.reshapeGrid(eta, points);
                             else
@@ -210,8 +213,18 @@ classdef NemohResult < IBemResult
                         for n = 1:doft
                             probn = probn + 1;
                             [eta, points] = nemoh_readFieldPoints([result.folder,'\Results\' fsfiles{probn}], isFS);
+                            % The complex conjuage is taken here because Nemoh
+                            % computes for a time depedence of exp(-i*omega*t), while
+                            % mwave assumes a time depedent of exp(i*omega*t);
+                            %
+                            % Also, Nemoh computes the radiated wavefield
+                            % for unit amplitude velocity, which would be a
+                            % unit amplitde motion of (1/i*omega), so to
+                            % normalize it to unit amplitude motion,
+                            % multiply by (i*omega)
+                            eta = 1i*(2*pi)/t(m)*conj(eta);      
                             npts = size(points, 1);
-                            %eta = conj(eta);
+  
                             if (j == 1)
                                 [Eta, X, Y] = result.reshapeGrid(eta, points);
                             else 

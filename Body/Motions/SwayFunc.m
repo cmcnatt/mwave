@@ -28,6 +28,7 @@ classdef SwayFunc < IMotionFunc
     methods
         function [sway] = SwayFunc(varargin)
             sway.initCg(varargin{:});
+            sway.isym = 2;
         end
         
         function [f] = Evaluate(sway, pos)

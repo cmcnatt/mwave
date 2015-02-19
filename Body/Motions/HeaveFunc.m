@@ -28,6 +28,7 @@ classdef HeaveFunc < IMotionFunc
     methods
         function [heave] = HeaveFunc(varargin)
             heave.initCg(varargin{:});
+            heave.isym = 3;
         end
         
         function [f] = Evaluate(heave, pos)
