@@ -279,4 +279,39 @@ classdef HydroBody < FloatingBody
             end
         end
     end
+    
+    methods (Static)
+        
+        function [MatOut] = Resize2M(MatIn, M)
+            [nrow, ncol] = size(MatIn);
+            
+            Min = ncol;
+            if (mod(Min,2) ~= 1)
+                error('The number of cols of the input matrix must be odd');
+            end
+            Min = (Min - 1)/2;
+            
+            if (nrow == 1)
+                if (M > Min)
+                    MatOut = zeros(1, 2*M+1);
+                    MatOut((M + 1 - Min):(M + 1 + Min)) = MatIn;
+                elseif (M < Min)
+                    MatOut = MatIn((Min + 1 - M):(Min + 1 + M));
+                else
+                    MatOut = MatIn;
+                end
+            elseif (nrow == ncol)
+                if (M > Min)
+                    MatOut = zeros(2*M+1,2*M+1);
+                    MatOut((M + 1 - Min):(M + 1 + Min),(M + 1 - Min):(M + 1 + Min)) = MatIn;
+                elseif (M < Min)
+                    MatOut = MatIn((Min + 1 - M):(Min + 1 + M), (Min + 1 - M):(Min + 1 + M));
+                else
+                    MatOut = MatIn;
+                end
+            else
+                error('Input matrix not of recognizable size');
+            end
+        end
+    end
 end
