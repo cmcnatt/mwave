@@ -1,4 +1,4 @@
-function [C, C0, Km, Km0, cb] = computeHydroStatic(rho, panelGeo, zpos, modes)
+function [C, C0, Km, cb] = computeHydroStatic(rho, panelGeo, zpos, modes)
 
 panelGeo = PanelGeo(panelGeo);
 panelGeo.Translate([0 0 zpos]);
@@ -10,6 +10,9 @@ dof = modes.DoF;
 motFuncs = modes.MotionFuncs;
 for n = 1:length(motFuncs)
     motFuncs(n).Cg = motFuncs(n).Cg + [0 0 zpos];
+    if (isa(motFuncs(n), 'HingeYFunc'))
+        motFuncs(n).HingePos = motFuncs(n).HingePos + [0 zpos];
+    end
 end
 
 cents = panelGeo.Centroids;

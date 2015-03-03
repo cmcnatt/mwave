@@ -52,12 +52,14 @@ classdef HingeYFunc < IMotionFunc
         end
         
         function [gf] = GravityForce(hinge, pos)
-            cg_ = hinge.cg;
-            pos = pos - cg_;
-            pos = [abs(pos(1)) pos(2:3)];
+            hp = hinge.hingePos;
+            dx = pos(1) - hp(1);
+            pos = [abs(dx), pos(2), -abs(pos(3) - hp(2))*sign(dx)];
+            
             znorm = [0 0 -1];
             gf = cross(pos, znorm);
-            gf = gf(2);
+   
+            gf = -gf(2);
         end
         
         function [in] = get.MotionIn(hinge)

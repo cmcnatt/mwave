@@ -205,7 +205,8 @@ classdef PanelGeo < handle
             nPos = 1;
             nNeg = 1;
             for m = 1:N
-                verts = geo.panels(m).Vertices;
+                panm = geo.panels(m);
+                verts = panm.Vertices;
                 allPos = true;
                 for n = 1:4
                     v = verts(n,:);
@@ -217,9 +218,15 @@ classdef PanelGeo < handle
                 end
                 if (allPos)
                     pansPos(nPos) = Panel(verts);
+                    pansPos(nPos).IsWet = panm.IsWet;
+                    pansPos(nPos).IsBody = panm.IsBody;
+                    pansPos(nPos).IsInterior = panm.IsInterior;
                     nPos = nPos + 1;
                 else
                     pansNeg(nNeg) = Panel(verts);
+                    pansNeg(nPos).IsWet = panm.IsWet;
+                    pansNeg(nPos).IsBody = panm.IsBody;
+                    pansNeg(nPos).IsInterior = panm.IsInterior;
                     nNeg = nNeg + 1;
                 end
             end
