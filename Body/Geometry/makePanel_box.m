@@ -42,7 +42,9 @@ if (quart)
     Nx = Nx/2;
     Ny = Ny/2;
     
-    pans(Ny*Nz + Nx*Nz + Ny*Nx,1) = Panel;
+    pans(Ny*Nz + Nx*Nz + 2*Ny*Nx,1) = Panel;
+    
+    np = 0;
     
     % back
     for n = 1:Nz
@@ -53,7 +55,11 @@ if (quart)
             verts(3,:) = [x(1) y(m) z(n+1)]; % bottom left
             verts(4,:) = [x(1) y(m+1) z(n+1)]; % bottom right
 
-            pans((n-1)*Ny + m) = Panel(verts);
+            np = np + 1;
+            pans(np) = Panel(verts);
+            pans(np).IsWet = true;
+            pans(np).IsBody = true;
+            pans(np).IsInterior = false;
         end
     end
     
@@ -66,7 +72,11 @@ if (quart)
             verts(3,:) = [x(m) y(end) z(n+1)]; % bottom left
             verts(4,:) = [x(m+1) y(end) z(n+1)]; % bottom right
 
-            pans(Ny*Nz + (n-1)*Nx + m) = Panel(verts);
+            np = np + 1;
+            pans(np) = Panel(verts);
+            pans(np).IsWet = true;
+            pans(np).IsBody = true;
+            pans(np).IsInterior = false;
         end
     end
     
@@ -79,7 +89,28 @@ if (quart)
             verts(3,:) = [x(n+1) y(m) z(end)]; % bottom left
             verts(4,:) = [x(n+1) y(m+1) z(end)]; % bottom right
 
-            pans(Ny*Nz + Nx*Nz + (n-1)*Ny + m) = Panel(verts);
+            np = np + 1;
+            pans(np) = Panel(verts);
+            pans(np).IsWet = true;
+            pans(np).IsBody = true;
+            pans(np).IsInterior = false;
+        end
+    end
+    
+    % top - looking up
+    for n = 1:Nx
+        for m = 1:Ny
+            verts = zeros(4,3);
+            verts(1,:) = [x(n) y(m+1) 0]; % top right
+            verts(2,:) = [x(n) y(m) 0]; % top left
+            verts(3,:) = [x(n+1) y(m) 0]; % bottom left
+            verts(4,:) = [x(n+1) y(m+1) 0]; % bottom right
+
+            np = np + 1;
+            pans(np) = Panel(verts);
+            pans(np).IsWet = true;
+            pans(np).IsBody = true;
+            pans(np).IsInterior = true;
         end
     end
     
@@ -99,7 +130,9 @@ else
     z = 0:-dz:-draft;
 
     pans(2*Ny*Nz + 2*Nx*Nz + Ny*Nx,1) = Panel;
-
+    
+    np = 0;
+    
     % front
     for n = 1:Nz
         for m = 1:Ny
@@ -109,7 +142,11 @@ else
             verts(3,:) = [x(end) y(m) z(n+1)]; % bottom left
             verts(4,:) = [x(end) y(m+1) z(n+1)]; % bottom right
 
-            pans((n-1)*Ny + m) = Panel(verts);
+            np = np + 1;
+            pans(np) = Panel(verts);
+            pans(np).IsWet = true;
+            pans(np).IsBody = true;
+            pans(np).IsInterior = false;
         end
     end
 
@@ -122,7 +159,11 @@ else
             verts(3,:) = [x(m+1) y(end) z(n+1)]; % bottom left
             verts(4,:) = [x(m) y(end) z(n+1)]; % bottom right
 
-            pans(Ny*Nz + (n-1)*Nx + (Nx-m) + 1) = Panel(verts);
+            np = np + 1;
+            pans(np) = Panel(verts);
+            pans(np).IsWet = true;
+            pans(np).IsBody = true;
+            pans(np).IsInterior = false;
         end
     end
 
@@ -135,7 +176,11 @@ else
             verts(3,:) = [x(1) y(m+1) z(n+1)]; % bottom left
             verts(4,:) = [x(1) y(m) z(n+1)]; % bottom right
 
-            pans(Ny*Nz + Nx*Nz + (n-1)*Ny + (Ny-m) + 1) = Panel(verts);
+            np = np + 1;
+            pans(np) = Panel(verts);
+            pans(np).IsWet = true;
+            pans(np).IsBody = true;
+            pans(np).IsInterior = false;
         end
     end
 
@@ -148,7 +193,11 @@ else
             verts(3,:) = [x(m) y(1) z(n+1)]; % bottom left
             verts(4,:) = [x(m+1) y(1) z(n+1)]; % bottom right
 
-            pans(2*Ny*Nz + Nx*Nz + (n-1)*Nx + m) = Panel(verts);
+            np = np + 1;
+            pans(np) = Panel(verts);
+            pans(np).IsWet = true;
+            pans(np).IsBody = true;
+            pans(np).IsInterior = false;
         end
     end
 
@@ -161,7 +210,28 @@ else
             verts(3,:) = [x(n) y(m) z(end)]; % bottom left
             verts(4,:) = [x(n) y(m+1) z(end)]; % bottom right
 
-            pans(2*Ny*Nz + 2*Nx*Nz + (Nx-n)*Ny + m) = Panel(verts);
+            np = np + 1;
+            pans(np) = Panel(verts);
+            pans(np).IsWet = true;
+            pans(np).IsBody = true;
+            pans(np).IsInterior = false;
+        end
+    end
+    
+    % top - looking up
+    for n = Nx:-1:1
+        for m = 1:Ny
+            verts = zeros(4,3);
+            verts(1,:) = [x(n+1) y(m+1) 0]; % top right
+            verts(2,:) = [x(n) y(m+1) 0]; % bottom right
+            verts(3,:) = [x(n) y(m) 0]; % bottom left
+            verts(4,:) = [x(n+1) y(m) 0]; % top left
+
+            np = np + 1;
+            pans(np) = Panel(verts);
+            pans(np).IsWet = true;
+            pans(np).IsBody = true;
+            pans(np).IsInterior = true;
         end
     end
 

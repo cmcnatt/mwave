@@ -29,15 +29,27 @@ classdef RollFunc < IMotionFunc
         function [roll] = RollFunc(varargin)
             roll.initCg(varargin{:});
             roll.isym = 4;
+            roll.isGen = false;
         end
         
         function [f] = Evaluate(roll, pos)
             cg_ = roll.cg;
             fx = 0;
             fy = -(pos(3) - cg_(3));
-            fz = pos(2) - cg_(2);
+            fz = (pos(2) - cg_(2));
             
             f = [fx fy fz];
+        end
+        
+        function [div] = Divergence(roll, pos)
+            div = 0;
+        end
+        
+        function [gf] = GravityForce(roll, pos)
+            cg_ = roll.cg;
+            znorm = [0 0 -1];
+            gf = cross(pos - cg_, znorm);
+            gf = gf(1);
         end
         
         function [in] = get.MotionIn(roll)

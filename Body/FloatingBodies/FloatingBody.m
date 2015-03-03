@@ -27,8 +27,12 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
         panelGeo;
         cg;
         m;
-        d;
+        dpto;
+        dpar;
+        c;
         k;
+        haskgm;
+        kgm;
         position;
         wpSec;
         angle;
@@ -48,7 +52,10 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
         Cg;             % Centor of Gravity in body coordinates
         M;              % Mass matrix
         Dpto;           % PTO Damping matrix
+        Dpar;           % Parasitic damping matrix 
+        C;              % Externally computed hydrostatic matrix
         K;              % Stiffness matrix
+        Kgm;            % Stiffness matric for generalized modes
         XYpos;          % XY Position of body origin in global coordinates 
         Zpos;           % Z position of body origin in global coordinates - seperate from the XYPosition because it controls the point about which the body pitches
         WaterPlaneSec;  % (x, y) coordinates of the cross-section of the body at the water plane in the bodies coordinate system
@@ -73,8 +80,11 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
                 fb.panelGeo = [];
                 fb.cg = zeros(1, 3);
                 fb.m = zeros(6, 6);
-                fb.d = zeros(6, 6);
+                fb.dpto = zeros(6, 6);
+                fb.dpar = zeros(6, 6);
                 fb.k = zeros(6, 6);
+                fb.kgm = zeros(6, 6);
+                fb.haskgm = false;
                 fb.position = zeros(1, 3);
                 fb.angle = 0;
                 fb.wpSec = [];
@@ -91,8 +101,16 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
                 fb.panelGeo = fbin.panelGeo;
                 fb.cg = fbin.cg;
                 fb.m = fbin.m;
-                fb.d = fbin.d;
+                fb.dpto = fbin.dpto;
+                fb.dpar = fbin.dpar;
                 fb.k = fbin.k;
+                fb.kgm = fbin.kgm;
+                if (any(any(fb.kgm ~= 0)))
+                    fb.haskgm = true;
+                else 
+                    fb.haskgm = false;
+                end
+
                 fb.position = fbin.position;
                 fb.angle = fbin.angle;
                 fb.wpSec = fbin.wpSec;
@@ -181,12 +199,34 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
         function [d_] = get.Dpto(fb)
             % Get the PTO damping matrix
             inds = 6 + fb.nGen;
-            d_ = fb.d(1:inds, 1:inds);
+            d_ = fb.dpto(1:inds, 1:inds);
         end
         function [fb] = set.Dpto(fb, d_)
             % Set the PTO damping matrix
             fb.checkSize(d_);            
-            fb.d = d_;
+            fb.dpto = d_;
+        end
+        
+        function [d_] = get.Dpar(fb)
+            % Get the parasitic damping matrix
+            inds = 6 + fb.nGen;
+            d_ = fb.dpar(1:inds, 1:inds);
+        end
+        function [fb] = set.Dpar(fb, d_)
+            % Set the parasitic damping matrix
+            fb.checkSize(d_);            
+            fb.dpar = d_;
+        end
+        
+        function [c_] = get.C(fb)
+            % Get the hydrostatic stiffness matrix
+            inds = 6 + fb.nGen;
+            c_ = fb.c(1:inds,1:inds);
+        end
+        function [fb] = set.C(fb, c_)
+            % Set the hydrostatic stiffness matrix
+            fb.checkSize(c_);            
+            fb.c = c_;
         end
         
         function [k_] = get.K(fb)
@@ -198,6 +238,12 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
             % Get the mechanical stiffness matrix
             fb.checkSize(k_);            
             fb.k = k_;
+        end
+        
+        function [kgm_] = get.Kgm(fb)
+            % Get the stiffness matrix for generalized modes
+            inds = 6 + fb.nGen;
+            kgm_ = fb.kgm(1:inds,1:inds);
         end
         
         function [p] = get.XYpos(fb)
@@ -278,8 +324,8 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
                     m_(1:n, 1:n) = fb.m;
                     fb.m = m_;
                     d_ = zeros(6 + fb.nGen, 6 + fb.nGen);
-                    d_(1:n, 1:n) = fb.d;
-                    fb.d = d_;
+                    d_(1:n, 1:n) = fb.dpto;
+                    fb.dpto = d_;
                     k_ = zeros(6 + fb.nGen, 6 + fb.nGen);
                     k_(1:n, 1:n) = fb.k;
                     fb.k = k_;

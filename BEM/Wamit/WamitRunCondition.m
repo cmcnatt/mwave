@@ -304,7 +304,7 @@ classdef WamitRunCondition < IBemRunCondition
             for n = 1:nbody
                 if (isempty(run.floatBods(n).GeoFile))
                     geoFile = [run.runName num2str(n)];
-                    run.writeGdf(run.floatBods(n), geoFile);
+                    run.writeGdf(run.floatBods(n), geoFile, run.floatBods(n).ISurfPan);
                     run.geoFiles{n} = geoFile;
                     %run.floatBods(n).WriteGdf(run.folder, fileName);
                 else
@@ -396,7 +396,7 @@ classdef WamitRunCondition < IBemRunCondition
     
     methods (Access = private)
         
-        function [] = writeGdf(run, fb, geoFile)
+        function [] = writeGdf(run, fb, geoFile, includeInt)
             
             geo = fb.PanelGeo;
             filename = [run.folder '\' geoFile '.gdf'];
@@ -405,18 +405,37 @@ classdef WamitRunCondition < IBemRunCondition
             ulen = 1;
             g = 9.806650;
             
+            Nwet = sum(geo.IsWets);
+            Nint = sum(geo.IsInteriors);
+            if (includeInt)
+                count = Nwet;
+            else
+                count = Nwet - Nint;
+            end
+            
             fprintf(fileID, ['Model ' geoFile ', created: ' date '\n']);
             fprintf(fileID, '%8.4f %8.4f\n', ulen, g);
             fprintf(fileID, '%i %i \n', geo.Xsymmetry, geo.Ysymmetry);
-            fprintf(fileID, '%i\n', geo.Count);
+            fprintf(fileID, '%i\n', count);
             
             pans = geo.Panels;
             
             for n = 1:geo.Count
                 pan = pans(n);
-                verts = pan.Vertices;
-                for m = 1:4
-                    fprintf(fileID, '\t%8.4f\t%8.4f\t%8.4f\n', verts(m,1), verts(m,2), verts(m,3));
+                
+                panOk = true;
+                if (~pan.IsWet)
+                    panOk = false;
+                end
+                if (pan.IsInterior && ~includeInt)
+                    panOk = false;
+                end
+                
+                if (panOk)
+                    verts = pan.Vertices;
+                    for m = 1:4
+                        fprintf(fileID, '\t%8.4f\t%8.4f\t%8.4f\n', verts(m,1), verts(m,2), verts(m,3));
+                    end
                 end
             end
             

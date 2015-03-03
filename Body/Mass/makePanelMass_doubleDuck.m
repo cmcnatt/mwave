@@ -132,15 +132,22 @@ for m = 1:Nr
         
         verts = flipud(verts);
         pansL(npan) = Panel(verts);
+        pansL(npan).IsWet = true;
+        pansL(npan).IsInterior = false;
+        pansL(npan).IsBody = true;
 
         verts = zeros(4,3);
         verts(1,:) = [xds(m,n) wid/2 zds(m,n)];
-        verts(2,:) = [xds(m,n+1) wid/2 zds(m,n+1)];
+        verts(2,:) = [xds(m+1,n) wid/2 zds(m+1,n)];
         verts(3,:) = [xds(m+1,n+1) wid/2 zds(m+1,n+1)];
-        verts(4,:) = [xds(m+1,n) wid/2 zds(m+1,n)];
+        verts(4,:) = [xds(m,n+1) wid/2 zds(m,n+1)];
 
-        verts = flipud(verts);
+
+%        verts = flipud(verts);
         pansR(npan) = Panel(verts);
+        pansR(npan).IsWet = true;
+        pansR(npan).IsInterior = false;
+        pansR(npan).IsBody = true;
 
         npan = npan + 1;
     end
@@ -159,6 +166,13 @@ for m = 1:Nwid
 
         verts = flipud(verts);
         pansS(npan) = Panel(verts);
+        pansS(npan).IsWet = true;
+        pansS(npan).IsBody = true;
+        if ((zd(n) == maxz) && (zd(n+1) == maxz))
+            pansS(npan).IsInterior = true;
+        else
+            pansS(npan).IsInterior = false;
+        end
         npan = npan + 1;
     end
 end

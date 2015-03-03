@@ -99,7 +99,7 @@ classdef HydroBodyComp < IHydroComp
                 hbcomp.fbs = hydro;
             end
         end
-        
+                
         function [iwavs] = get.IncWaves(hbcomp)
             % Incident waves
             iwavs = hbcomp.iwaves;

@@ -29,10 +29,19 @@ classdef SurgeFunc < IMotionFunc
         function [surge] = SurgeFunc(varargin)
             surge.initCg(varargin{:});
             surge.isym = 1;
+            surge.isGen = false;
         end
         
         function [f] = Evaluate(surge, pos)
             f = [1 0 0];
+        end
+        
+        function [div] = Divergence(surge, pos)
+            div = 0;
+        end
+        
+        function [gf] = GravityForce(surge, pos)
+            gf = 0;
         end
          
         function [in] = get.MotionIn(surge)

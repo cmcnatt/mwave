@@ -18,14 +18,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Contributors:
     C. McNatt
 %}
-function [geo] = makePanel_cylinder(radius, draft, Ntheta, Nr, Nz, varargin)
+function [geo] = makePanel_cylinder(radius, draft, height, Ntheta, Nr, Nz, varargin)
 
-quart = checkOptions({'Quarter'}, varargin);
+opts = checkOptions({{'Quarter'}}, varargin);
+quart = opts(1);
 
 dr = radius/Nr;
 r = radius:-dr:0;
-dz = draft/Nz;
-z = 0:-dz:-draft;
+dzn = draft/Nz;
+Nzp = round((height - draft)/dzn);
+dzp = (height - draft)/Nzp;
+z = [(height - draft):-dzp:0, -dzn:-dzn:-draft];
+Nz = Nz + Nzp;
+%z = 0:-dz:-draft;
 
 
 if (quart)
@@ -48,9 +53,52 @@ stheta = sin(theta);
 cirx = radius*ctheta;
 ciry = radius*stheta;
 
-pans(Ntheta*(Nz + Nr),1) = Panel;
+if (z(1) == 0)
+    pans(Ntheta*(Nz + 2*Nr),1) = Panel;
+    topZero = true;
+else    
+    pans(Ntheta*(Nz + 3*Nr),1) = Panel;
+    topZero = false;
+end
+
+np = 0;
 
 for n = 1:Ntheta
+    
+    for m = 1:Nr
+        verts = zeros(4,3);
+        verts(1,:) = [r(Nr-m+2)*ctheta(n) r(Nr-m+2)*stheta(n) z(1)];
+        verts(2,:) = [r(Nr-m+1)*ctheta(n) r(Nr-m+1)*stheta(n) z(1)];
+        verts(3,:) = [r(Nr-m+1)*ctheta(n+1) r(Nr-m+1)*stheta(n+1) z(1)];
+        verts(4,:) = [r(Nr-m+2)*ctheta(n+1) r(Nr-m+2)*stheta(n+1) z(1)];
+
+        np = np + 1;
+        pans(np) = Panel(verts);
+        pans(np).IsWet = false;
+        if (topZero)
+            pans(np).IsInterior = true;
+        else
+            pans(np).IsInterior = false;
+        end
+        pans(np).IsBody = true;
+    end
+    
+    if (~topZero)
+        for m = 1:Nr
+            verts = zeros(4,3);
+            verts(1,:) = [r(Nr-m+2)*ctheta(n) r(Nr-m+2)*stheta(n) 0];
+            verts(2,:) = [r(Nr-m+1)*ctheta(n) r(Nr-m+1)*stheta(n) 0];
+            verts(3,:) = [r(Nr-m+1)*ctheta(n+1) r(Nr-m+1)*stheta(n+1) 0];
+            verts(4,:) = [r(Nr-m+2)*ctheta(n+1) r(Nr-m+2)*stheta(n+1) 0];
+
+            np = np + 1;
+            pans(np) = Panel(verts);
+            pans(np).IsWet = true;
+            pans(np).IsInterior = true;
+            pans(np).IsBody = false;
+        end
+    end
+    
     for m = 1:Nz
         verts = zeros(4,3);
         verts(1,:) = [cirx(n) ciry(n) z(m)];
@@ -58,7 +106,14 @@ for n = 1:Ntheta
         verts(3,:) = [cirx(n+1) ciry(n+1) z(m+1)];
         verts(4,:) = [cirx(n+1) ciry(n+1) z(m)];
 
-        pans((n-1)*(Nz+Nr) + m) = Panel(verts);
+        np = np + 1;
+        pans(np) = Panel(verts);
+        if (z(m) <= 0)
+            pans(np).IsWet = true;
+        else
+            pans(np).IsWet = false;
+        end
+        pans(np).IsInterior = false;
     end
 
     for m = 1:Nr
@@ -68,7 +123,10 @@ for n = 1:Ntheta
         verts(3,:) = [r(m+1)*ctheta(n+1) r(m+1)*stheta(n+1) -draft];
         verts(4,:) = [r(m)*ctheta(n+1) r(m)*stheta(n+1) -draft];
 
-        pans((n-1)*(Nz+Nr) + Nz + m) = Panel(verts);
+        np = np + 1;
+        pans(np) = Panel(verts);
+        pans(np).IsWet = true;
+        pans(np).IsInterior = false;
     end
 end
 

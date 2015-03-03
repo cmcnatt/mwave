@@ -29,19 +29,32 @@ classdef PitchFunc < IMotionFunc
         function [pitch] = PitchFunc(varargin)
             pitch.initCg(varargin{:});
             pitch.isym = 5;
+            pitch.isGen = false;
         end
         
         function [f] = Evaluate(pitch, pos)
             cg_ = pitch.cg;
-            fx = -(pos(3) - cg_(3));
+            fx = (pos(3) - cg_(3));
             fy = 0;
-            fz = pos(1) - cg_(1);
+            fz = -(pos(1) - cg_(1));
             
             f = [fx fy fz];
+        end
+        
+        function [div] = Divergence(pitch, pos)
+            div = 0;
+        end
+        
+        function [gf] = GravityForce(pitch, pos)
+            cg_ = pitch.cg;
+            znorm = [0 0 -1];
+            gf = cross(pos - cg_, znorm);
+            gf = gf(2);
         end
         
         function [in] = get.MotionIn(pitch)
             in = [1 0 1];
         end
+        
     end
 end

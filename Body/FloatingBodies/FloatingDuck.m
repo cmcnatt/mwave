@@ -71,6 +71,11 @@ classdef FloatingDuck < FloatingBody
                 Nr = varargin{2};
                 Nwid = varargin{3};
                 [panGeo, mass] = makePanelMass_doubleDuck(rho, radius, lengthFront, angleFront, lengthBack, angleBack, width, Ntheta, Nr, Nwid);
+                
+                modes = ModesOfMotion();
+                
+                C = computeHydroStatic(rho, panGeo, fb.position(3), modes);
+                fb.c = C;
                 fb.panelGeo = panGeo;
                 fb.iLowHi = 0;
                 

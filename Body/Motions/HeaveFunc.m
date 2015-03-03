@@ -29,14 +29,24 @@ classdef HeaveFunc < IMotionFunc
         function [heave] = HeaveFunc(varargin)
             heave.initCg(varargin{:});
             heave.isym = 3;
+            heave.isGen = false;
         end
         
         function [f] = Evaluate(heave, pos)
             f = [0 0 1];
         end
         
+        function [div] = Divergence(heave, pos)
+            div = 0;
+        end
+        
+        function [gf] = GravityForce(heave, pos)
+            gf = -1;
+        end
+        
         function [in] = get.MotionIn(heave)
             in = [0 0 1];
         end
+        
      end
 end

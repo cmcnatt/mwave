@@ -32,8 +32,10 @@ classdef IHydroComp < handle
         b;
         c;
         m;
-        d;
+        dpto;
+        dpar;
         k;
+        kgm;
         isComp;
     end
     
@@ -41,10 +43,11 @@ classdef IHydroComp < handle
         T;              % Periods (s)
         H;              % Water depth
         A;              % Added mass matrix (dof x dof)
-        B;              % Hydrodynamic Damping matrix (dof x dof)
+        B;              % Hydrodynamic Damping matrix (dof x dof)        
         C;              % Hydrostatic stiffness matrix (dof x dof)
         M;              % Mass matrix for all bodies
         Dpto;           % PTO Damping matrix for all bodies 
+        Dpar;           % Parasitic damping matrix for all bodies
         K;              % Mechanical Stiffness matrix for all bodies
         DoF;            % Degrees of freedom
         Modes;          % String description of all modes of operation
@@ -89,9 +92,9 @@ classdef IHydroComp < handle
             % The hydrostatic stiffness
             hcomp.computeIfNot();
             
-            c_ = hcomp.c;
+            c_ = hcomp.c + hcomp.kgm;
         end
-        
+                
         function [m_] = get.M(hcomp)
             % The mass matrix
             m_ = hcomp.m;
@@ -99,7 +102,12 @@ classdef IHydroComp < handle
         
         function [d_] = get.Dpto(hcomp)
             % The power take-off damping
-            d_ = hcomp.d;
+            d_ = hcomp.dpto;
+        end
+        
+        function [d_] = get.Dpar(hcomp)
+            % The parastic damping
+            d_ = hcomp.dpar;
         end
         
         function [k_] = get.K(hcomp)
@@ -140,9 +148,9 @@ classdef IHydroComp < handle
             if (~optm)
                 motions = zeros(size(fex));
                 m_ = hcomp.m;
-                dd = hcomp.d;
+                dd = hcomp.dpto + hcomp.dpar;
                 kk = hcomp.k;
-                c_ = hcomp.c;
+                c_ = hcomp.c + hcomp.kgm;
                 
                 for n = 1:hcomp.nT
                     a_ = squeeze(hcomp.a(n,:,:));
@@ -290,9 +298,10 @@ classdef IHydroComp < handle
 
                 for n = 1:hcomp.nT    
                     if (dfreq)
-                        d_ = squeeze(hcomp.d(n,:,:));
+                        % Only the PTO damping is used to compute power
+                        d_ = squeeze(hcomp.dpto(n,:,:));
                     else
-                        d_ = hcomp.d;
+                        d_ = hcomp.dpto;
                     end
                     for j = 1:hcomp.nInc
                         u = squeeze(vel(n, j, :));
@@ -333,45 +342,26 @@ classdef IHydroComp < handle
         function [] = SetDpto(hcomp, d_)
             % Set the PTO damping values, currently does not change the
             % values of the floating bodies
-            if (ndims(d_) == 2)
-                [row, col] = size(d_);
-                if (row ~= hcomp.dof || col ~= hcomp.dof)
-                    error('The damping matrix must be of size DoF x DoF');
-                end
-            elseif (ndims(d_) == 3)
-                [nt, row, col] = size(d_);
-                if (nt ~= hcomp.nT)
-                    error('The number of d matrices must be equal to the number of periods');
-                end
-                if (row ~= hcomp.dof || col ~= hcomp.dof)
-                    error('The damping matrix must be of size DoF x DoF');
-                end
-            else
-                error('Damping matrix wrong size');
-            end
             
-            hcomp.d = d_;
+            hcomp.checkMatSize(d_);
+
+            hcomp.dpto = d_;
+        end
+        
+        function [] = SetDpar(hcomp, d_)
+            % Set the parasitic damping values, currently does not change the
+            % values of the floating bodies
+            
+            hcomp.checkMatSize(d_);
+            
+            hcomp.dpar = d_;
         end
         
         function [] = SetK(hcomp, k_)
             % Set the mechanical stiffness values, currently does not change the
             % values of the floating bodies
-            if (ndims(k_) == 2)
-                [row, col] = size(k_);
-                if (row ~= hcomp.dof || col ~= hcomp.dof)
-                    error('The stiffness matrix must be of size DoF x DoF');
-                end
-            elseif (ndims(k_) == 3)
-                [nt, row, col] = size(k_);
-                if (nt ~= hcomp.nT)
-                    error('The number of k matrices must be equal to the number of periods');
-                end
-                if (row ~= hcomp.dof || col ~= hcomp.dof)
-                    error('The stiffness matrix must be of size DoF x DoF');
-                end
-            else
-                error('Stiffness matrix wrong size');
-            end
+            
+            hcomp.checkMatSize(k_);
             
             hcomp.k = k_;
         end
@@ -391,11 +381,13 @@ classdef IHydroComp < handle
             
             hcomp.h = h_;
             
-            [m_, d_, k_] = IHydroComp.resizeMDK(bods);
+            [m_, dpto_, dpar_, k_, kgm_] = IHydroComp.resizeMDK(bods);
 
             hcomp.m = m_;
-            hcomp.d = d_;
+            hcomp.dpto = dpto_;
+            hcomp.dpar = dpar_;
             hcomp.k = k_;
+            hcomp.kgm = kgm_;
 
             hcomp.dof = IHydroComp.GetDoF(bods);
         end
@@ -478,6 +470,25 @@ classdef IHydroComp < handle
             f = f- 4;
             f = real(f); % this should always be real, but sometimes it has a very small imag
         end
+        
+        function [] = checkMatSize(hcomp, m)
+            if (ndims(m) == 2)
+                [row, col] = size(d);
+                if (row ~= hcomp.dof || col ~= hcomp.dof)
+                    error('The matrix must be of size DoF x DoF');
+                end
+            elseif (ndims(m) == 3)
+                [nt, row, col] = size(m);
+                if (nt ~= hcomp.nT)
+                    error('The number of matrices must be equal to the number of periods');
+                end
+                if (row ~= hcomp.dof || col ~= hcomp.dof)
+                    error('The matrix must be of size DoF x DoF');
+                end
+            else
+                error('Matrix wrong size');
+            end
+        end
     end
        
     methods (Static)
@@ -507,7 +518,7 @@ classdef IHydroComp < handle
     
     methods (Static, Access = protected)
                 
-        function [m_, d_, k_] = resizeMDK(fbs)
+        function [m_, dpto_, dpar_, k_, kgm_] = resizeMDK(fbs)
             nbody = length(fbs);
             % Get Mass, Damping and Stiffness matrices from geomerties.
             % Can't handle connected bodies...
@@ -519,8 +530,10 @@ classdef IHydroComp < handle
             end
 
             m_ = zeros(df, df);
-            d_ = zeros(df, df);
+            dpto_ = zeros(df, df);
+            dpar_ = zeros(df, df);
             k_ = zeros(df, df);
+            kgm_ = zeros(df, df);
 
             lsf = 0;
             for n = 1:nbody
@@ -531,8 +544,10 @@ classdef IHydroComp < handle
                 for j = 1:count
                     for p = 1:count
                         m_(lsf + j, lsf + p) = geo.M(iv(j), iv(p));
-                        d_(lsf + j, lsf + p) = geo.Dpto(iv(j), iv(p));
+                        dpto_(lsf + j, lsf + p) = geo.Dpto(iv(j), iv(p));
+                        dpar_(lsf + j, lsf + p) = geo.Dpar(iv(j), iv(p));
                         k_(lsf + j, lsf + p) = geo.K(iv(j), iv(p));
+                        kgm_(lsf + j, lsf + p) = geo.Kgm(iv(j), iv(p));
                     end
                 end
                 lsf = lsf + count;

@@ -34,6 +34,7 @@ classdef HingeYFunc < IMotionFunc
             hinge.initCg(varargin{:});
             hinge.hingePos = [0 0];
             hinge.isym = 1;
+            hinge.isGen = true;
         end
         
         function [f] = Evaluate(hinge, pos)
@@ -44,6 +45,19 @@ classdef HingeYFunc < IMotionFunc
             fz = abs(dx);
             
             f = [fx fy fz];
+        end
+        
+        function [div] = Divergence(hinge, pos)
+            div = 0;
+        end
+        
+        function [gf] = GravityForce(hinge, pos)
+            cg_ = hinge.cg;
+            pos = pos - cg_;
+            pos = [abs(pos(1)) pos(2:3)];
+            znorm = [0 0 -1];
+            gf = cross(pos, znorm);
+            gf = gf(2);
         end
         
         function [in] = get.MotionIn(hinge)

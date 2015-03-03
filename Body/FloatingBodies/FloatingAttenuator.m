@@ -49,6 +49,8 @@ classdef FloatingAttenuator < FloatingBody
             
             fb.m = FloatingAttenuator.MassMatrix(rho, length, radius, conePct);
             fb.d = zeros(7, 7);
+            fb.dpto = zeros(7, 7);
+            fb.dpar = zeros(7, 7);
             fb.k = zeros(7, 7);
             
             fb.modes = ModesOfMotion([1 1 1 1 1 1 1]);

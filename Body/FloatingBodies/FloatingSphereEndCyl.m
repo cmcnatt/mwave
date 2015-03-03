@@ -25,6 +25,7 @@ classdef FloatingSphereEndCyl < FloatingBody
         radius;
         sphereRad;
         hingePos;
+        includeNotch;
     end
 
     properties (Dependent)
@@ -37,7 +38,11 @@ classdef FloatingSphereEndCyl < FloatingBody
     methods
         % Constructor 
         function [fb] = FloatingSphereEndCyl(rho, length, radius, sphereRad, hingePos, varargin)
+            opts = checkOptions({{'Notch'}}, varargin);
+            notch = opts(1);
+            
             fb = fb@FloatingBody();
+            fb.includeNotch = notch;
             
             if (2*sphereRad > length)
                 error('2*sphereRad must be less than the length');
@@ -51,9 +56,15 @@ classdef FloatingSphereEndCyl < FloatingBody
             
             [modes, Nh] = FloatingSphereEndCyl.CreateHingeModes(length, hingePos);
             
-            fb.m = FloatingSphereEndCyl.MassMatrix(rho, length, radius, sphereRad, hingePos);
-            fb.d = zeros(6 + Nh, 6 + Nh);
+            if (notch)
+                fb.m = FloatingSphereEndCyl.MassMatrix(rho, length, radius, sphereRad, hingePos, 'Notch');
+            else
+                fb.m = FloatingSphereEndCyl.MassMatrix(rho, length, radius, sphereRad, hingePos);
+            end
+            fb.dpto = zeros(6 + Nh, 6 + Nh);
+            fb.dpar = zeros(6 + Nh, 6 + Nh);
             fb.k = zeros(6 + Nh, 6 + Nh);
+            fb.kgm = zeros(6 + Nh, 6 + Nh);
 
             fb.modes = modes;
             fb.nGen = Nh;
@@ -63,13 +74,19 @@ classdef FloatingSphereEndCyl < FloatingBody
             fb.writeParams = fb.hingePos;
             
             if (~isempty(varargin))
-                if (size(varargin,2) ~= 2)
+                if (size(varargin,2) < 2)
                     error('There must be two optional inputs to FloatingAttenuator: Nx, Ntheta');
                 end
                 Nx = varargin{1};
                 Ntheta = varargin{2};
-                fb.panelGeo = makePanel_spheroidEndHorCyl(fb.length, fb.radius, fb.sphereRad, Nx, Ntheta);
+                if (notch)
+                    fb.panelGeo = makePanel_spheroidEndHorCyl(fb.length, fb.radius, fb.sphereRad, Nx, Ntheta, 'Hinge', fb.hingePos);
+                else
+                    fb.panelGeo = makePanel_spheroidEndHorCyl(fb.length, fb.radius, fb.sphereRad, Nx, Ntheta);
+                end
                 fb.iLowHi = 0;
+                
+                fb.c = computeHydroStatic(rho, fb.panelGeo, 0, fb.modes);
             end
                                     
             nx = 40;
@@ -123,7 +140,11 @@ classdef FloatingSphereEndCyl < FloatingBody
         end
                 
         function [] = MakePanelGeometry(fb, Nx, Ntheta)
-            fb.panelGeo = makePanel_spheroidEndHorCyl(fb.length, fb.radius, fb.sphereLen, Nx, Ntheta);
+            if (fb.includeNotch)
+                fb.panelGeo = makePanel_spheroidEndHorCyl(fb.length, fb.radius, fb.sphereLen, fb.hingePos, Nx, Ntheta, 'Hinge', fb.hingePos);
+            else
+                fb.panelGeo = makePanel_spheroidEndHorCyl(fb.length, fb.radius, fb.sphereLen, fb.hingePos, Nx, Ntheta);
+            end
             fb.iLowHi = 0;
         end
         
@@ -131,10 +152,15 @@ classdef FloatingSphereEndCyl < FloatingBody
     
     methods (Static)
         function [M] = MassMatrix(rho, length, radius, sphereRad, hingePos, varargin)
+            notch = checkOptions({'Notch'}, varargin);
             Nx = 40;
             Nr = 20;
             Ntheta = 20;
-            cyl = makeMass_spheroidEndHorCyl(rho, length, radius, sphereRad, Nx, Nr, Ntheta);
+            if (notch)
+                cyl = makeMass_spheroidEndHorCylHinge(rho, length, radius, sphereRad, hingePos, Nx, Nr, Ntheta);
+            else
+                cyl = makeMass_spheroidEndHorCyl(rho, length, radius, sphereRad, Nx, Nr, Ntheta);
+            end
                         
             modes = FloatingSphereEndCyl.CreateHingeModes(length, hingePos);
                         

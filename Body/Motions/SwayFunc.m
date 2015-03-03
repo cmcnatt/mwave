@@ -29,10 +29,19 @@ classdef SwayFunc < IMotionFunc
         function [sway] = SwayFunc(varargin)
             sway.initCg(varargin{:});
             sway.isym = 2;
+            sway.isGen = false;
         end
         
         function [f] = Evaluate(sway, pos)
             f = [0 1 0];
+        end
+        
+        function [div] = Divergence(sway, pos)
+            div = 0;
+        end
+        
+        function [gf] = GravityForce(sway, pos)
+            gf = 0;
         end
         
         function [in] = get.MotionIn(sway)

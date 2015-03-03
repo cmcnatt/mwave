@@ -26,6 +26,9 @@ classdef Panel < handle
         area;
         centroid;
         value;
+        isWet;
+        isIn;
+        isBody;
     end
     
     properties (Dependent)
@@ -34,6 +37,9 @@ classdef Panel < handle
         Area;
         Centroid;
         Value;
+        IsWet;
+        IsInterior;
+        IsBody;
     end
     
     methods
@@ -48,6 +54,9 @@ classdef Panel < handle
                 pan.area = [];
                 pan.centroid = [];
                 pan.value = [];
+                pan.isWet = true;
+                pan.isIn = false;
+                pan.isBody = true;
             end
         end
         
@@ -77,6 +86,39 @@ classdef Panel < handle
             end
             
             cent = pan.centroid;
+        end
+        
+        function [iw] = get.IsWet(pan)
+            iw = pan.isWet;
+        end
+        function [pan] = set.IsWet(pan, iw)
+            if (~isBool(iw))
+                error('IsWet must be boolean');
+            end
+            
+            pan.isWet = iw;
+        end
+        
+        function [ii] = get.IsInterior(pan)
+            ii = pan.isIn;
+        end
+        function [pan] = set.IsInterior(pan, ii)
+            if (~isBool(ii))
+                error('IsInterior must be boolean');
+            end
+            
+            pan.isIn = ii;
+        end
+        
+        function [ib] = get.IsBody(pan)
+            ib = pan.isBody;
+        end
+        function [pan] = set.IsBody(pan, ib)
+            if (~isBool(ib))
+                error('IsBody must be boolean');
+            end
+            
+            pan.isBody = ib;
         end
         
         function [val] = get.Value(pan)
@@ -147,118 +189,127 @@ classdef Panel < handle
         end
                 
         function [] = plot(pan, varargin)
-            xsym = false;
-            ysym = false;
-            showN = false;
-            for n = 1:length(varargin)
-                if (strcmp(varargin{n}, 'xsym'))
-                    xsym = true;
-                end
-                if (strcmp(varargin{n}, 'ysym'))
-                    ysym = true;
-                end
-                if (strcmp(varargin{n}, 'ShowNorm'))
-                    showN = true;
-                end
-            end
-            pnts = zeros(5,3);
-            for n = 1:3
-                pnts(:,n) = [pan.vertices(:,n); pan.vertices(1,n)];
-            end
-            plot3(pnts(:,1), pnts(:,2), pnts(:,3));
             
-            if (showN)
-                hold on;
-                cent = pan.Centroid;
-                norm = pan.Normal;
-                area = pan.Area;
-                quiver3(cent(1), cent(2), cent(3), norm(1), norm(2), norm(3), 10*area);
+            opts = checkOptions({{'xsym'}, {'ysym'}, {'ShowNorm'}, {'OnlyWet'}, {'ShowInt'}}, varargin);
+            xsym = opts(1);
+            ysym = opts(2);
+            showN = opts(3);
+            onlyWet = opts(4);
+            showInt = opts(5);
+            
+            plotThis = true;
+            if (onlyWet && ~pan.isWet)
+                plotThis = false;                    
             end
             
-            if (xsym && ~ysym)
-                hold on;
-                plot3(-pnts(:,1), pnts(:,2), pnts(:,3));
-            elseif (~xsym && ysym)
-                hold on;
-                plot3(pnts(:,1), -pnts(:,2), pnts(:,3));
-            elseif (xsym && ysym)
-                hold on;
-                plot3(pnts(:,1), -pnts(:,2), pnts(:,3));
-                plot3(-pnts(:,1), pnts(:,2), pnts(:,3));
-                plot3(-pnts(:,1), -pnts(:,2), pnts(:,3));
+            if (~showInt && ~pan.IsBody && pan.IsInterior)
+                plotThis = false;                    
+            end
+
+            if (plotThis)
+                pnts = zeros(5,3);
+                for n = 1:3
+                    pnts(:,n) = [pan.vertices(:,n); pan.vertices(1,n)];
+                end
+                plot3(pnts(:,1), pnts(:,2), pnts(:,3));
+
+                if (showN)
+                    hold on;
+                    cent = pan.Centroid;
+                    norm = pan.Normal;
+                    area = pan.Area;
+                    quiver3(cent(1), cent(2), cent(3), norm(1), norm(2), norm(3), 10*area);
+                end
+
+                if (xsym && ~ysym)
+                    hold on;
+                    plot3(-pnts(:,1), pnts(:,2), pnts(:,3));
+                elseif (~xsym && ysym)
+                    hold on;
+                    plot3(pnts(:,1), -pnts(:,2), pnts(:,3));
+                elseif (xsym && ysym)
+                    hold on;
+                    plot3(pnts(:,1), -pnts(:,2), pnts(:,3));
+                    plot3(-pnts(:,1), pnts(:,2), pnts(:,3));
+                    plot3(-pnts(:,1), -pnts(:,2), pnts(:,3));
+                end
             end
         end
         
         function [] = surf(pan, varargin)
-            xsym = false;
-            ysym = false;
-            showN = false;
-            for n = 1:length(varargin)
-                if (strcmp(varargin{n}, 'xsym'))
-                    xsym = true;
-                end
-                if (strcmp(varargin{n}, 'ysym'))
-                    ysym = true;
-                end
-                if (strcmp(varargin{n}, 'ShowNorm'))
-                    showN = true;
-                end
+            
+            opts = checkOptions({{'xsym'}, {'ysym'}, {'ShowNorm'}, {'OnlyWet'}, {'ShowInt'}}, varargin);
+            xsym = opts(1);
+            ysym = opts(2);
+            showN = opts(3);
+            onlyWet = opts(4);
+            showInt = opts(5);
+            
+            plotThis = true;
+            if (onlyWet && ~pan.isWet)
+                plotThis = false;                    
             end
             
-            x = pan.vertices(:,1);
-            y = pan.vertices(:,2);
-            z = pan.vertices(:,3);
-            
-            X = zeros(2,2);
-            Y = zeros(2,2);
-            Z = zeros(2,2);
-            
-            X(1,1) = x(1);
-            X(2,1) = x(2);
-            X(2,2) = x(3);
-            X(1,2) = x(4);
-            
-            Y(1,1) = y(1);
-            Y(2,1) = y(2);
-            Y(2,2) = y(3);
-            Y(1,2) = y(4);
-            
-            Z(1,1) = z(1);
-            Z(2,1) = z(2);
-            Z(2,2) = z(3);
-            Z(1,2) = z(4);
-            
-            if (~isempty(pan.value))
-                C = pan.value*ones(2,2);
-                surf(X, Y, Z, C);
-            else
-                surf(X, Y, Z);
+            if (~showInt && ~pan.IsBody && pan.IsInterior)
+                plotThis = false;                    
             end
             
-            if (showN)
-                hold on;
-                cent = pan.Centroid;
-                norm = pan.Normal;
-                area = pan.Area;
-                quiver3(cent(1), cent(2), cent(3), norm(1), norm(2), norm(3), 10*area);
-            end
-            
-            if (xsym && ~ysym)
-                hold on;
-                surf(-X, Y, Z);
-                %plot3(-pnts(:,1), pnts(:,2), pnts(:,3));
-            elseif (~xsym && ysym)
-                hold on;
-                surf(X, -Y, Z);
-                %plot3(pnts(:,1), -pnts(:,2), pnts(:,3));
-            elseif (xsym && ysym)
-                hold on;
-                surf(X, -Y, Z);
-                surf(-X, Y, Z);
-                surf(-X, -Y, Z);
-%                 plot3(pnts(:,1), -pnts(:,2), pnts(:,3));
-%                 plot3(-pnts(:,1), pnts(:,2), pnts(:,3));
-%                 plot3(-pnts(:,1), -pnts(:,2), pnts(:,3));
+            if (plotThis)
+                x = pan.vertices(:,1);
+                y = pan.vertices(:,2);
+                z = pan.vertices(:,3);
+
+                X = zeros(2,2);
+                Y = zeros(2,2);
+                Z = zeros(2,2);
+
+                X(1,1) = x(1);
+                X(2,1) = x(2);
+                X(2,2) = x(3);
+                X(1,2) = x(4);
+
+                Y(1,1) = y(1);
+                Y(2,1) = y(2);
+                Y(2,2) = y(3);
+                Y(1,2) = y(4);
+
+                Z(1,1) = z(1);
+                Z(2,1) = z(2);
+                Z(2,2) = z(3);
+                Z(1,2) = z(4);
+
+                if (~isempty(pan.value))
+                    C = pan.value*ones(2,2);
+                    surf(X, Y, Z, C);
+                else
+                    surf(X, Y, Z);
+                end
+
+                if (showN)
+                    hold on;
+                    cent = pan.Centroid;
+                    norm = pan.Normal;
+                    area = pan.Area;
+                    quiver3(cent(1), cent(2), cent(3), norm(1), norm(2), norm(3), 10*area);
+                end
+
+                if (xsym && ~ysym)
+                    hold on;
+                    surf(-X, Y, Z);
+                    %plot3(-pnts(:,1), pnts(:,2), pnts(:,3));
+                elseif (~xsym && ysym)
+                    hold on;
+                    surf(X, -Y, Z);
+                    %plot3(pnts(:,1), -pnts(:,2), pnts(:,3));
+                elseif (xsym && ysym)
+                    hold on;
+                    surf(X, -Y, Z);
+                    surf(-X, Y, Z);
+                    surf(-X, -Y, Z);
+    %                 plot3(pnts(:,1), -pnts(:,2), pnts(:,3));
+    %                 plot3(-pnts(:,1), pnts(:,2), pnts(:,3));
+    %                 plot3(-pnts(:,1), -pnts(:,2), pnts(:,3));
+                end
             end
         end
         
@@ -320,18 +371,24 @@ classdef Panel < handle
             n1 = cross(v1,v2);
             len = sqrt(n1(1)^2 + n1(2)^2 + n1(3)^2);
             ar1 = 0.5*len;
-            n1 = n1./len;
+            if (len == 0)
+                n1 = [0 0 0];
+            else
+                n1 = n1./len;
+            end
             cen1 = mean(verts(1:3,:));
             
-            % triangle 1
-            n2 = cross(v1,v3);
+            % triangle 2
+            n2 = cross(v2,v3);
             len = sqrt(n2(1)^2 + n2(2)^2 + n2(3)^2);
             ar2 = 0.5*len;
-            n2 = n2./len;
+            if (len == 0)
+                n2 = [0 0 0];
+            else
+                n2 = n2./len;
+            end
             cen2 = mean(verts([1 3 4],:));
-            
-           
-            
+
             area = ar1 + ar2;
             if (area == 0)
                 norm = [0 0 0];
@@ -350,15 +407,6 @@ classdef Panel < handle
                 % could check how coplanar the points are by comparing the
                 % normals
             end
-            
-%             p = verts(3,:) - verts(1,:);
-%             q = verts(4,:) - verts(2,:);
-% 
-%             n = cross(p,q); %[(p(2)*q(3)-p(3)*q(2)), -(p(1)*q(3)-p(3)*q(1)), (p(1)*q(2)-p(2)*q(1))];
-%             len = sqrt(n(1)^2 + n(2)^2 + n(3)^2);
-%             norm = n./len;           
-            
-           % area = 0.5*len;
         end
     end
     

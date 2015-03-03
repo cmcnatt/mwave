@@ -29,6 +29,7 @@ classdef YawFunc < IMotionFunc
         function [yaw] = YawFunc(varargin)
             yaw.initCg(varargin{:});
             yaw.isym = 6;
+            yaw.isGen = false;
         end
         
         function [f] = Evaluate(yaw, pos)
@@ -38,6 +39,14 @@ classdef YawFunc < IMotionFunc
             fz = 0;
             
             f = [fx fy fz];
+        end
+        
+        function [div] = Divergence(yaw, pos)
+            div = 0;
+        end
+        
+        function [gf] = GravityForce(yaw, pos)
+            gf = 0;
         end
         
         function [in] = get.MotionIn(yaw)

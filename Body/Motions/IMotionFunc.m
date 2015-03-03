@@ -24,11 +24,13 @@ classdef IMotionFunc < matlab.mixin.Heterogeneous & handle
     properties(Access = protected)
         cg;
         isym;
+        isGen;
     end
     
     properties (Dependent)
         Cg;
         ISym;   % Indicates the type of Symmetry of the motion
+        IsGen;
     end
     
     properties (Abstract)
@@ -37,6 +39,8 @@ classdef IMotionFunc < matlab.mixin.Heterogeneous & handle
     
     methods (Abstract)
         Evaluate(pos);
+        Divergence(pos);
+        GravityForce(pos);
     end
     
     methods
@@ -60,6 +64,10 @@ classdef IMotionFunc < matlab.mixin.Heterogeneous & handle
             % 3 - Heave like symmetry
             % 6 - Yaw like symmetry
             isy = motF.isym;
+        end
+        
+        function [isg] = get.IsGen(motF)
+            isg = motF.isGen;
         end
     end
     

@@ -150,7 +150,11 @@ classdef HydroBody < FloatingBody
         
         function [c_] = get.C(hb)
             % Get the hydrostatic stiffness
-            c_ = hb.hydroForces.C;
+            if (hb.haskgm)
+                c_ = hb.hydroForces.C + hb.kgm;
+            else
+                c_ = hb.hydroForces.C;
+            end
         end
         
         function [dof] = get.DoF(hb)

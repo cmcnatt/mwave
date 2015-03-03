@@ -384,6 +384,9 @@ classdef WamitUT < matlab.unittest.TestCase
             legend('flex 1', 'flex 2');
             xlabel('Period (s)');
             ylabel('Nm');
+            
+            hcomp = HydroBodyComp(hydroForces, wec);
+            hcomp.C
         end
         
         function testReadFolder(testCase)

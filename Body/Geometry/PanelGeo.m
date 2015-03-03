@@ -33,6 +33,9 @@ classdef PanelGeo < handle
         Normals;
         Areas;
         Values;
+        IsWets;
+        IsInteriors
+        IsBodies;
         AvgPanelArea;
         Xsymmetry;
         Ysymmetry;
@@ -48,6 +51,9 @@ classdef PanelGeo < handle
                     for n = 1:nPan
                         newPans(n) = Panel(pans.Panels(n).Vertices);
                         newPans(n).Value = pans.Panels(n).Value;
+                        newPans(n).IsWet = pans.Panels(n).IsWet;
+                        newPans(n).IsInterior = pans.Panels(n).IsInterior;
+                        newPans(n).IsBody = pans.Panels(n).IsBody;
                     end
                     
                     geo.panels = newPans;
@@ -100,12 +106,44 @@ classdef PanelGeo < handle
             end
         end
         
+        function [iws] = get.IsWets(geo)
+            cnt = geo.Count;
+            iws = zeros(cnt, 1);
+            
+            for n = 1:cnt
+                iws(n) = geo.panels(n).IsWet;
+            end
+        end
+        
+        function [iis] = get.IsInteriors(geo)
+            cnt = geo.Count;
+            iis = zeros(cnt, 1);
+            
+            for n = 1:cnt
+                iis(n) = geo.panels(n).IsInterior;
+            end
+        end
+        
+        function [ibs] = get.IsBodies(geo)
+            cnt = geo.Count;
+            ibs = zeros(cnt, 1);
+            
+            for n = 1:cnt
+                ibs(n) = geo.panels(n).IsBody;
+            end
+        end
+        
         function [vals] = get.Values(geo)
             cnt = geo.Count;
             vals = zeros(cnt, 1);
             
             for n = 1:cnt
-                vals(n) = geo.panels(n).Value;
+                valn = geo.panels(n).Value;
+                if (isempty(valn))
+                    vals(n) = NaN;
+                else
+                    vals(n) = valn;
+                end
             end
         end
         function [geo] = set.Values(geo, vals)
@@ -251,16 +289,8 @@ classdef PanelGeo < handle
         function [] = plotFuncs(geo, func, varargin)
             N = geo.Count;
             
-            showN = false;
-            showSym = false;
-            for n = 1:length(varargin)
-                if (strcmp(varargin{n}, 'ShowSym'))
-                    showSym = true;
-                end
-                if (strcmp(varargin{n}, 'ShowNorm'))
-                    showN = true;
-                end
-            end
+            opts = checkOptions({{'ShowSym'}, {'ShowNorm'}, {'OnlyWet'}}, varargin);
+            showSym = opts(1);
             
             xsy = false;
             ysy = false;
@@ -272,38 +302,22 @@ classdef PanelGeo < handle
             
             if (~xsy && ~ysy)
                 for n = 1:N
-                    if (showN)
-                        func(geo.panels(n), 'ShowNorm');
-                    else
-                        func(geo.panels(n));
-                    end
+                    func(geo.panels(n), varargin{:});
                     hold on;
                 end
             elseif (xsy && ~ysy)
                 for n = 1:N
-                    if (showN)
-                        func(geo.panels(n), 'xsym', 'ShowNorm');
-                    else
-                        func(geo.panels(n), 'xsym');
-                    end
+                    func(geo.panels(n), 'xsym', varargin{:});
                     hold on;
                 end
             elseif (~xsy && ysy)
                 for n = 1:N
-                    if (showN)
-                        func(geo.panels(n), 'ysym', 'ShowNorm');
-                    else
-                        func(geo.panels(n), 'ysym');
-                    end
+                    func(geo.panels(n), 'ysym', varargin{:});
                     hold on;
                 end
             elseif (xsy && ysy)
                 for n = 1:N
-                    if (showN)
-                        func(geo.panels(n), 'xsym', 'ysym', 'ShowNorm');
-                    else
-                        func(geo.panels(n), 'xsym', 'ysym');
-                    end
+                    func(geo.panels(n), 'xsym', 'ysym', varargin{:});
                     hold on;
                 end
             end
