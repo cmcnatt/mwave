@@ -201,7 +201,7 @@ classdef MassBody < handle
                  mapos = mapos + mpMass(n)*mpPos(n,:);
              end
              
-             rnd = 1e9;
+             rnd = 1e8;
              mass.mas = round(rnd*ma)/rnd;
              mass.cg = round(rnd*mapos./ma)./rnd;
              
@@ -238,6 +238,7 @@ classdef MassBody < handle
                      end
                  end
 
+                 rnd = 10^round(log10(rnd/mass.mas));
                  M_ = round(rnd*M_)./rnd;
                  
                  maxM = max(max(M_));

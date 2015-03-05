@@ -376,7 +376,7 @@ classdef Panel < handle
             else
                 n1 = n1./len;
             end
-            cen1 = mean(verts(1:3,:));
+            cen1 = sum(verts(1:3,:))./3;
             
             % triangle 2
             n2 = cross(v2,v3);
@@ -387,19 +387,19 @@ classdef Panel < handle
             else
                 n2 = n2./len;
             end
-            cen2 = mean(verts([1 3 4],:));
+            cen2 = sum(verts([1 3 4],:))./3;
 
             area = ar1 + ar2;
             if (area == 0)
                 norm = [0 0 0];
-                centroid = mean(verts);
+                centroid = sum(verts)./4;
             else
                 if (ar1 == 0)
                     norm = n2;
                 elseif (ar2 == 0)
                     norm = n1;
                 else
-                    norm = mean([n1; n2]);
+                    norm = sum([n1; n2])./2;
                 end
                 
                 centroid = 1/area*(cen1*ar1 + cen2*ar2);

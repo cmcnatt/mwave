@@ -36,67 +36,77 @@ classdef HydroBodyComp < IHydroComp
     
     methods
         
-        function [hbcomp] = HydroBodyComp(hydro, varargin)
+        function [hbcomp] = HydroBodyComp(varargin)
             % Constructor - takes either a single HydroBody of a HydroForces object and and a vector of
             % floating bodies
+            % If arg1 is a HydroBody, then arg 2 is IWaves
+            % If arg1 is a HydroForces, then arg 2 is Floating Body
+            
+            opts = checkOptions({{'UseBodC'}}, varargin);
+            useBodC = opts(1);
             
             hbcomp.isHB = false;
             
-            if (isa(hydro, 'HydroBody'))
-                hbcomp.isHB = true;
-                if (isempty(varargin))
-                    error('Second argument must be IWaves');
-                elseif(~isa(varargin{1}, 'IWaves'));
-                    error('Second argument must be IWaves');
-                end
-                iwavs = varargin{1};
-            elseif (isa(hydro, 'HydroForces'))                
-                if (isempty(varargin{1}))
-                    error('Second input must be a FloatingBody');
-                end
-                fbods = varargin{1};
-                if (length(varargin) > 1)
-                    error('Can only set the incident waves for the computation when body is a HydroBody');
-                else
+            if (~isempty(varargin))
+                hydro = varargin{1};
+                
+                if (isa(hydro, 'HydroBody'))
+                    hbcomp.isHB = true;
+                    if (isempty(varargin{2}))
+                        error('Second argument must be IWaves');
+                    elseif(~isa(varargin{2}, 'IWaves'));
+                        error('Second argument must be IWaves');
+                    end
+                    iwavs = varargin{2};
+                elseif (isa(hydro, 'HydroForces'))                
+                    if (isempty(varargin{2}))
+                        error('Second input must be a FloatingBody');
+                    elseif(~isa(varargin{2}, 'FloatingBody'));
+                        error('Second argument must be FloatingBody');
+                    end
+                    fbods = varargin{2};
+
                     nB = length(hydro.Beta);
                     wuns = ones(size(hydro.T));
                     for n = 1:nB
                         iwavs(n) = PlaneWaves(wuns, hydro.T, hydro.Beta(n)*wuns, hydro.H);
                     end
+                else
+                    error('Inputs must be either a HydroBody or a HydroForces object and and a vector of floating bodies');
                 end
-            else
-                error('Inputs must be either a HydroBody or a HydroForces object and and a vector of floating bodies');
-            end
-            
-            if (~hbcomp.isHB)       
-                for n = 1:length(fbods)
-                    if (~isa(fbods(n), 'FloatingBody'))
-                        error('Second input must be a FloatingBody')
+
+                if (~hbcomp.isHB)       
+                    for n = 1:length(fbods)
+                        if (~isa(fbods(n), 'FloatingBody'))
+                            error('Second input must be a FloatingBody')
+                        end
                     end
+
+                    hbcomp.initHydroParam(hydro.T, hydro.H, fbods);
+                    hbcomp.setIncWaves(iwavs);
+                    hbcomp.fex = hydro.Fex;
+                else
+                    hbcomp.initHydroParam(hydro.T, hydro.H, hydro);
+                    hbcomp.setIncWaves(iwavs);
                 end
-                
-                hbcomp.initHydroParam(hydro.T, hydro.H, fbods);
-                hbcomp.setIncWaves(iwavs);
-                hbcomp.fex = hydro.Fex;
-            else
-                hbcomp.initHydroParam(hydro.T, hydro.H, hydro);
-                hbcomp.setIncWaves(iwavs);
-            end
 
-            hbcomp.a = hydro.A;
-            hbcomp.b = hydro.B;
-            hbcomp.c = hydro.C;
-            
-            [row, col] = size(squeeze(hbcomp.a(1,:,:)));
+                hbcomp.a = hydro.A;
+                hbcomp.b = hydro.B;
+                if (~useBodC)
+                    hbcomp.c = hydro.C;
+                end
 
-            if (row ~= size(hbcomp.m, 1) && col ~= size(hbcomp.m, 2))
-                error('The sizes of the geometric matrices (mass, damping, stiffness) are not the same as added mass and damping matrices');
-            end
+                [row, col] = size(squeeze(hbcomp.a(1,:,:)));
 
-            if (~hbcomp.isHB)
-                hbcomp.fbs = fbods;
-            else
-                hbcomp.fbs = hydro;
+                if (row ~= size(hbcomp.m, 1) && col ~= size(hbcomp.m, 2))
+                    error('The sizes of the geometric matrices (mass, damping, stiffness) are not the same as added mass and damping matrices');
+                end
+
+                if (~hbcomp.isHB)
+                    hbcomp.fbs = fbods;
+                else
+                    hbcomp.fbs = hydro;
+                end
             end
         end
                 

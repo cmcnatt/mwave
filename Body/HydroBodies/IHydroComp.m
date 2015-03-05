@@ -92,7 +92,7 @@ classdef IHydroComp < handle
             % The hydrostatic stiffness
             hcomp.computeIfNot();
             
-            c_ = hcomp.c + hcomp.kgm;
+            c_ = hcomp.c;
         end
                 
         function [m_] = get.M(hcomp)
@@ -136,7 +136,7 @@ classdef IHydroComp < handle
             fex = hcomp.Fex;
             
             dfreq = false;
-            if (ndims(hcomp.d) == 3)
+            if (ndims(hcomp.dpto) == 3)
                 dfreq = true;
             end
             
@@ -150,7 +150,7 @@ classdef IHydroComp < handle
                 m_ = hcomp.m;
                 dd = hcomp.dpto + hcomp.dpar;
                 kk = hcomp.k;
-                c_ = hcomp.c + hcomp.kgm;
+                c_ = hcomp.c;
                 
                 for n = 1:hcomp.nT
                     a_ = squeeze(hcomp.a(n,:,:));
@@ -292,7 +292,7 @@ classdef IHydroComp < handle
                 power = zeros(size(vel));
                 
                 dfreq = false;
-                if (ndims(hcomp.d) == 3)
+                if (ndims(hcomp.dpto) == 3)
                     dfreq = true;
                 end
 
@@ -381,13 +381,13 @@ classdef IHydroComp < handle
             
             hcomp.h = h_;
             
-            [m_, dpto_, dpar_, k_, kgm_] = IHydroComp.resizeMDK(bods);
+            [m_, dpto_, dpar_, k_, c_] = IHydroComp.resizeMDK(bods);
 
             hcomp.m = m_;
             hcomp.dpto = dpto_;
             hcomp.dpar = dpar_;
             hcomp.k = k_;
-            hcomp.kgm = kgm_;
+            hcomp.c = c_;
 
             hcomp.dof = IHydroComp.GetDoF(bods);
         end
@@ -473,7 +473,7 @@ classdef IHydroComp < handle
         
         function [] = checkMatSize(hcomp, m)
             if (ndims(m) == 2)
-                [row, col] = size(d);
+                [row, col] = size(m);
                 if (row ~= hcomp.dof || col ~= hcomp.dof)
                     error('The matrix must be of size DoF x DoF');
                 end
@@ -518,7 +518,7 @@ classdef IHydroComp < handle
     
     methods (Static, Access = protected)
                 
-        function [m_, dpto_, dpar_, k_, kgm_] = resizeMDK(fbs)
+        function [m_, dpto_, dpar_, k_, c_] = resizeMDK(fbs)
             nbody = length(fbs);
             % Get Mass, Damping and Stiffness matrices from geomerties.
             % Can't handle connected bodies...
@@ -533,7 +533,7 @@ classdef IHydroComp < handle
             dpto_ = zeros(df, df);
             dpar_ = zeros(df, df);
             k_ = zeros(df, df);
-            kgm_ = zeros(df, df);
+            c_ = zeros(df, df);
 
             lsf = 0;
             for n = 1:nbody
@@ -547,7 +547,7 @@ classdef IHydroComp < handle
                         dpto_(lsf + j, lsf + p) = geo.Dpto(iv(j), iv(p));
                         dpar_(lsf + j, lsf + p) = geo.Dpar(iv(j), iv(p));
                         k_(lsf + j, lsf + p) = geo.K(iv(j), iv(p));
-                        kgm_(lsf + j, lsf + p) = geo.Kgm(iv(j), iv(p));
+                        c_(lsf + j, lsf + p) = geo.C(iv(j), iv(p));
                     end
                 end
                 lsf = lsf + count;
