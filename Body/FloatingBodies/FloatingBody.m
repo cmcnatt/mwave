@@ -83,6 +83,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
                 fb.dpto = zeros(6, 6);
                 fb.dpar = zeros(6, 6);
                 fb.k = zeros(6, 6);
+                fb.c = zeros(6, 6);
                 fb.kgm = zeros(6, 6);
                 fb.haskgm = false;
                 fb.position = zeros(1, 3);
@@ -104,6 +105,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
                 fb.dpto = fbin.dpto;
                 fb.dpar = fbin.dpar;
                 fb.k = fbin.k;
+                fb.c = fbin.c;
                 fb.kgm = fbin.kgm;
                 if (any(any(fb.kgm ~= 0)))
                     fb.haskgm = true;
