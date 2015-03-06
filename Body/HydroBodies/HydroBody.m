@@ -38,7 +38,6 @@ classdef HydroBody < FloatingBody
         T;              % Periods (s)
         A;              % Added mass matrix (dof x dof)
         B;              % Hydrodynamic Damping matrix (dof x dof)
-        C;              % Hydrostatic stiffness matrix (dof x dof)
         DoF;            % Number of degrees of freedom
         H;              % The water depth
         Rho;            % The fluid density
@@ -147,16 +146,7 @@ classdef HydroBody < FloatingBody
             % Get the hydrodynamic damping
             b_ = hb.hydroForces.B;
         end
-        
-        function [c_] = get.C(hb)
-            % Get the hydrostatic stiffness
-            if (hb.haskgm)
-                c_ = hb.hydroForces.C + hb.kgm;
-            else
-                c_ = hb.hydroForces.C;
-            end
-        end
-        
+                
         function [dof] = get.DoF(hb)
             % Get the number of degrees of freedom
             dof = hb.hydroForces.DoF;
