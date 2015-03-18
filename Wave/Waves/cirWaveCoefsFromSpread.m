@@ -52,7 +52,7 @@ if (randPhase)
     B = B.*exp(2*pi*1i*rand(size(B)));
 end
 
-am = cirWaveCoefsFromFunc(B);
+am = cirWaveCoefsFromFunc(B, M);
 end
 
 function [eps] = makePhase(theta)

@@ -74,7 +74,10 @@ classdef HydroBodyComp < IHydroComp
                 else
                     error('Inputs must be either a HydroBody or a HydroForces object and and a vector of floating bodies');
                 end
-
+                
+                if (~useBodC)
+                    hbcomp.c = hydro.C;
+                end
                 if (~hbcomp.isHB)       
                     for n = 1:length(fbods)
                         if (~isa(fbods(n), 'FloatingBody'))
@@ -92,9 +95,6 @@ classdef HydroBodyComp < IHydroComp
 
                 hbcomp.a = hydro.A;
                 hbcomp.b = hydro.B;
-                if (~useBodC)
-                    hbcomp.c = hydro.C;
-                end
 
                 [row, col] = size(squeeze(hbcomp.a(1,:,:)));
 

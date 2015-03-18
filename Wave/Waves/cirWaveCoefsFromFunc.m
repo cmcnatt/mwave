@@ -11,7 +11,8 @@ am(M+2:2*M+1) = fori(2:M+1);
 am(M:-1:1) = fori(N:-1:N-M+1);
 
 m = (-M:M).';
-am = (-1i).^m.*am;
+%am = (-1i).^m.*am;
+am = exp(1i*m*pi/2).*am;
 
 am = am.';
 end

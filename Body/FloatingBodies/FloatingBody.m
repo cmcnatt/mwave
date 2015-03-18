@@ -26,6 +26,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
         geoFile;
         panelGeo;
         cg;
+        cb;
         m;
         dpto;
         dpar;
@@ -49,7 +50,8 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
         Handle;         % Descriptive name of floating body
         GeoFile;        % Name of .cfg geometry file (do not include ".cfg")
         PanelGeo;       % The actual panel geometry  
-        Cg;             % Centor of Gravity in body coordinates
+        Cg;             % Center of Gravity in body coordinates
+        Cb;             % Center of Buoyancy in body coordinates
         M;              % Mass matrix
         Dpto;           % PTO Damping matrix
         Dpar;           % Parasitic damping matrix 
@@ -79,6 +81,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
                 fb.geoFile = [];
                 fb.panelGeo = [];
                 fb.cg = zeros(1, 3);
+                fb.cb = zeros(1, 3);
                 fb.m = zeros(6, 6);
                 fb.dpto = zeros(6, 6);
                 fb.dpar = zeros(6, 6);
@@ -101,6 +104,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
                 fb.geoFile = fbin.geoFile;
                 fb.panelGeo = fbin.panelGeo;
                 fb.cg = fbin.cg;
+                fb.cb = fbin.cb;
                 fb.m = fbin.m;
                 fb.dpto = fbin.dpto;
                 fb.dpar = fbin.dpar;
@@ -185,6 +189,16 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
             % Set the center of gravity of the floating body
             fb.checkSizeNx1(cg,3);           
             fb.cg = cg;
+        end
+        
+        function [C_b] = get.Cb(fb)
+            % Get the center of buoyancy of the floating body
+            C_b = fb.cb;
+        end
+        function [fb] = set.Cb(fb, cb)
+            % Set the center of buoyancy of the floating body
+            fb.checkSizeNx1(cb,3);           
+            fb.cb = cb;
         end
         
         function [m_] = get.M(fb)

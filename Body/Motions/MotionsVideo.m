@@ -34,6 +34,7 @@ classdef MotionsVideo < handle
         bodyPoints;
         dof;
         showWave;
+        waveA;
         isComp;
     end
 
@@ -45,6 +46,7 @@ classdef MotionsVideo < handle
         BodyPoints;
         DoF;
         ShowWave;
+        WaveAmp;
         Xlim;
         Zlim;
     end
@@ -65,6 +67,7 @@ classdef MotionsVideo < handle
             mv.omega = 2*pi/period;
             dof_ = length(motions);
             mv.dof = dof_;
+            mv.waveA = 1;
             
             if (length(motionFuncs) ~= dof_)
                 error('The number of motion functions must be the same as the number of motions (i.e. the DoF)');
@@ -104,6 +107,17 @@ classdef MotionsVideo < handle
             end
             mv.isComp = false;
             mv.h = h_;
+        end
+        
+        function [a_] = get.WaveAmp(mv)
+            a_ = mv.waveA;
+        end
+        function [mv] = set.WaveAmp(mv, a_)
+            if (a_ <= 0)
+                error('The wave amplitude must be positive');
+            end
+            mv.isComp = false;
+            mv.waveA = a_;
         end
         
         function [mot] = get.Motions(mv)
@@ -284,27 +298,29 @@ classdef MotionsVideo < handle
             
             bp = mv.bodyPoints + abs(mv.pointMot);
             
+            k = IWaves.SolveForK(mv.omega, mv.h, IWaves.G);
+            lam = 2*pi./k;
             limx = max(abs(bp(:,1)));
-            if (limx < 2)
-                limx = 2;
+            if (limx < 0.25*lam)
+                limx = 0.25*lam;
             end
             
             mv.xlim = limx + 0.5*limx;
             
             limz = max(abs(bp(:,3)));
-            if (limz < 1)
-                limz = 1;
-            end
+%             if (limz < 1)
+%                 limz = 1;
+%             end
             
-            mv.zlim = limz + 0.1*limz;
+            mv.zlim = limz + 0.5*limz;
             
             if (mv.showWave)
                 if (isempty(mv.h))
                     error('Depth value (H) must be set to show the wave');
                 end
-                k = IWaves.SolveForK(mv.omega, mv.h, IWaves.G);
+               
                 mv.xWave = -mv.xlim:0.1:mv.xlim;
-                mv.wave = exp(-1i*k*mv.xWave);
+                mv.wave = mv.waveA*exp(-1i*k*mv.xWave);
             end
             
             mv.isComp = true;

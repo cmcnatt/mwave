@@ -572,7 +572,7 @@ classdef WaveField < IWaveField & matlab.mixin.Heterogeneous
             end
             
             % frequncies
-            if any(wfa.T ~= wfb.T)
+            if any(abs(wfa.T - wfb.T) > 1e-8)
                 areEq = 0;
                 return;
             end

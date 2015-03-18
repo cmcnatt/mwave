@@ -1,4 +1,4 @@
-function [C, C0, Km, cb] = computeHydroStatic(rho, panelGeo, zpos, modes)
+function [C, rhoBod, C0, Km, cg, cb] = computeHydroStatic(rho, panelGeo, zpos, modes)
 
 panelGeo = PanelGeo(panelGeo);
 panelGeo.Translate([0 0 zpos]);
@@ -10,7 +10,7 @@ dof = modes.DoF;
 motFuncs = modes.MotionFuncs;
 for n = 1:length(motFuncs)
     motFuncs(n).Cg = motFuncs(n).Cg + [0 0 zpos];
-    if (isa(motFuncs(n), 'HingeYFunc'))
+    if (isprop(motFuncs(n),'HingePos'))
         motFuncs(n).HingePos = motFuncs(n).HingePos + [0 zpos];
     end
 end
@@ -33,19 +33,20 @@ for n = 1:nPan
     
     pnt = cents(n,:);
     nrm = norms(n,:);
+    area = areas(n);
     if (isWets(n))
-        VolWet = VolWet - nrm.*pnt*areas(n);
-        cb = cb - nrm.*pnt.^2*areas(n);
+        VolWet = VolWet - nrm.*pnt*area;
+        cb = cb - nrm.*pnt.^2*area;
     end
     
     if (isBods(n))
-        VolBod = VolBod - nrm.*pnt*areas(n);
-        cg = cg - nrm.*pnt.^2*areas(n);
+        VolBod = VolBod - nrm.*pnt*area;
+        cg = cg - nrm.*pnt.^2*area;
     end
 end
 
-VolWet = VolWet(1);
-VolBod = VolBod(1);
+VolWet = VolWet(2);
+VolBod = VolBod(2);
 
 cb = cb./(2*VolWet);
 cg = cg./(2*VolBod);
