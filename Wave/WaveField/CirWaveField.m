@@ -132,7 +132,7 @@ classdef CirWaveField < FuncWaveField
             [L, M, A0, Am, Anm] = CirWaves.SortCoefs(A);
             
             if (L > 0)
-                kl = WaveComp.SolveForK(omega, h, g, 'Evanescent', L);
+                kl = IWaves.SolveForK(omega, h, g, 'Evanescent', L);
                 kl = kl(2:end);
             end
             

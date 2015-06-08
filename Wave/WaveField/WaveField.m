@@ -380,16 +380,18 @@ classdef WaveField < IWaveField & matlab.mixin.Heterogeneous
                 error('surf must be a ControlSurface.');
             end
             
-            total = true;
+            opts = checkOptions({'PerPoint'}, varargin);
             
-            for n = 1:length(varargin)
-                switch varargin{n}
-                    case 'Total'
-                        total = true;
-                    case 'PerPoint'
-                        total = false;
-                end
-            end
+            total = ~opts(1);
+            
+%             for n = 1:length(varargin)
+%                 switch varargin{n}
+%                     case 'Total'
+%                         total = true;
+%                     case 'PerPoint'
+%                         total = false;
+%                 end
+%             end
             
             pts = surf.Points';
             nrms = surf.Norms';

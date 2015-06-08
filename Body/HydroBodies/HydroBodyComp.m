@@ -42,8 +42,10 @@ classdef HydroBodyComp < IHydroComp
             % If arg1 is a HydroBody, then arg 2 is IWaves
             % If arg1 is a HydroForces, then arg 2 is Floating Body
             
-            opts = checkOptions({{'UseBodC'}}, varargin);
+            [opts, args] = checkOptions({{'UseBodC'}, {'Constrained', 1}}, varargin);
             useBodC = opts(1);
+            const = opts(2);
+            P = args{2};
             
             hbcomp.isHB = false;
             
@@ -56,6 +58,9 @@ classdef HydroBodyComp < IHydroComp
                         error('Second argument must be IWaves');
                     elseif(~isa(varargin{2}, 'IWaves'));
                         error('Second argument must be IWaves');
+                    end
+                    if (const)
+                        error('Cannot created a constrained computation with a HydroBody');
                     end
                     iwavs = varargin{2};
                 elseif (isa(hydro, 'HydroForces'))                
@@ -75,9 +80,6 @@ classdef HydroBodyComp < IHydroComp
                     error('Inputs must be either a HydroBody or a HydroForces object and and a vector of floating bodies');
                 end
                 
-                if (~useBodC)
-                    hbcomp.c = hydro.C;
-                end
                 if (~hbcomp.isHB)       
                     for n = 1:length(fbods)
                         if (~isa(fbods(n), 'FloatingBody'))
@@ -85,16 +87,49 @@ classdef HydroBodyComp < IHydroComp
                         end
                     end
 
-                    hbcomp.initHydroParam(hydro.T, hydro.H, fbods);
+                    hbcomp.initHydroParam(hydro.T, hydro.H, fbods, const, P);
                     hbcomp.setIncWaves(iwavs);
-                    hbcomp.fex = hydro.Fex;
+                    fex_ = hydro.Fex;
+                    if (const)
+                        [M, ~] =  size(P);
+                        [Nt, Nb, ~] = size(fex_);
+                        fexc = zeros(Nt, Nb, M);
+                        for m = 1:Nt
+                            for n = 1:Nb
+                                fexc(m,n,:) = P*squeeze(fex_(m,n,:));
+                            end
+                        end
+                        fex_ = fexc;    
+                    end
+                    hbcomp.fex = fex_;
                 else
-                    hbcomp.initHydroParam(hydro.T, hydro.H, hydro);
+                    hbcomp.initHydroParam(hydro.T, hydro.H, hydro, const, P);
                     hbcomp.setIncWaves(iwavs);
                 end
+                
+                if (~useBodC)
+                    c = hydro.C;
+                    if (const)
+                        c = P*c*P.';
+                    end
+                    hbcomp.c = c;
+                end
 
-                hbcomp.a = hydro.A;
-                hbcomp.b = hydro.B;
+                a_ = hydro.A;
+                b_ = hydro.B;
+                if (const)
+                    ac = zeros(Nt, M, M);
+                    bc = zeros(Nt, M, M);
+                    for m = 1:Nt
+                        ac(m,:,:) = P*squeeze(a_(m,:,:))*P.';
+                        bc(m,:,:) = P*squeeze(b_(m,:,:))*P.';
+                    end
+                    a_ = ac;
+                    b_ = bc;
+                end
+                
+                hbcomp.a = a_;
+                hbcomp.b = b_;
 
                 [row, col] = size(squeeze(hbcomp.a(1,:,:)));
 

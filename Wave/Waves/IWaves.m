@@ -284,9 +284,8 @@ classdef IWaves < handle
     end
     methods (Static)
         
-        function [Ef] = UnitEnergyFlux(rho, T, h)
+        function [cg] = GroupVel(T, h)
             g = 9.806650;
-            e = 0.5*rho*g;
             if (isinf(h))
                 nn = 0.5;
                 c = g./(2*pi)*T;
@@ -296,7 +295,13 @@ classdef IWaves < handle
                 nn = 0.5*(1 + 2*k_*h./sinh(2*k_*h));
                 c = 2*pi./(T.*k_);
             end
-            cg = nn.*c;
+            cg = nn.*c;            
+        end
+        
+        function [Ef] = UnitEnergyFlux(rho, T, h)
+            g = 9.806650;
+            e = 0.5*rho*g;
+            cg = IWaves.GroupVel(T, h);
             Ef = e*cg;
         end
         

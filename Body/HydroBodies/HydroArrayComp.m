@@ -69,7 +69,7 @@ classdef HydroArrayComp < IHydroComp
                 end
             end
             
-            hacomp.initHydroParam(hydroBs(1).T, hydroBs(1).H, hydroBs);
+            hacomp.initHydroParam(hydroBs(1).T, hydroBs(1).H, hydroBs, false, 0);
             hacomp.omega = 2*pi./hacomp.T;
             hacomp.k0 = IWaves.SolveForK(hacomp.omega, hacomp.h);
             hacomp.hbs = hydroBs;

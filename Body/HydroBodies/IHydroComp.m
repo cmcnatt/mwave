@@ -368,7 +368,7 @@ classdef IHydroComp < handle
     end
     
     methods (Access = protected)        
-        function [] = initHydroParam(hcomp, t_, h_, bods)    
+        function [] = initHydroParam(hcomp, t_, h_, bods, const, P)    
             if (isvector(t_))
                 if (isrow(t_))
                     t_ = t_.';
@@ -381,15 +381,32 @@ classdef IHydroComp < handle
             
             hcomp.h = h_;
             
+            dof_ = IHydroComp.GetDoF(bods);
+            if (const)
+                [M, N] =  size(P);
+                if(N ~= dof_)
+                    error('Constraint P matrix not correct size');
+                end
+                dof_ = M;
+            end
+            
+            
             [m_, dpto_, dpar_, k_, c_] = IHydroComp.resizeMDK(bods);
 
+            if (const)
+                m_ = P*m_*P.';
+                dpto_ = P*dpto_*P.';
+                dpar_ = P*dpar_*P.';
+                k_ = P*k_*P.';
+                c_ = P*c_*P.';
+            end
             hcomp.m = m_;
             hcomp.dpto = dpto_;
             hcomp.dpar = dpar_;
             hcomp.k = k_;
             hcomp.c = c_;
 
-            hcomp.dof = IHydroComp.GetDoF(bods);
+            hcomp.dof = dof_;
         end
         
         function [] = setIncWaves(hcomp, iwavs)
@@ -429,7 +446,8 @@ classdef IHydroComp < handle
              % it is due to numerical errors in computing the eigenvalues.
              
              % This is the unconstained optimal velocity
-             v = 0.5*inv(b_)*f;
+             %v = 0.5*inv(b_)*f;
+              v = 0.5*(b_\f);
              if (~isnan(G(1,1)))
                  % want to compute the constained optimal velocity
                  % first, check to see whether the velocity
