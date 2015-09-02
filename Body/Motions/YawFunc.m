@@ -33,12 +33,16 @@ classdef YawFunc < IMotionFunc
         end
         
         function [f] = Evaluate(yaw, pos)
-            cg_ = yaw.cg;
-            fx = -(pos(2) - cg_(2));
-            fy = pos(1) - cg_(1);
-            fz = 0;
-            
-            f = [fx fy fz];
+            if (yaw.checkEvalPoint(pos))
+                cg_ = yaw.cg;
+                fx = -(pos(2) - cg_(2));
+                fy = pos(1) - cg_(1);
+                fz = 0;
+
+                f = [fx fy fz];
+            else
+                f = [0 0 0];
+            end            
         end
         
         function [div] = Divergence(yaw, pos)

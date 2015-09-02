@@ -36,7 +36,7 @@ classdef FloatingBristolCyl < FloatingBody
         % Constructor 
         function [fb] = FloatingBristolCyl(rho, radius, beam, depth, varargin)
 
-            [opts, args] = checkOptions({{'SphereEnd', 1}, {'FlareEnd', 1}}, varargin);
+            [opts, args] = checkOptions({{'SphereEnd', 1}, {'FlareEnd', 1}, {'CustProf', 1}}, varargin);
             if (opts(1))
                 sphLen = args{1};
             else
@@ -47,6 +47,12 @@ classdef FloatingBristolCyl < FloatingBody
                 flrRad = args{2};
             else
                 flrRad = 0;
+            end
+            
+            if (opts(3))
+                custProf = args{3};
+            else
+                custProf = [];
             end
             
             fb = fb@FloatingBody();
@@ -61,7 +67,7 @@ classdef FloatingBristolCyl < FloatingBody
             fb.position = [0 0 -depth];
             
             fb.cg = [0 0 0];
-            M = FloatingCylinder.MassMatrixCgCenter(rho, radius, beam, beam);
+            M = FloatingCylinder.MassMatrix(rho, radius, beam, beam);
             I55 = M(6,6);
             I66 = M(5,5);
             M(6,6) = I66;
@@ -70,7 +76,6 @@ classdef FloatingBristolCyl < FloatingBody
             fb.dpto = zeros(6, 6);
             fb.dpar = zeros(6, 6);
             fb.k = zeros(6, 6);
-            fb.kgm = zeros(6, 6);
 
             fb.modes = ModesOfMotion;
 
@@ -89,6 +94,9 @@ classdef FloatingBristolCyl < FloatingBody
                 elseif (flrRad > 0)
                     warning('Bristol Cylinder mass computation not correct');
                     fb.panelGeo = makePanel_horCylinder(radius, beam, Nr, Ntheta, Ny, 'FlareEnd', flrRad);
+                elseif (~isempty(custProf))
+                    warning('Bristol Cylinder mass computation not correct');
+                    fb.panelGeo = makePanel_horCylinder(radius, beam, Nr, Ntheta, Ny, 'CustProf', custProf);
                 else
                     fb.panelGeo = makePanel_horCylinder(radius, beam, Nr, Ntheta, Ny);
                 end

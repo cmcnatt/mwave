@@ -389,7 +389,7 @@ classdef HydroArrayComp < IHydroComp
                              dofn = hacomp.hbs(n).DoF;
                              qdof2 = qdof1 + dofn - 1;
                              
-                             zn = 1i/omeg*G*aIlmqn;
+                             zn = 1i/omeg*G*aIlmqn;         % This is -1/(i*omega)*G*aI
                              zq(qdof1:qdof2) = zq(qdof1:qdof2) + zn;
                              
                              qdof1 = qdof2 + 1;
@@ -404,7 +404,6 @@ classdef HydroArrayComp < IHydroComp
                      
                      ldof1 = ldof2 + 1;
                  end
-                 
                  hacomp.a(l,:,:) = imag(Z)./omeg;
                  hacomp.b(l,:,:) = real(Z);
              end

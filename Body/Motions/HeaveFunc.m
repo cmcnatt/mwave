@@ -33,7 +33,11 @@ classdef HeaveFunc < IMotionFunc
         end
         
         function [f] = Evaluate(heave, pos)
-            f = [0 0 1];
+            if (heave.checkEvalPoint(pos))
+                f = [0 0 1];
+            else
+                f = [0 0 0];
+            end
         end
         
         function [div] = Divergence(heave, pos)

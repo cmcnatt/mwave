@@ -25,12 +25,14 @@ classdef IMotionFunc < matlab.mixin.Heterogeneous & handle
         cg;
         isym;
         isGen;
+        evalCheckFunc;
     end
     
     properties (Dependent)
         Cg;
         ISym;   % Indicates the type of Symmetry of the motion
         IsGen;
+        EvalCheckFunc;
     end
     
     properties (Abstract)
@@ -69,6 +71,13 @@ classdef IMotionFunc < matlab.mixin.Heterogeneous & handle
         function [isg] = get.IsGen(motF)
             isg = motF.isGen;
         end
+        
+        function [ef] = get.EvalCheckFunc(motF)
+            ef = motF.evalCheckFunc;
+        end
+        function [motF] = set.EvalCheckFunc(motF, ef)
+            motF.evalCheckFunc = ef;
+        end
     end
     
     methods (Access = protected)
@@ -87,6 +96,14 @@ classdef IMotionFunc < matlab.mixin.Heterogeneous & handle
                 motF.cg = c;
             else
                 error('MotionFunc input not recognize');               
+            end
+        end
+        
+        function [eval] = checkEvalPoint(motF, pos)
+            if (isempty(motF.evalCheckFunc))
+                eval = true;
+            else
+                eval = motF.evalCheckFunc(pos);
             end
         end
     end

@@ -30,6 +30,8 @@ if (mod(Nx, 2) ~= 0)
     error('The number of lengthwise panels (Nx) must be even');
 end
 
+Ntheta = 2*Ntheta;
+
 if (quart)
     if (mod(Ntheta, 2) ~= 0)
         error('To generate a quarter geometry, the number of rotational panels (Ntheta) must be even');
@@ -44,8 +46,14 @@ if (quart)
 else
     dx = length/Nx;
     x = -length/2:dx:length/2;
-    dtheta = pi/Ntheta;
-    theta = -pi:dtheta:0;
+    dtheta = 2*pi/Ntheta;
+    theta = -pi:dtheta:pi;
+    
+    dy = radius*dtheta;
+    Ny = round(2*radius/dy);
+    dy = 2/Ny;
+    
+    y0 = 1:-dy:-1;
 end
 
 ctheta = cos(theta);
@@ -60,10 +68,11 @@ cone = x(ic);
 slope = radius/cone;
 
 
-pans(Nx*Ntheta, 1) = Panel;
+pans(Nx*Ntheta + Nx*Ny, 1) = Panel;
 
 r = 0;
 
+np = 0;
 
 for n = 1:Nx
     if (x(n+1) < (-length/2 + cone))
@@ -80,6 +89,7 @@ for n = 1:Nx
         rp1 = slope*(length/2 - x(n+1));
     end
 
+    % body surface
     for m = 1:Ntheta
         verts = zeros(4,3);
         verts(1,:) = [x(n) r*ctheta(m) r*stheta(m)]; % top left
@@ -87,9 +97,33 @@ for n = 1:Nx
         verts(3,:) = [x(n+1) rp1*ctheta(m+1) rp1*stheta(m+1)]; % bottom right
         verts(4,:) = [x(n+1) rp1*ctheta(m) rp1*stheta(m)]; % bottom left
 
-        pans((n-1)*Ntheta + m) = Panel(verts);
+        np = np + 1;
+        pans(np) = Panel(verts);
+        if ((stheta(m) < 0) || (stheta(m+1) < 0))
+            pans(np).IsWet = true;
+        else
+            pans(np).IsWet = false;
+        end
+        pans(np).IsBody = true;
+        pans(np).IsInterior = false;
     end
-        r = rp1;
+    
+    % interior
+    for m = 1:Ny
+        verts = zeros(4,3);
+        verts(1,:) = [x(n) r*y0(m) 0]; % top left
+        verts(2,:) = [x(n) r*y0(m+1) 0]; % top right
+        verts(3,:) = [x(n+1) rp1*y0(m+1) 0]; % bottom right
+        verts(4,:) = [x(n+1) rp1*y0(m) 0]; % bottom left
+
+        np = np + 1;
+        pans(np) = Panel(verts);
+        pans(np).IsWet = true;
+        pans(np).IsBody = false;
+        pans(np).IsInterior = true;
+    end
+    
+    r = rp1;
 end
 
 if (quart)

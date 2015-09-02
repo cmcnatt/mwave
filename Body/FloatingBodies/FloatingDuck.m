@@ -76,6 +76,7 @@ classdef FloatingDuck < FloatingBody
                 
                 C = computeHydroStatic(rho, panGeo, fb.position(3), modes);
                 fb.c = C;
+                fb.hasc = true;
                 fb.panelGeo = panGeo;
                 fb.iLowHi = 0;
                 

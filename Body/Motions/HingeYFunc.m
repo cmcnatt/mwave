@@ -38,13 +38,17 @@ classdef HingeYFunc < IMotionFunc
         end
         
         function [f] = Evaluate(hinge, pos)
-            hinPos = hinge.hingePos;
-            dx = pos(1) - hinPos(1);
-            fx = abs(pos(3) - hinPos(2))*sign(dx);
-            fy = 0;
-            fz = abs(dx);
-            
-            f = [fx fy fz];
+            if (hinge.checkEvalPoint(pos))
+                hinPos = hinge.hingePos;
+                dx = pos(1) - hinPos(1);
+                fx = abs(pos(3) - hinPos(2))*sign(dx);
+                fy = 0;
+                fz = abs(dx);
+                
+                f = [fx fy fz];
+            else
+                f = [0 0 0];
+            end
         end
         
         function [div] = Divergence(hinge, pos)

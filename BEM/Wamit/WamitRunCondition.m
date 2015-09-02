@@ -34,6 +34,7 @@ classdef WamitRunCondition < IBemRunCondition
         useridPath;
         ncpu;
         ramGB;
+        maxItt;
     end
 
     properties (Dependent)
@@ -51,6 +52,7 @@ classdef WamitRunCondition < IBemRunCondition
         UseridPath;         % Path location of userid.wam license file
         NCPU;               % The number of cpus to be used in the Wamit computation
         RAMGBmax;           % The max RAM to be used in the Wamit computation
+        MaxItt;
     end
 
     methods
@@ -66,6 +68,7 @@ classdef WamitRunCondition < IBemRunCondition
             run.useridPath = 'N:\wamitv7';
             run.ncpu = 1;
             run.ramGB = 2;
+            run.maxItt = 35;
             run.geoFiles = [];
             if (nargin == 0)
                 run.folder = ' ';
@@ -140,8 +143,8 @@ classdef WamitRunCondition < IBemRunCondition
             % Set the wave headings to be run in wamit (radians)
             if (isnumeric(bet))
                 for n = 1:length(bet)
-                    if(bet(n) < 0 || bet(n) > 2*pi)
-                        error('All wave headings must be between 0 and 2pi radians');
+                    if(bet(n) < -pi || bet(n) > 2*pi)
+                        error('All wave headings must be between -pi and 2pi radians');
                     end
                 end
                 run.beta = bet;
@@ -288,6 +291,19 @@ classdef WamitRunCondition < IBemRunCondition
             run.ramGB = ram;
         end
         
+        function [mi] = get.MaxItt(run)
+            % The max number of iterations - default is 35
+            mi = run.maxItt;
+        end
+        function [run] = set.MaxItt(run, mi)
+             % The max number of iterations - default is 35
+            if (~isInt(mi) || (mi <= 0))                
+                error('The MaxItt must be an integer greater than 0');
+            end
+            
+            run.maxItt = mi;
+        end
+        
         function [] = WriteRun(run, varargin)
             % Writes the Input files (except for the .gdf) for a WAMIT run
             
@@ -317,9 +333,9 @@ classdef WamitRunCondition < IBemRunCondition
                 fileID = fopen(filename, 'wt');
                 
                 fprintf(fileID, ['set "fN=' run.runName '"\n\n']);
-                fprintf(fileID, 'del %%fN%%.1 %%fN%%.2 %%fN%%.3 %%fN%%.4 ');
+                fprintf(fileID, 'del %%fN%%.out %%fN%%.1 %%fN%%.2 %%fN%%.3 %%fN%%.4 ');
                 fprintf(fileID, '%%fN%%.5 %%fN%%.6p %%fN%%.6vx %%fN%%.6vy %%fN%%.6vz ');
-                fprintf(fileID, '%%fN%%.fpt %%fN%%.out %%fN%%.p2f errorf.log ');
+                fprintf(fileID, '%%fN%%.fpt %%fN%%.p2f errorf.log ');
                 fprintf(fileID, 'errorp.log rgkinit.txt rgklog.txt wamitlog.txt %%fN%%_batch.log\n\n');
                 if (run.floatBods(1).WamIGenMds == 0 && run.floatBods(1).Ngen > 0)
                     for n = 1:nbody
@@ -399,6 +415,10 @@ classdef WamitRunCondition < IBemRunCondition
         function [] = writeGdf(run, fb, geoFile, includeInt)
             
             geo = fb.PanelGeo;
+            %%%%%% make a copy
+            geo = PanelGeo(geo);
+            geo.Translate(-fb.CenterRot); %translate to rotate about center of rotation.
+            
             filename = [run.folder '\' geoFile '.gdf'];
             fileID = fopen(filename, 'wt');
             
@@ -479,6 +499,9 @@ classdef WamitRunCondition < IBemRunCondition
             fprintf(fileID, 'IFORCE = 1\n');
             fprintf(fileID, 'ILOWHI = %i\n', run.floatBods(1).WamILowHi);
             if (run.floatBods(1).WamILowHi)
+                fprintf(fileID, 'PANEL_SIZE = %i\n', run.floatBods(1).WamPanelSize); 
+            end
+            if (run.floatBods(1).WamILowHi)
                 fprintf(fileID, 'ILOWGDF = 0\n');
             end
             if (~all([isempty(run.fieldArray) isempty(run.fieldPoints) isempty(run.cylArray)]))
@@ -507,7 +530,7 @@ classdef WamitRunCondition < IBemRunCondition
             else
                 fprintf(fileID, 'ISOR = 0\n');
             end
-            fprintf(fileID, 'MAXITT = 100\n');
+            fprintf(fileID, 'MAXITT = %i\n', run.maxItt);
             fprintf(fileID, 'MAXMIT = 8\n');
             fprintf(fileID, 'MONITR = 0\n');
             fprintf(fileID, 'NOOUT = 0  0  0  0  0  0  0  0  0\n');
@@ -563,6 +586,8 @@ classdef WamitRunCondition < IBemRunCondition
             for n = 1:nbody
                 fb = run.floatBods(n);
                 cg = fb.Cg;
+                cR = fb.CenterRot;
+                cg = cg - cR;
                 fprintf(fileID, '%8.4f\t%8.4f\t%8.4f\t', cg(1), cg(2), cg(3));
                 mod = fb.Modes;
                 ndof = ndof + 6 + fb.Ngen;
@@ -722,7 +747,12 @@ classdef WamitRunCondition < IBemRunCondition
                 fprintf(fileID, [run.geoFiles{n} '.gdf\n']);
                 % x, y, z, and angle (degrees of body x-axis relative to global x-axis) of
                 % body n
-                fprintf(fileID, '%8.4f\t%8.4f\t%8.4f\t%8.4f\n', fb.XYpos(1), fb.XYpos(2), fb.Zpos, fb.Angle);
+                %%%%
+                cR = fb.CenterRot;
+                pos = [fb.XYpos(1) fb.XYpos(2) fb.Zpos];
+                pos = pos + cR; % add cg bc body moved so cg is the origin. 
+                fprintf(fileID, '%8.4f\t%8.4f\t%8.4f\t%8.4f\n', pos(1), pos(2), pos(3), fb.Angle);
+                %fprintf(fileID, '%8.4f\t%8.4f\t%8.4f\t%8.4f\n', fb.XYpos(1), fb.XYpos(2), fb.Zpos, fb.Angle);
                 % modes to be computed of body n
                 modes = fb.Modes;
                 vect = modes.Vector;

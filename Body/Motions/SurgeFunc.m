@@ -33,7 +33,11 @@ classdef SurgeFunc < IMotionFunc
         end
         
         function [f] = Evaluate(surge, pos)
-            f = [1 0 0];
+            if (surge.checkEvalPoint(pos))
+                f = [1 0 0];
+            else
+                f = [0 0 0];
+            end
         end
         
         function [div] = Divergence(surge, pos)

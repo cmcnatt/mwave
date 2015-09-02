@@ -42,6 +42,7 @@ points = zeros(Nr*Ntheta*Nz, 3);
 
 delTheta = 2*pi/Ntheta;
 theta = 0:delTheta:(2*pi - delTheta);
+%theta = -pi:delTheta:(pi - delTheta);
 ctheta = cos(theta);
 stheta = sin(theta);
 

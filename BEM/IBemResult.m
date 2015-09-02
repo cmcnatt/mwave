@@ -46,6 +46,7 @@ classdef IBemResult < handle
         wavePoints;
         waveArray;
         hasBeenRead;
+        errLog;
     end
 
     properties (Dependent)
@@ -59,6 +60,7 @@ classdef IBemResult < handle
         HydroForces;        % Hydrodynamic forces computed by WAMIT
         WavePoints;         % Wave field at field points
         WaveArray;          % Wave field at array locations
+        ErrorLog;
     end
     
     methods (Abstract)
@@ -166,6 +168,14 @@ classdef IBemResult < handle
                 wa = result.waveArray;
             else
                 wa = [];
+            end
+        end
+        
+        function [er] = get.ErrorLog(result)
+            if (result.hasBeenRead)
+                er = result.errLog;
+            else
+                er = [];
             end
         end
         

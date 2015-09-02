@@ -39,8 +39,8 @@ classdef FloatingBox < FloatingBody
         function [fb] = FloatingBox(rho, length, beam, height, draft, varargin)
             fb = fb@FloatingBody();
             dep = draft - height/2;
-            fb.position = [0 0 -dep];
-            fb.cg = [0 0 0];
+            fb.position = [0 0 0];
+            fb.cg = [0 0 -dep];
             fb.m = FloatingBox.MassMatrix(rho, length, beam, height, draft);
             
             fb.len = length;
@@ -49,17 +49,25 @@ classdef FloatingBox < FloatingBody
             fb.draft = draft;
             
             if (~isempty(varargin))
-                if (size(varargin,2) ~= 3)
+                if (size(varargin,2) < 3)
                     error('There must be three optional inputs to FloatingFlap: Nx, Ny, Nz');
                 end
+                
                 Nx = varargin{1};
                 Ny = varargin{2};
                 Nz = varargin{3};
-                %panGeo = makePanel_box(len, beam, draft, Nx, Ny, Nz, 'Quarter');
-                panGeo = makePanel_box(length, beam, draft, Nx, Ny, Nz);
-                panGeo.Translate(-fb.position);
+                
+                opts = checkOptions({{'NoInt'}}, varargin);
+                
+                panGeo = makePanel_box(length, beam, draft, Nx, Ny, Nz, varargin{:});
+
                 fb.panelGeo = panGeo;
                 fb.iLowHi = 0;
+                if (opts(1))
+                    fb.iSurfPan = false;
+                else
+                    fb.iSurfPan = true;
+                end
             end
             
             fb.wpSec = [length/2 -beam/2; length/2 beam/2; -length/2 beam/2; -length/2 -beam/2; length/2 -beam/2];
@@ -85,7 +93,7 @@ classdef FloatingBox < FloatingBody
         
         function [] = MakePanelGeometry(fb, Nx, Ny, Nz)
             panGeo = makePanel_box(fb.length, fb.beam, fb.draft, Nx, Ny, Nz, 'Quarter');
-            panGeo.Translate(-fb.position);
+            %panGeo.Translate(-fb.position);
             fb.panelGeo = panGeo;
             fb.iLowHi = 0;
         end

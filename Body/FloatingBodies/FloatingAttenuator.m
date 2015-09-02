@@ -35,6 +35,10 @@ classdef FloatingAttenuator < FloatingBody
     methods
         % Constructor 
         function [fb] = FloatingAttenuator(rho, length, radius, conePct, varargin)
+            opts = checkOptions({{'NoInt'}}, varargin);
+           
+            noInt = opts(1);
+            
             fb = fb@FloatingBody();
             
             if (conePct > 0.25)
@@ -48,22 +52,35 @@ classdef FloatingAttenuator < FloatingBody
             fb.cg = [0 0 0];
             
             fb.m = FloatingAttenuator.MassMatrix(rho, length, radius, conePct);
-            fb.d = zeros(7, 7);
             fb.dpto = zeros(7, 7);
             fb.dpar = zeros(7, 7);
             fb.k = zeros(7, 7);
+            fb.c = zeros(7, 7);
             
-            fb.modes = ModesOfMotion([1 1 1 1 1 1 1]);
+            modes = ModesOfMotion();
+            modes.Generalized = 1;
+            hfunc = HingeYFunc();
+            hfunc.HingePos = [0 0];
+            modes.GenMotFuncs = hfunc;
+            fb.modes = modes;
             fb.nGen = 1;
             
             if (~isempty(varargin))
-                if (size(varargin,2) ~= 2)
+                if (size(varargin,2) < 2)
                     error('There must be two optional inputs to FloatingAttenuator: Nx, Ntheta');
                 end
                 Nx = varargin{1};
                 Ntheta = varargin{2};
                 fb.panelGeo = makePanel_attenuator(length, radius, conePct, Nx, Ntheta);
+                if (noInt)
+                    fb.iSurfPan = 0;
+                else
+                    fb.iSurfPan = 1;
+                end
                 fb.iLowHi = 0;
+                
+                fb.c = computeHydroStatic(rho, fb.panelGeo, 0, fb.modes);
+                fb.hasc = true;
             end
             
             fb.iGenMds = 27;
@@ -136,6 +153,11 @@ classdef FloatingAttenuator < FloatingBody
             Izz = Iyy;
             % Generalized mode
             Igg = Iyy;
+            % Generalized mode/cross mode
+            xcgCon1 = 2/3*lcon;
+            xcgCon2 = length/2 - 2/3*lcon;
+            xcgCyl = lcon + lcyl/2;
+            Ihg = 2*(mcon*(xcgCon1 + xcgCon2) + mcyl*xcgCyl);
 
             M = zeros(7,7);
 
@@ -147,6 +169,8 @@ classdef FloatingAttenuator < FloatingBody
             M(4,4) = Ixx;
             M(5,5) = Iyy;
             M(6,6) = Izz;
+            M(3,7) = Ihg;
+            M(7,3) = Ihg;
             M(7,7) = Igg;
         end
     end

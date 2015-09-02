@@ -509,14 +509,14 @@ classdef WaveField < IWaveField & matlab.mixin.Heterogeneous
                 end
                 
                 for n = 1:wf.nT
-                    pm = wf.p{m};
-                    pm(in) = NaN;
-                    wf.p{m} = pm;
+                    pn = wf.p{n};
+                    pn(in) = NaN;
+                    wf.p{n} = pn;
                     
                     if (wf.hasvel)
-                        velm = wf.vel{m};
-                        velm(in,:) = NaN;
-                        wf.vel{m} = velm;
+                        veln = wf.vel{n};
+                        veln(in,:) = NaN;
+                        wf.vel{n} = veln;
                     end
                 end
             end

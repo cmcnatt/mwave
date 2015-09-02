@@ -33,12 +33,16 @@ classdef RollFunc < IMotionFunc
         end
         
         function [f] = Evaluate(roll, pos)
-            cg_ = roll.cg;
-            fx = 0;
-            fy = -(pos(3) - cg_(3));
-            fz = (pos(2) - cg_(2));
-            
-            f = [fx fy fz];
+            if (roll.checkEvalPoint(pos))
+                cg_ = roll.cg;
+                fx = 0;
+                fy = -(pos(3) - cg_(3));
+                fz = (pos(2) - cg_(2));
+                
+                f = [fx fy fz];
+            else
+                f = [0 0 0];
+            end            
         end
         
         function [div] = Divergence(roll, pos)

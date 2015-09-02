@@ -21,6 +21,7 @@ Contributors:
 classdef MotionsVideo < handle
     
     properties (Access = private)
+        nBod;
         t;
         h;
         omega;
@@ -65,25 +66,61 @@ classdef MotionsVideo < handle
             
             mv.t = period;
             mv.omega = 2*pi/period;
-            dof_ = length(motions);
-            mv.dof = dof_;
-            mv.waveA = 1;
             
-            if (length(motionFuncs) ~= dof_)
-                error('The number of motion functions must be the same as the number of motions (i.e. the DoF)');
+            if (iscell(motions))
+                mv.nBod = length(motions);
+                                
+                if (~iscell(motionFuncs))
+                    error('If motions are provided as a cell, then so must the motionFuncs and the bodyPoints');
+                end
+                
+                if (~iscell(bodyPoints))
+                    error('If motions are provided as a cell, then so must the motionFuncs and the bodyPoints');
+                end
+                
+                if (mv.nBod == 1)
+                    mv.motions = motions{1};
+                    mv.motionFuncs = motionFuncs{1};
+                    mv.bodyPoints = bodyPoints{1};  
+                else
+                    mv.motions = motions;
+                    mv.motionFuncs = motionFuncs;
+                    mv.bodyPoints = bodyPoints;  
+                end
+            else
+                mv.nBod = 1;
+                mv.motions = motions;
+                mv.motionFuncs = motionFuncs;
+                mv.bodyPoints = bodyPoints;  
             end
             
-            mv.motions = motions;
-            mv.motionFuncs = motionFuncs;
-            
-            [~, col] = size(bodyPoints);
-            
-            if (col ~= 3)
-                error('The body points must be an Np x 3 vector of [x, y, z] body points');
+            dofs = zeros(mv.nBod,1);
+            for n = 1:mv.nBod
+                if (iscell(motions))
+                    motn = motions{n};
+                    motFunn = motionFuncs{n};
+                    bodPntn = bodyPoints{n};
+                else
+                    motn = motions;
+                    motFunn = motionFuncs;
+                    bodPntn = bodyPoints;
+                end
+                
+                dofs(n) = length(motn);
+                
+                if (length(motFunn) ~= dofs(n))
+                    error('The number of motion functions must be the same as the number of motions (i.e. the DoF)');
+                end
+                
+                [~, col] = size(bodPntn);
+                
+                if (col ~= 3)
+                    error('The body points must be an Np x 3 vector of [x, y, z] body points');
+                end
             end
             
-            mv.bodyPoints = bodyPoints;       
-            
+            mv.dof = dofs;
+            mv.waveA = 1;  
             mv.showWave = false;
         end
                 
@@ -124,8 +161,20 @@ classdef MotionsVideo < handle
             mot = mv.motions;
         end
         function [mv] = set.Motions(mv, mot)
-            if (length(mot) ~= mv.dof)
-                error('The number of motions must be the same as the DoF');
+            if (mv.nBod > 1)
+                if (~iscell(mot) || (length(mot) ~= mv.nBod))
+                    error('For multiple bodies, input must be cell of length equal to the number of bodies');
+                end
+            end
+            for n = 1:mv.nBod
+                if (iscell(mot))
+                    mo = mot{n};
+                else
+                    mo = mot;
+                end
+                if (length(mo) ~= mv.dof(n))
+                    error('The number of motions must be the same as the DoF');
+                end
             end
             mv.isComp = false;
             mv.motions = mot;
@@ -135,8 +184,20 @@ classdef MotionsVideo < handle
             mf = mv.motionFuncs;
         end
         function [mv] = set.MotionFuncs(mv, motFuncs)
-            if (length(motFuncs) ~= mv.dof)
-                error('The number of motion functions must be the same as the DoF');
+            if (mv.nBod > 1)
+                if (~iscell(motFuncs) || (length(motFuncs) ~= mv.nBod))
+                    error('For multiple bodies, input must be cell of length equal to the number of bodies');
+                end
+            end
+            for n = 1:mv.nBod
+                if (iscell(mot))
+                    mf = motFuncs{n};
+                else
+                    mf = motFuncs;
+                end
+                if (length(mf) ~= mv.dof(n))
+                    error('The number of motion functions must be the same as the DoF');
+                end
             end
             mv.isComp = false;
             mv.motionFuncs = motFuncs;
@@ -146,10 +207,23 @@ classdef MotionsVideo < handle
             bp = mv.bodyPoints;
         end
         function [mv] = set.BodyPoints(mv, bodyPs)
-            [~, col] = size(bodyPs);
+            if (mv.nBod > 1)
+                if (~iscell(bodyPs) || (length(bodyPs) ~= mv.nBod))
+                    error('For multiple bodies, input must be cell of length equal to the number of bodies');
+                end
+            end
             
-            if (col ~= 3)
-                error('The body points must be an Np x 3 vector of [x, y, z] body points');
+            for n = 1:mv.nBod
+                if (iscell(bodyPs))
+                    bps = bodyPs{n};
+                else
+                    bps = bodyPs;
+                end
+                [~, col] = size(bps);
+
+                if (col ~= 3)
+                    error('The body points must be an Np x 3 vector of [x, y, z] body points');
+                end
             end
             mv.isComp = false;
             mv.bodyPoints = bodyPs;
@@ -176,6 +250,12 @@ classdef MotionsVideo < handle
             end
             xli = mv.xlim;
         end
+        function [mv] = set.Xlim(mv, xli)
+            if (length(xli) ~= 1)
+                error('Xlim must be a scalar. Limits are +/-Xlim');
+            end
+            mv.xlim = xli;
+        end
         
         function [zli] = get.Zlim(mv)
             if (~mv.isComp)
@@ -200,26 +280,52 @@ classdef MotionsVideo < handle
                 xwav = [];
             end
             
-            bodPos = mv.bodyPoints + real(mv.pointMot*time);
+            if (mv.nBod == 1)
+                bodPos = mv.bodyPoints + real(mv.pointMot*time);
+            else
+                bodPos = cell(mv.nBod, 1);
+                for n = 1:mv.nBod
+                    bodPos{n} = mv.bodyPoints{n} + real(mv.pointMot{n}*time);
+                end
+            end
         end
         
         function [mov] = movie(runTime, dt, motionsVids, varargin)
             % overloaded movie function
             
-            [opts, args] = checkOptions({{'EqualZ'}, {'Title', 1}, {'YLabel', 1}}, varargin);
+            [opts, args] = checkOptions({{'EqualZ'}, {'Title', 1}, ...
+                {'YLabel', 1}, {'Xlim', 1}, {'Zlim', 1}, {'NoPause'}}, varargin);
             
             equalz = opts(1);
             if (opts(2))
-                titl = args{2}{1};
+                titl = args{2};
             else
                 titl = -1;
             end
             
             if (opts(3))
-                ylab = args{3}{1};
+                ylab = args{3};
             else
                 ylab = -1;
             end
+            
+            if (opts(4))
+                xlimin = true;
+                xli = args{4};
+            else
+                xlimin = false;
+                xli = [];
+            end
+            
+            if (opts(5))
+                zlimin = true;
+                zli = args{5};
+            else
+                zlimin = false;
+                zli = [];
+            end
+            
+            noPause = opts(6);
                         
             ti = 0:dt:runTime;
             Nti = length(ti);
@@ -234,9 +340,19 @@ classdef MotionsVideo < handle
             for n = 1:Nmvs
                 %plotaxes(n) = subplot(Nmvs, 1, n);
                 
-                axis equal;
-                limx(n) = motionsVids(n).Xlim;
-                limz(n) = motionsVids(n).Zlim;
+                if (xlimin)
+                    limx(n) = xli;
+                    motionsVids(n).Xlim = xli;
+                else
+                    limx(n) = motionsVids(n).Xlim;
+                end
+                
+                if (zlimin)
+                    limz(n) = zli;
+                else
+                    limz(n) = motionsVids(n).Zlim;
+                end
+                
                 if (limz(n) > maxz)
                     maxz = limz(n);
                 end
@@ -250,12 +366,17 @@ classdef MotionsVideo < handle
             nFrames = Nti;
             mov(1:nFrames) = struct('cdata',[], 'colormap',[]);
             
+            thisFig = gcf;
             for m = 1:Nti
                 for n = 1:Nmvs
+                    if (gcf ~= thisFig)
+                        return;
+                    end
                     %set(gcf,'CurrentAxes',plotaxes(n));
                     subplot(Nmvs, 1, n);
                     cla;
                     set(gca, 'xlim', [-limx(n) limx(n)], 'ylim', [-limz(n) limz(n)]);
+
                     if (n == 1)
                         if (titl ~= -1)
                             title(titl);
@@ -265,7 +386,7 @@ classdef MotionsVideo < handle
                     [bp, wav, xwav] = motionsVids(n).GetPoints(ti(m));
                     
                     if (motionsVids(n).ShowWave)
-                        plot(xwav,wav);
+                        plot(xwav,wav, 'LineWidth', 1.2);
                     end
                     hold on;
                     
@@ -273,11 +394,24 @@ classdef MotionsVideo < handle
                         ylabel(ylab{n});
                     end
                     
-                    scatter(bp(:,1), bp(:,3));
-                    plot(bp(:,1), bp(:,3));
+                    if (iscell(bp))
+                        for o = 1:length(bp)
+                            scatter(bp{o}(:,1), bp{o}(:,3), '.');
+                            plot(bp{o}(:,1), bp{o}(:,3), 'LineWidth', 1.2 );
+                        end
+                    else
+                        scatter(bp(:,1), bp(:,3), '.');
+                        plot(bp(:,1), bp(:,3), 'LineWidth', 1.2 );
+                    end
+                    if (m == 1)
+                        axis equal
+                    end
+                end
+                if (~noPause)
                     pause(0.5*dt);
                 end
                 mov(m) = getframe(gcf);
+                
             end
         end
     end
@@ -286,28 +420,68 @@ classdef MotionsVideo < handle
         function [] = computeMotWave(mv)            
             mv.omega = 2*pi/mv.t;                      
                         
-            Np = size(mv.bodyPoints, 1);
-            
-            mv.pointMot = zeros(Np, 3);
-            
-            for m = 1:Np
-                for n = 1:mv.dof
-                    mv.pointMot(m,:) = mv.pointMot(m,:) + mv.motions(n)*mv.motionFuncs(n).Evaluate(mv.bodyPoints(m,:));
+            if (mv.nBod == 1)
+                Np = size(mv.bodyPoints, 1);
+
+                mv.pointMot = zeros(Np, 3);
+
+                for m = 1:Np
+                    for n = 1:mv.dof
+                        mv.pointMot(m,:) = mv.pointMot(m,:) + mv.motions(n)*mv.motionFuncs(n).Evaluate(mv.bodyPoints(m,:));
+                    end
+                end
+
+                bp = mv.bodyPoints + abs(mv.pointMot);
+            else
+                mv.pointMot = cell(mv.nBod, 1);
+                bp = cell(mv.nBod, 1);
+                for l = 1:mv.nBod
+                    Np = size(mv.bodyPoints{l}, 1);
+
+                    mv.pointMot{l} = zeros(Np, 3);
+
+                    for m = 1:Np
+                        for n = 1:mv.dof
+                            mv.pointMot{l}(m,:) = mv.pointMot{l}(m,:) + mv.motions{l}(n)*mv.motionFuncs{l}(n).Evaluate(mv.bodyPoints{l}(m,:));
+                        end
+                    end
+
+                    bp{l} = mv.bodyPoints{l} + abs(mv.pointMot{l});
                 end
             end
             
-            bp = mv.bodyPoints + abs(mv.pointMot);
-            
             k = IWaves.SolveForK(mv.omega, mv.h, IWaves.G);
-            lam = 2*pi./k;
-            limx = max(abs(bp(:,1)));
-            if (limx < 0.25*lam)
-                limx = 0.25*lam;
+            
+            if (isempty(mv.xlim))
+                lam = 2*pi./k;
+                if (mv.nBod == 1)
+                    limx = max(abs(bp(:,1)));
+                else
+                    limx = 0;
+                    for n = 1:mv.nBod
+                        limxn = max(abs(bp{n}(:,1)));
+                        if (limxn > limx)
+                            limx = limxn;
+                        end
+                    end
+                end
+                if (limx < 0.25*lam)
+                    limx = 0.25*lam;
+                end
+                mv.xlim = limx + 0.5*limx;
             end
             
-            mv.xlim = limx + 0.5*limx;
-            
-            limz = max(abs(bp(:,3)));
+            if (mv.nBod == 1)
+                limz = max(abs(bp(:,3)));
+            else
+                limz = 0;
+                for n = 1:mv.nBod
+                    limzn = max(abs(bp{n}(:,3)));
+                    if (limzn > limz)
+                        limz = limzn;
+                    end
+                end
+            end
 %             if (limz < 1)
 %                 limz = 1;
 %             end

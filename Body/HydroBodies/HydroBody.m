@@ -130,6 +130,10 @@ classdef HydroBody < FloatingBody
                 hb.fexTM = ftm;
                 hb.radCoefs = radCs;
             end
+            if (isempty(body.C))
+                hb.c = hb.hydroForces.C;    
+                hb.hasc = true;
+            end
         end
         
         function [t_] = get.T(hb)

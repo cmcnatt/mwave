@@ -326,7 +326,7 @@ classdef WamitUT < matlab.unittest.TestCase
             sphereRad = 0.1*len;
             Nx = 80;              
             Ntheta = 24;           
-            wec = FloatingSphereEndCylHinge(rho, len, dia/2, sphereRad, hingePos, Nx, Ntheta);  
+            wec = FloatingSphereEndCyl(rho, len, dia/2, sphereRad, hingePos, Nx, Ntheta, 'Notch');  
             
             % Let's look at the Geometry..
             figure;
@@ -431,7 +431,7 @@ classdef WamitUT < matlab.unittest.TestCase
             Nr = 8;
             Nz = 24;
             
-            cyl = FloatingCylinder(rho, diameter/2, height, draft, Ntheta, Nr, Nz);
+            cyl = FloatingCylinder(rho, diameter/2, height, draft, Ntheta, Nr, Nz, 'NoInt');
 
             damping = zeros(6,6);
             damping(3,3) = D;

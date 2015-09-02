@@ -26,8 +26,11 @@ classdef FloatingTrap < FloatingBody
         beam;
         height;
         draft;
+        angF;
+        angB;
         theta;
-        surfArea;
+        trap;
+        trapWet;
     end
 
     properties (Dependent)
@@ -35,9 +38,10 @@ classdef FloatingTrap < FloatingBody
         LengthBottom;
         Beam;
         Height;
+        AngFront;
+        AngBack;
         Draft;
         Theta;
-        SurfaceArea;
     end
     
     methods
@@ -45,10 +49,13 @@ classdef FloatingTrap < FloatingBody
         function [fb] = FloatingTrap(rho, lenTop, lenBot, dLenF, beam, height, draft, varargin)
             fb = fb@FloatingBody();
             
-            [m_, cg_, theta_] = FloatingTrap.MassMatrix(rho, lenTop, lenBot, dLenF, beam, height, draft);
+            fb.position = [0 0 0];
+
+            [m_, cg_, theta_, cb_] = FloatingTrap.MassMatrix(rho, lenTop, lenBot, dLenF, beam, height, draft);
             fb.m = m_;
-            fb.position = [0 0 cg_(3)];
-            fb.cg = [cg_(1) 0 0];
+
+            fb.cg = cg_;
+            fb.cb = cb_;
             fb.theta = theta_;
             
             fb.lenTop = lenTop;
@@ -58,31 +65,38 @@ classdef FloatingTrap < FloatingBody
             fb.draft = draft;
             
             if (~isempty(varargin))
-                if (size(varargin,2) ~= 3)
-                    error('There must be three optional inputs to FloatingFlap: Nx, Ny, Nz');
+
+                if (size(varargin,2) < 3)
+                    error('There must be at least three optional inputs to FloatingFlap: Nx, Ny, Nz');
                 end
                 Nx = varargin{1};
                 Ny = varargin{2};
                 Nz = varargin{3};
-                %panGeo = makePanel_box(len, beam, draft, Nx, Ny, Nz, 'Quarter');
-                panGeo =  makePanel_trap(lenTop, lenBot, dLenF, beam, height, draft, Nx, Ny, Nz);
-                panGeo.Translate([0 0 -cg_(3)]);
+                [panGeo, prof] =  makePanel_trap2(lenTop, lenBot, dLenF, beam, height, draft, Nx, Ny, Nz, varargin{:});
+                
+                opts = checkOptions({{'NoInt'}}, varargin);
+                if (opts(1))
+                    fb.iSurfPan = 0;
+                else
+                    fb.iSurfPan = 1;
+                end
                 fb.panelGeo = panGeo;
                 fb.iLowHi = 0;
             end
             
-            xZ = FloatingTrap.Xz(lenTop, lenBot, dLenF, height, draft, 0);
+            fb.angF = atan2(prof(4,1) - prof(1,1), (prof(4,2) - prof(1,2)));
+            fb.angB = atan2(prof(2,1) - prof(3,1), (prof(2,2) - prof(3,2)));
+            
+            fb.trap = Trapazoid(prof(1:4,:));
+            xZ = fb.trap.Xz(0);
+            
+            vwet = prof(1:4,:);
+            vwet(1,:) = [xZ(1), 0];
+            vwet(2,:) = [xZ(2), 0];
+            
+            fb.trapWet = Trapazoid(vwet);
+
             fb.wpSec = [xZ(2) -beam/2; xZ(2) beam/2; xZ(1) beam/2; xZ(1) -beam/2; xZ(2) -beam/2];
-            
-            ang1 = atan2(height, dLenF);
-            lenSide1 = abs(height/sin(ang1));
-            
-            ang2 = atan2(height, lenBot + dLenF - lenTop);
-            lenSide2 = abs(height/sin(ang1));
-            
-            sa = (lenTop + lenBot + lenSide1 + lenSide2)*beam + (lenTop + lenBot)*height;
-            
-            fb.surfArea = sa;
         end
     end
     
@@ -107,22 +121,26 @@ classdef FloatingTrap < FloatingBody
             d = fb.draft;
         end
         
+        function [a] = get.AngFront(fb)
+            a = fb.angF;
+        end
+        
+        function [a] = get.AngBack(fb)
+            a = fb.angB;
+        end
+        
         function [thet] = get.Theta(fb)
             thet = fb.theta;
         end
-        
-        function [sa] = get.SurfaceArea(fb)
-            sa = fb.surfArea;
-        end
-        
+                
         function [] = MakePanelGeometry(fb, Nx, Ny, Nz)
-            panGeo = makePanel_box(fb.length, fb.beam, fb.draft, Nx, Ny, Nz, 'Quarter');
-            panGeo.Translate(-fb.position);
-            fb.panelGeo = panGeo;
-            fb.iLowHi = 0;
+            warning('MakePanelGeometry not implemented');
         end
     end
     
+    methods (Access = protected)
+    end
+        
     methods (Static)
         function [xZ] = Xz(lenTop, lenBot, dLenF, height, draft, z)
             
@@ -135,25 +153,42 @@ classdef FloatingTrap < FloatingBody
             xZ = [xzF xzB];
         end
         
-        function [M, cg, theta] = MassMatrix(rho, lenTop, lenBot, dLenF, beam, height, draft)
-            
+        function [M, cg, theta, cb] = MassMatrix(rho, lenTop, lenBot, dLenF, beam, height, draft)
             % Area, cg, and moment of inertia of trapazoid assuming
             % constant density
-            [Ag, Cg, Ig] = FloatingTrap.trapAreaCen(lenTop, lenBot, dLenF, height, draft);
+            trp = Trapazoid.MakeTrap(lenTop, lenBot, dLenF, height, draft);
+            Ag = trp.Area;
+            Cg = trp.Centroid;
+            Ig = trp.Interia;
+            
+            xZ = trp.Xz(0);
+            lenZero = xZ(2) - xZ(1);
+            verts = trp.Vertices;
+            
+            vwet = verts(1:4,:);
+            vwet(1,:) = [xZ(1), 0];
+            vwet(2,:) = [xZ(2), 0];
+            
+            trpWet = Trapazoid(vwet);
+            
+            % [Ag, Cg, Ig] = FloatingTrap.trapAreaCen(lenTop, lenBot, dLenF, height, draft);
            
             % Area, cb, and moment of inertia of trapzoid below water
             % assuming constant density
-            xZ = FloatingTrap.Xz(lenTop, lenBot, dLenF, height, draft, 0);
-            lenZero = xZ(2) - xZ(1);
-            dLenFZero = -lenTop/2+dLenF - xZ(1);
-           
-            [Ab, Cb, Ib] = FloatingTrap.trapAreaCen(lenZero, lenBot, dLenFZero, draft, draft);
+%             xZ = FloatingTrap.Xz(lenTop, lenBot, dLenF, height, draft, 0);
+%             lenZero = xZ(2) - xZ(1);
+%             dLenFZero = -lenTop/2+dLenF - xZ(1);
+%            
+%             [Ab, Cb, Ib] = FloatingTrap.trapAreaCen(lenZero, lenBot, dLenFZero, draft, draft);
+
+            Ab = trpWet.Area;
+            cb = trpWet.Centroid;
             
             % The cgx and cbx may not be the same, which will cause a
             % moment hydrostatic moment
             
             % Torque due to Cg and Cb offset
-            Ts = (Cg(1)-Cb(1))*Ab;
+            Ts = (Cg(1)-cb(1))*Ab;
             
             % Moment arm of hydrostaic rotation
             Rarea = 1/3*((lenZero - Cg(1))^2 + (lenZero + Cg(1))^2);
@@ -162,13 +197,14 @@ classdef FloatingTrap < FloatingBody
             theta = Ts/Rarea;
             
             cg = [Cg(1) 0 Cg(2)];
+            cb = [cb(1) 0 cb(2)];
             
             rhoBod = Ab/Ag*rho;
             m = rhoBod*Ag*beam;
                                     
             Iyy = rhoBod*beam*Ig;
             
-            xCg = FloatingTrap.Xz(lenTop, lenBot, dLenF, height, draft, cg(3));
+            xCg = trp.Xz(cg(3));
             lenCg = xCg(2) - xCg(1);
             
             Ixx = 1/12*m*(height^2+beam^2);

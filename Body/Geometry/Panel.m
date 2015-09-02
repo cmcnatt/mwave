@@ -135,7 +135,7 @@ classdef Panel < handle
         
         function [] = Translate(pan, vector)
             if (length(vector) ~= 3)
-                error('Transtaltional vector must be Nx1 or Nx3');
+                error('Translational vector must be 3x1 or 1x3');
             end
             n = size(vector);
             if (n == 3)
@@ -197,28 +197,51 @@ classdef Panel < handle
             onlyWet = opts(4);
             showInt = opts(5);
             
-            plotThis = true;
-            if (onlyWet && ~pan.isWet)
-                plotThis = false;                    
+            if (onlyWet)
+                if (pan.isWet)
+                    if (pan.isIn)
+                        if (showInt)
+                            plotThis = true;
+                        else
+                            plotThis =  false;
+                        end
+                    else
+                        plotThis = true;
+                    end
+                else
+                    plotThis = false;
+                end
+            else
+                if (pan.isBody)
+                    plotThis = true;
+                else
+                    plotThis = false;
+                end
             end
+                
             
-            if (~showInt && ~pan.IsBody && pan.IsInterior)
-                plotThis = false;                    
-            end
+%             plotThis = true;
+%             if (onlyWet && ~pan.isWet)
+%                 plotThis = false;                    
+%             end
+%             
+%             if (~showInt && ~pan.IsBody && pan.IsInterior)
+%                 plotThis = false;                    
+%             end
 
             if (plotThis)
                 pnts = zeros(5,3);
                 for n = 1:3
                     pnts(:,n) = [pan.vertices(:,n); pan.vertices(1,n)];
                 end
-                plot3(pnts(:,1), pnts(:,2), pnts(:,3));
+                plot3(pnts(:,1), pnts(:,2), pnts(:,3), 'Color', [0 0.4470 0.7410]);
 
                 if (showN)
                     hold on;
                     cent = pan.Centroid;
                     norm = pan.Normal;
                     area = pan.Area;
-                    quiver3(cent(1), cent(2), cent(3), norm(1), norm(2), norm(3), 10*area);
+                    quiver3(cent(1), cent(2), cent(3), norm(1), norm(2), norm(3), 10*area, 'Color', [0.8500 0.3250 0.0980]);
                 end
 
                 if (xsym && ~ysym)
@@ -245,14 +268,36 @@ classdef Panel < handle
             onlyWet = opts(4);
             showInt = opts(5);
             
-            plotThis = true;
-            if (onlyWet && ~pan.isWet)
-                plotThis = false;                    
+
+            if (pan.IsInterior)
+                if (showInt)
+                    plotThis = true;
+                else
+                    plotThis = false;
+                end
+            else
+                if (onlyWet)
+                    if (pan.IsWet)
+                        plotThis = true;
+                    else
+                        plotThis = false;
+                    end
+                else
+                    plotThis = true;
+                end
             end
             
-            if (~showInt && ~pan.IsBody && pan.IsInterior)
-                plotThis = false;                    
-            end
+%             if (pan.IsBody)
+%                  if (onlyWet && ~pan.isWet && ~pan.IsInterior)
+%                      plotThis = false;
+%                  end
+%             else
+%                 if ~(showInt && pan.IsInterior)
+%                     plotThis = false;
+%                 end
+%             end
+            
+            
             
             if (plotThis)
                 x = pan.vertices(:,1);
@@ -354,7 +399,7 @@ classdef Panel < handle
         function [pass] = checkVertices(verts)
             [n m] = size(verts);
             if (n ~= 4 || m ~= 3)
-                error('The vertices must be a 4x3 matrix. i.e. 4 points by 3 coordinates (x,y,x)');
+                error('The vertices must be a 4x3 matrix. i.e. 4 points by 3 coordinates (x,y,z)');
             end
             pass = true; 
         end

@@ -35,8 +35,8 @@ classdef IHydroComp < handle
         dpto;
         dpar;
         k;
-        kgm;
         isComp;
+        P;
     end
     
     properties (Dependent)
@@ -51,6 +51,7 @@ classdef IHydroComp < handle
         K;              % Mechanical Stiffness matrix for all bodies
         DoF;            % Degrees of freedom
         Modes;          % String description of all modes of operation
+        Pmat;           % Linear constraint matrix;
     end
     
     properties (Abstract)
@@ -119,6 +120,11 @@ classdef IHydroComp < handle
             % The number of degrees-of-freedom
             dof_ = hcomp.dof;
         end
+        
+        function [P_] = get.Pmat(hcomp)
+            % Linear constraint matrix
+            P_ = hcomp.P;
+        end
                 
         function [motions] = Motions(hcomp, varargin)
             % The complex motion amplitudes of the bodies in the array.
@@ -127,9 +133,11 @@ classdef IHydroComp < handle
             
             hcomp.computeIfNot();
             
-            opts = checkOptions({{'Optimal'}, {'ConstOpt', 1}}, varargin);
+            opts = checkOptions({{'Optimal'}, {'ConstOpt', 1}, {'OrgCoor'}}, varargin);
             
             optm = (opts(1) || opts(2));
+            
+            orgCoor = opts(3);
             
             omega = 2*pi./hcomp.t;
             
@@ -153,8 +161,18 @@ classdef IHydroComp < handle
                 c_ = hcomp.c;
                 
                 for n = 1:hcomp.nT
-                    a_ = squeeze(hcomp.a(n,:,:));
-                    b_ = squeeze(hcomp.b(n,:,:));
+%                     a_ = squeeze(hcomp.a(n,:,:));
+%                     b_ = squeeze(hcomp.b(n,:,:));
+
+                    a_ = zeros(hcomp.dof);
+                    b_ = zeros(hcomp.dof);
+                    
+                    for p = 1:hcomp.dof
+                        for q = 1:hcomp.dof
+                            a_(p,q) = hcomp.a(n,p,q);
+                            b_(p,q) = hcomp.b(n,p,q);
+                        end
+                    end
                     
                     if (dfreq)
                         d_ = squeeze(dd(n,:,:));
@@ -175,8 +193,33 @@ classdef IHydroComp < handle
                         motions(n, :) = lhs\f;
                     else
                         for j = 1:hcomp.nInc
-                            f = squeeze(fex(n, j, :));
+                            f = zeros(hcomp.dof,1);
+                            for p = 1:hcomp.dof
+                                f(p) = fex(n, j, p);
+                            end
+                            %f = squeeze(fex(n, j, :));
                             motions(n, j, :) = lhs\f;
+                        end
+                    end
+                end
+                
+                if (orgCoor && ~isempty(hcomp.P))
+                    mot1 = motions;
+                    PT = hcomp.P.';
+                    Ndim = size(PT, 1);
+                    if (ndims(fex) == 2)
+                        motions = zeros(hcomp.nT, Ndim);
+                    else
+                        motions = zeros(hcomp.nT, hcomp.nInc, Ndim);
+                    end
+                    
+                    for m_ = 1:hcomp.nT
+                        for n = 1:hcomp.nInc
+                            if (ndims(fex) == 2)
+                                motions(m_, :) = PT*mot1(m_, :);
+                            else
+                                motions(m_, n, :) = PT*squeeze(mot1(m_, n, :));
+                            end
                         end
                     end
                 end
@@ -282,9 +325,17 @@ classdef IHydroComp < handle
             
             hcomp.computeIfNot();
             
-            opts = checkOptions({{'Optimal'}, {'ConstOpt', 1}}, varargin);
+            [opts, args] = checkOptions({{'Optimal'}, {'ConstOpt', 1}, {'CW', 1}}, varargin);
             
             optm = (opts(1) || opts(2));
+            if (opts(3))
+                compCW = true;
+                rho = args{3};
+            else
+                compCW = false;
+            end
+            
+            
                         
             if (~optm)
                 vel = hcomp.Velocities;
@@ -304,7 +355,11 @@ classdef IHydroComp < handle
                         d_ = hcomp.dpto;
                     end
                     for j = 1:hcomp.nInc
-                        u = squeeze(vel(n, j, :));
+                        u = zeros(hcomp.dof, 1);
+                        for p = 1:hcomp.dof
+                            u(p) = vel(n, j, p);
+                        end
+                        %u = squeeze(vel(n, j, :));
                         power(n, j, :) = 0.5*real((d_*conj(u)).*u);
                     end
 %                     if (hcomp.nB == 1)
@@ -336,6 +391,24 @@ classdef IHydroComp < handle
                         end
                     end
                 end
+            end
+            
+            if (compCW)
+                uEf = IWaves.UnitEnergyFlux(rho, hcomp.t, hcomp.h);
+                CW = zeros(size(power));
+                if (hcomp.nInc == 1)
+                    for n = 1:hcomp.dof
+                        CW(:,n) = power(:,n)./uEf;
+                    end
+                else
+                    for j = 1:hcomp.nInc
+                        for n = 1:hcomp.dof
+                            CW(:,j,n) = power(:,j,n)./uEf;
+                        end
+                    end
+                end
+                
+                power = CW;
             end
         end
         
@@ -388,6 +461,7 @@ classdef IHydroComp < handle
                     error('Constraint P matrix not correct size');
                 end
                 dof_ = M;
+                hcomp.P = P;
             end
             
             
@@ -551,7 +625,20 @@ classdef IHydroComp < handle
             dpto_ = zeros(df, df);
             dpar_ = zeros(df, df);
             k_ = zeros(df, df);
-            c_ = zeros(df, df);
+            
+            if (isempty(geo.C))
+                evalC = false;
+                 c_ = zeros(df, df);
+            else
+                cdof = size(geo.C,1);
+                if (cdof == df)
+                    evalC = false;
+                    c_ = geo.C;
+                else
+                    evalC = true;
+                    c_ = zeros(df, df);
+                end
+            end
 
             lsf = 0;
             for n = 1:nbody
@@ -565,7 +652,9 @@ classdef IHydroComp < handle
                         dpto_(lsf + j, lsf + p) = geo.Dpto(iv(j), iv(p));
                         dpar_(lsf + j, lsf + p) = geo.Dpar(iv(j), iv(p));
                         k_(lsf + j, lsf + p) = geo.K(iv(j), iv(p));
-                        c_(lsf + j, lsf + p) = geo.C(iv(j), iv(p));
+                        if (evalC)
+                            c_(lsf + j, lsf + p) = geo.C(iv(j), iv(p));
+                        end
                     end
                 end
                 lsf = lsf + count;

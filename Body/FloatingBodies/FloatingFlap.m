@@ -35,33 +35,42 @@ classdef FloatingFlap < FloatingBody
     methods
         % Constructor 
         function [fb] = FloatingFlap(rho, length, beam, draft, varargin)
+            opts = checkOptions({{'NoInt'}}, varargin);
+            
+            noInt = opts(1);
+            
             fb = fb@FloatingBody();
-            % put the hinge (origin) at the bottom
-            fb.position = [0 0 -draft];
+            fb.position = [0 0 0];
             % put the cg in center of the panel.
-            fb.cg = [0 0 draft/2];
+            fb.cg = [0 0 -draft/2];
+            % put the center of rotation at the bottom
+            fb.centRot = [0 0 -draft];
             fb.m = FloatingFlap.MassMatrix(rho, length, beam, draft, fb.cg);
             
-            len = length;
-            fb.len = len;
+            fb.len = length;
             fb.beam = beam;
             fb.draft = draft;
             
             if (~isempty(varargin))
-                if (size(varargin,2) ~= 3)
+                if (size(varargin,2) < 3)
                     error('There must be three optional inputs to FloatingFlap: Nx, Ny, Nz');
                 end
                 Nx = varargin{1};
                 Ny = varargin{2};
                 Nz = varargin{3};
-                %panGeo = makePanel_box(len, beam, draft, Nx, Ny, Nz, 'Quarter');
-                panGeo = makePanel_box(len, beam, draft, Nx, Ny, Nz);
-                panGeo.Translate(-fb.position);
+
+                panGeo = makePanel_box(length, beam, draft, Nx, Ny, Nz, varargin{:});
+
                 fb.panelGeo = panGeo;
                 fb.iLowHi = 0;
+                if (noInt)
+                    fb.iSurfPan = 0;
+                else
+                    fb.iSurfPan = 1;
+                end
             end
             
-            fb.wpSec = [len/2 -beam/2; len/2 beam/2; -len/2 beam/2; -len/2 -beam/2; len/2 -beam/2];
+            fb.wpSec = [length/2 -beam/2; length/2 beam/2; -length/2 beam/2; -length/2 -beam/2; length/2 -beam/2];
         end
     end
     
@@ -80,7 +89,7 @@ classdef FloatingFlap < FloatingBody
         
         function [] = MakePanelGeometry(fb, Nx, Ny, Nz)
             panGeo = makePanel_box(fb.length, fb.beam, fb.draft, Nx, Ny, Nz, 'Quarter');
-            panGeo.Translate(-fb.position);
+            %panGeo.Translate(-fb.position);
             fb.panelGeo = panGeo;
             fb.iLowHi = 0;
         end

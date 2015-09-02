@@ -33,12 +33,16 @@ classdef PitchFunc < IMotionFunc
         end
         
         function [f] = Evaluate(pitch, pos)
-            cg_ = pitch.cg;
-            fx = (pos(3) - cg_(3));
-            fy = 0;
-            fz = -(pos(1) - cg_(1));
-            
-            f = [fx fy fz];
+            if (pitch.checkEvalPoint(pos))
+                cg_ = pitch.cg;
+                fx = (pos(3) - cg_(3));
+                fy = 0;
+                fz = -(pos(1) - cg_(1));
+                
+                f = [fx fy fz];
+            else
+                f = [0 0 0];
+            end
         end
         
         function [div] = Divergence(pitch, pos)

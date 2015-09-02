@@ -338,7 +338,9 @@ classdef IWaves < handle
             
             evan = false;
             if (~isempty(varargin))
-                evan = checkOptions({'Evanescent'}, varargin(1));
+                [opts, args] = checkOptions({{'Evanescent', 1}}, varargin);
+                evan = opts;
+                L_ = args{1};
             end
             
             if (isempty(omega) || isempty(h) || isempty(g))
@@ -372,16 +374,15 @@ classdef IWaves < handle
             end
             
             if (evan)
-                N = varargin{2};
-                if (~isInt(N))
+                if (~isInt(L_))
                     error('If evanescent modes are requested, the argument after ''Evanescent'' must be an integer, which is the reqeusted number of evanescent modes');
                 end
                 
-                kN = zeros(1,N);
+                kL = zeros(1,L_);
                 
                 if (~isinf(h))
                     % Bisection method - always converges
-                    for n = 1:N
+                    for n = 1:L_
                         tol = 1e-7;
                         const = omega.^2.*h/g;
 
@@ -408,7 +409,7 @@ classdef IWaves < handle
                             end
                         end
 
-                        kN(n) = kh./h;
+                        kL(n) = kh./h;
                     end
 
                     %{
@@ -441,9 +442,9 @@ classdef IWaves < handle
                 end
                 
                 k0 = k;
-                k = zeros(1, N+1);
+                k = zeros(1, L_+1);
                 k(1) = k0;
-                k(2:end) = kN;
+                k(2:end) = kL;
             end
         end
         

@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Contributors:
     C. McNatt
 %}
-function [box] = makeMass_box(rho, len, width, draft, Nx, Ny, Nz)
+function [box] = makeMass_box(rho, len, width, draft, freeboard, Nx, Ny, Nz)
 
 dx = len/Nx;
 xl = -len/2+dx/2:dx:Nx*dx/2;
@@ -26,7 +26,9 @@ xl = -len/2+dx/2:dx:Nx*dx/2;
 dy = width/Ny;
 yl = -width/2+dy/2:dy:Ny*dy/2;
 
-dz = draft/Nz;
+hei = draft + freeboard;
+
+dz = hei/Nz;
 zl = -draft+dz/2:dz:Nz*dz/2;
 
 

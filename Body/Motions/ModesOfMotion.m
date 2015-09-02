@@ -214,7 +214,7 @@ classdef ModesOfMotion
             end
             
             for n = 7:N
-                if (~isInt(mods(n)) || (mods(n) < 0))
+                if (~isInt(v(n)) || (v(n) < 0))
                     error('The generalized modes entry must be a non-negative integer');
                 end
                 modes.vector(n) = v(n);

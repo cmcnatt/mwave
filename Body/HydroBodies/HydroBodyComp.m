@@ -45,7 +45,11 @@ classdef HydroBodyComp < IHydroComp
             [opts, args] = checkOptions({{'UseBodC'}, {'Constrained', 1}}, varargin);
             useBodC = opts(1);
             const = opts(2);
-            P = args{2};
+            if (const)
+                P = args{2};
+            else
+                P = [];
+            end
             
             hbcomp.isHB = false;
             
@@ -63,6 +67,7 @@ classdef HydroBodyComp < IHydroComp
                         error('Cannot created a constrained computation with a HydroBody');
                     end
                     iwavs = varargin{2};
+                    useBodC = true;
                 elseif (isa(hydro, 'HydroForces'))                
                     if (isempty(varargin{2}))
                         error('Second input must be a FloatingBody');
@@ -70,6 +75,10 @@ classdef HydroBodyComp < IHydroComp
                         error('Second argument must be FloatingBody');
                     end
                     fbods = varargin{2};
+                    
+                    if (useBodC && isempty(fbods(1).C))
+                        error('Floating body does not have a hydrostatic matrix');
+                    end
 
                     nB = length(hydro.Beta);
                     wuns = ones(size(hydro.T));
@@ -79,7 +88,7 @@ classdef HydroBodyComp < IHydroComp
                 else
                     error('Inputs must be either a HydroBody or a HydroForces object and and a vector of floating bodies');
                 end
-                
+
                 if (~hbcomp.isHB)       
                     for n = 1:length(fbods)
                         if (~isa(fbods(n), 'FloatingBody'))
@@ -91,12 +100,17 @@ classdef HydroBodyComp < IHydroComp
                     hbcomp.setIncWaves(iwavs);
                     fex_ = hydro.Fex;
                     if (const)
-                        [M, ~] =  size(P);
+                        [M, N] =  size(P);
                         [Nt, Nb, ~] = size(fex_);
                         fexc = zeros(Nt, Nb, M);
                         for m = 1:Nt
                             for n = 1:Nb
-                                fexc(m,n,:) = P*squeeze(fex_(m,n,:));
+                                f = zeros(N, 1);
+                                for p = 1:N
+                                    f(p) = fex_(m,n,p);
+                                end
+                                %fexc(m,n,:) = P*squeeze(fex_(m,n,:));
+                                fexc(m,n,:) = P*f;
                             end
                         end
                         fex_ = fexc;    
@@ -106,7 +120,7 @@ classdef HydroBodyComp < IHydroComp
                     hbcomp.initHydroParam(hydro.T, hydro.H, hydro, const, P);
                     hbcomp.setIncWaves(iwavs);
                 end
-                
+
                 if (~useBodC)
                     c = hydro.C;
                     if (const)
@@ -114,15 +128,25 @@ classdef HydroBodyComp < IHydroComp
                     end
                     hbcomp.c = c;
                 end
-
+                
                 a_ = hydro.A;
                 b_ = hydro.B;
                 if (const)
                     ac = zeros(Nt, M, M);
                     bc = zeros(Nt, M, M);
                     for m = 1:Nt
-                        ac(m,:,:) = P*squeeze(a_(m,:,:))*P.';
-                        bc(m,:,:) = P*squeeze(b_(m,:,:))*P.';
+                        am = zeros(N);
+                        bm = zeros(N);
+                        for p = 1:N
+                            for q = 1:N
+                                am(p,q) = a_(m,p,q);
+                                bm(p,q) = b_(m,p,q);
+                            end
+                        end
+%                         ac(m,:,:) = P*squeeze(a_(m,:,:))*P.';
+%                         bc(m,:,:) = P*squeeze(b_(m,:,:))*P.';
+                        ac(m,:,:) = P*am*P.';
+                        bc(m,:,:) = P*bm*P.';
                     end
                     a_ = ac;
                     b_ = bc;
@@ -131,9 +155,9 @@ classdef HydroBodyComp < IHydroComp
                 hbcomp.a = a_;
                 hbcomp.b = b_;
 
-                [row, col] = size(squeeze(hbcomp.a(1,:,:)));
+                %[row, col] = size(squeeze(hbcomp.a(1,:,:)));
 
-                if (row ~= size(hbcomp.m, 1) && col ~= size(hbcomp.m, 2))
+                if (hbcomp.dof ~= size(hbcomp.m, 1) && hbcomp.dof ~= size(hbcomp.m, 2))
                     error('The sizes of the geometric matrices (mass, damping, stiffness) are not the same as added mass and damping matrices');
                 end
 

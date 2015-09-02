@@ -65,38 +65,39 @@ for l = 1:dof
                 pnt = cents(n,:);        
                 nrm = norms(n,:);
                 
-                fgl = motFuncs(l).GravityForce(pnt);
+                nl = motFuncs(l).Evaluate(pnt);
                 
                 nm = motFuncs(m).Evaluate(pnt);
                 nmS = nm(1)*nrm(1) + nm(2)*nrm(2) + nm(3)*nrm(3);
                 
-                kmlm = kmlm + nmS*fgl*areas(n);
+                kmlm = kmlm + g*nl(3)*nmS*areas(n);
             end
         end
         Km(l, m) = kmlm;
     end
 end
 
-% znorm = [0 0 -1];
-% 
-% for m = 1:6
-%     Fm = [0 0 0];
-%     Mm = [0 0 0];
-%     for n = 1:nPan
-%         if (isBods(n))
-%             pnt = cents(n,:);        
-%             nrm = norms(n,:);
-%             nm = motFuncs(m).Evaluate(pnt);
-% 
-%             nmS = nm(1)*nrm(1) + nm(2)*nrm(2) + nm(3)*nrm(3);
-% 
-%             Fm = Fm + nmS*znorm*areas(n);
-%             Mm = Mm + nmS*cross(pnt-cg, znorm)*areas(n);
+% for l = 1:dof
+%     for m = 1:dof
+%         kmlm = 0;
+%         
+%         for n = 1:nPan
+%             if (isBods(n))
+%                 pnt = cents(n,:);        
+%                 nrm = norms(n,:);
+%                 
+%                 fgl = motFuncs(l).GravityForce(pnt);
+%                 
+%                 nm = motFuncs(m).Evaluate(pnt);
+%                 nmS = nm(1)*nrm(1) + nm(2)*nrm(2) + nm(3)*nrm(3);
+%                 
+%                 kmlm = kmlm + nmS*fgl*areas(n);
+%             end
 %         end
+%         Km(l, m) = kmlm;
 %     end
-%     Km(1:3,m) = Fm';
-%     Km(4:6,m) = Mm';
 % end
+
 
 Km = rhoBod*g*Km;
 mKm = max(max(abs(Km)));
@@ -134,7 +135,7 @@ izero = (abs(C0) < 1e-8*mC0);
 C0(izero) = 0;
 
 % add the hydrostatic and mass static to get the final hydrostatic matrix
-C = C0 - Km;
+C = C0 + Km;
 
 mC = max(max(C));
 izero = (abs(C) < 1e-8*mC);

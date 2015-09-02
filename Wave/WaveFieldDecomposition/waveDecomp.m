@@ -52,7 +52,7 @@ function [A, eta0] = waveDecomp(k, r0, theta, z, h, eta, L, M, varargin)
 %     - 'Incident' - computes the coefficients for an incident cylindircal
 %       wave rather than an outwardly radiating one
 
-[opts, args] = checkOptions({{'SigFigCutoff', 1}, 'Incident', {'Round', 1}}, varargin);
+[opts, args] = checkOptions({{'SigFigCutoff', 1}, {'Incident'}, {'Round', 1}}, varargin);
 useSigFig = opts(1);
 if (useSigFig)
     sigFig = args{1};

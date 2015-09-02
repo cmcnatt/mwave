@@ -72,6 +72,7 @@ classdef WamitResult < IBemResult
                     error('Constructor input must be of type WamitRunCondition')
                 end
             end
+            result.errLog = [];
             result.hasBeenRead = 0;
         end
                 
@@ -107,6 +108,25 @@ classdef WamitResult < IBemResult
         function [] = ReadResult(result, varargin)
             % Reads the Wamit results
 
+            % read error log
+            fid = fopen([result.folder '\errorp.log']);
+            nerr = 0;
+            while(~feof(fid))
+                line = fgetl(fid);
+                if (~isempty(line))
+                    if (~isempty(line(3:4)))
+                        if (strcmp(line(3:4), 'No'))
+                            line = fgetl(fid);
+                            line = fgetl(fid);
+                            nerr = nerr + 1;
+                            result.errLog{nerr} = strtrim(line);
+                        end
+                    end
+                end
+            end
+            
+            fclose(fid);
+            
             useSing = false;
             removeBodies = false;
             for n = 1:length(varargin)

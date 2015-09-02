@@ -37,11 +37,9 @@ classdef KochinWaveField < FuncWaveField
             if (isarray)
                 args = cell(3,1);
                 args(1:2) = varargin(1:2);
-                args{3} = loc;
             else
                 args = cell(2,1);
                 args(1) = varargin(1);
-                args{2} = loc;
             end
             wf = wf@FuncWaveField(rho, compVel, waves, @KochinWaveField.Compute, isarray, args{:});
         end
@@ -94,13 +92,15 @@ classdef KochinWaveField < FuncWaveField
 
             [f, df] = kochinF.Evaluate(theta);
             kreikr = (1./sqrt(kr)).*exp(-1i*kr);
+            
+            const = sqrt(2*pi)*exp(1i*pi/4);
 
-            p = rho*g*Kp.*f.*kreikr;
+            p = rho*g*const*Kp.*f.*kreikr;
             
             if (compVel)
-                ur = g*k/omega*(1-1i./(2*kr)).*f.*kreikr;
-                utheta = 1i*g/omega*Kp.*df.*kreikr;
-                w = 1i*g*k/omega*Kpw.*p;
+                ur = g*k/omega*const*Kp.*(1-1i./(2*kr)).*f.*kreikr;
+                utheta = 1i*g/omega*const*Kp.*df.*kreikr;
+                w = 1i*g*k/omega*const*Kpw.*p;
 
                 cth = cos(theta);
                 sth = sin(theta);

@@ -22,8 +22,8 @@ function [hydroB, eta0aSw, eta0aRw] = computeHydroBody(waveCP, hydroF, floatB, v
 % TODO: document this man
 
 [opts, args] = checkOptions({{'SigFigCutoff', 1}, {'Movie', 1}, {'Mmax', 1}, ...
-    {'AccTrim'}, {'Waves', 1}, {'Scattered', 1} {'Radiated', 1}, {'SymAxis'}, ...
-    {'SymX'}, {'SymY'}}, varargin);
+    {'AccTrim'}, {'Waves', 1}, {'Scattered', 1} {'Radiated', 1}, {'AxisSym',1}, ...
+    {'XSym',1}, {'YSym',1}, {'XYSym', 1}, {'OldMeth'}}, varargin);
 % 'Mmax' is an optional input that limits the number of coefficients to
 % include in the diffraction transfer matrix and radiation coeffs
 %
@@ -78,9 +78,42 @@ if (retWaves)
     iRw = 1;
 end
 
-symA = opts(8);
-symX = opts(9);
-symY = opts(10);
+if (opts(8))
+    symA = true;
+    modes = args{8};
+    motFuncs = modes.MotionFuncs;
+else
+    symA = false;
+end
+
+if (opts(9))
+    symX = true;
+    modes = args{9};
+    motFuncs = modes.MotionFuncs;
+else
+    symX = false;
+end
+
+if (opts(10))
+    symY = true;
+    modes = args{10};
+    motFuncs = modes.MotionFuncs;
+else
+    symY = false;
+end
+
+if (opts(11))
+    symX = true;
+    symY = true;
+    modes = args{11};
+    motFuncs = modes.MotionFuncs;
+end
+
+oldMeth = opts(12);
+
+if (oldMeth && any([symA, symX, symY]))
+    error('Old method not supported for symmetry');
+end
 
 if (symA && (symX || symY))
     error('Body cannot have both axis symmetry and symmetry in X or Y')
@@ -89,13 +122,13 @@ end
 points = waveCP.FieldPoints;
 
 h = waveCP.H;
-Beta = waveCP.IncWaveVals;
+beta = waveCP.IncWaveVals;
 T = waveCP.T;
 nT = length(T);
 
 lam = round(IWaves.T2Lam(T,h));
 
-MbA = length(Beta);     % actual number of dicections
+MbA = length(beta);     % actual number of dicections
 
 if (xor(symX, symY))
     Mb = 2*(MbA - 1);   % effective number of directions;
@@ -111,8 +144,16 @@ else
     Mb2 = Mb/2-1;
 end
 
-if ((Mmax > 0) && (Mmax < Mb2))
-    Mb2 = Mmax;
+if (Mmax < 0)
+    if (symA)
+        Mmax = 30;
+    else
+        Mmax = Mb2;
+    end
+else
+    if (Mmax > Mb2)
+        Mmax = Mb2;
+    end
 end
 
 L = 0;
@@ -137,9 +178,9 @@ for nt = 1:nT
     % diffraction transfer matrix and the radiation amplitudes
     
     % 1) get scattering coeffs for the diffraction transfer matrix
-    aSb = zeros(2*Mb2+1, Mb);   % aSb is an array of the scattered coeffs at each incident wave direction
+    aSb = zeros(2*Mmax+1, MbA);   % aSb is an array of the scattered coeffs at each incident wave direction
 
-    trimMs = zeros(Mb+dof,1);   % trimMs holds the cutoff M value
+    trimMs = zeros(MbA+dof,1);   % trimMs holds the cutoff M value
 
     for m = 1:MbA
         
@@ -149,11 +190,7 @@ for nt = 1:nT
             [r0, theta, z, etaq] = reshapeCirWFPoints(points, etaS{nt, m});
         end
   
-        [aS, eta0] = waveDecomp(k0(nt), r0, theta, z, h, etaq, L, Mb2);
-        ntheta = length(theta);
-        etaq2 = fliplr(etaq);
-        etaq2 = circshift(etaq2, 1, 2);
-        [aS2, eta0] = waveDecomp(k0(nt), r0, theta, z, h, etaq2, L, Mb2);
+        [aS, eta0] = waveDecomp(k0(nt), r0, theta, z, h, etaq, L, Mmax);
         
         if (m == 1)
             showMov1 = showMov;
@@ -177,23 +214,7 @@ for nt = 1:nT
         [aS, trimMs(m)] = getTrimM(aS, eta0, sigFig, accTrim, theta, k0(nt), r0, ...
             showMov1, ['Scatter, \lambda/a = ' num2str(lam(nt))], [movLoc 'scat_lam' num2str(lam(nt))]);
 
-        if (symA)
-        elseif (symX && ~symY)
-            aSb(:,m) = aS.';
-            % reflection
-            mm = -Mb2:Mb2;
-            neg1 = exp(1i*mm*pi);
-            if ((m ~= 1) && (m ~= MbA))
-                aSb(:,Mb - m + 2) = fliplr(neg1.*aS).';
-            end
-        elseif (~symX && symY)
-            error('SymY and not SymX not currently supported');
-        elseif (symX && symY)
-            aSb(:,m) = aS.';
-            aSb(:,m) = aS.';
-        else
-            aSb(:,m) = aS.';
-        end
+        aSb(:,m) = aS.';
     end
     
     % Get radiation coeffs
@@ -205,7 +226,7 @@ for nt = 1:nT
             [r0, theta, z, etaq] = reshapeCirWFPoints(points, etaR{nt, q});
         end
         
-        [aq, eta0] = waveDecomp(k0(nt), r0, theta, z, h, etaq, L, Mb2);
+        [aq, eta0] = waveDecomp(k0(nt), r0, theta, z, h, etaq, L, Mmax);
         
         if (retWaves)
             if (nt == iTw)
@@ -220,7 +241,7 @@ for nt = 1:nT
             end
         end
 
-        [aq, trimMs(Mb+q)] = getTrimM(aq, eta0, sigFig, accTrim, theta, k0(nt), r0,...
+        [aq, trimMs(MbA+q)] = getTrimM(aq, eta0, sigFig, accTrim, theta, k0(nt), r0,...
             showMov, ['Radiated, \lambda/a = ' num2str(lam(nt)) ', Mode = ' num2str(q)], [movLoc 'rad_lam' num2str(lam(nt)) '_mod' num2str(q)]);
 
         AR{nt, q} = aq;
@@ -228,42 +249,74 @@ for nt = 1:nT
     
     % Trim coefs
     M = max(trimMs);
-    aSb = aSb(Mb2-M+1:Mb2+M+1,:);
+    aSb = aSb(Mmax-M+1:Mmax+M+1,:);
     
     for q = 1:dof
-        AR{nt, q} = AR{nt, q}(Mb2-M+1:Mb2+M+1);
+        AR{nt, q} = AR{nt, q}(Mmax-M+1:Mmax+M+1);
     end
+       
+    % 3 - solve for each row of the diffraction transfer matrix B
+    D = zeros(2*M+1, 2*M+1);
+
+    if (oldMeth)
+        % 2 - generate rotation matrix
+        aIbeta = zeros(2*M+1, MbA);
+
+        for m = -M:M
+            for n = 1:MbA
+                aIbeta(m+M+1, n) = exp(-1i*m*(pi/2 + beta(n)));
+            end
+        end
+        aIbetaT = aIbeta.';
     
-
-    % 2 - generate rotation matrix
-    aIbeta = zeros(2*M+1, Mb);
-
-    for m = -M:M
-        for n = 1:MbA
-            if (symA)
-            elseif (symX && ~symY)
-                aIbeta(m+M+1, n) = exp(-1i*m*(pi/2 + Beta(n)));
-                if ((n ~= 1) && (n ~= MbA))
-                    aIbeta(m+M+1, Mb - n + 2) = exp(-1i*m*(pi/2 - Beta(n)));
+        for m = -M:M
+            bm = aIbetaT\(aSb(m+M+1,:).');
+            D(m+M+1,:) = bm.';
+        end
+    else
+        expinpi = exp(1i*(-M:M)*pi/2);
+        if (symA)
+            for m = -M:M
+                D(m+M+1,m+M+1) = expinpi(m+M+1)*aSb(m+M+1);
+            end
+        elseif (symX && ~symY)
+            for m = -M:M
+                for n = -M:M
+                    Dmn = 1/(2*pi)*expinpi(n+M+1)*trapz(beta,(aSb(m+M+1,:).*exp(1i*n*beta)+exp(-1i*m*pi)*aSb(-m+M+1,:).*exp(-1i*n*beta)));
+                    D(m+M+1, n+M+1) = Dmn;
                 end
-            elseif (~symX && symY)
-                error('SymY and not SymX not currently supported');
-            elseif (symX && symY)
-               
-            else
-                aIbeta(m+M+1, n) = exp(-1i*m*(pi/2 + Beta(n)));
+            end
+        elseif (~symX && symY)
+            for m = -M:M
+                for n = -M:M
+                    Dmn = 1/(2*pi)*expinpi(n+M+1)*trapz(beta,(aSb(m+M+1,:).*exp(1i*n*beta)+exp(1i*n*pi)*aSb(-m+M+1,:).*exp(-1i*n*beta)));
+                    D(m+M+1, n+M+1) = Dmn;
+                end
+            end
+        elseif (symX && symY)
+            for m = -M:M
+                for n = -M:M
+                    Dmn = 1/(2*pi)*expinpi(n+M+1)*(cos((m+n)*pi) + 1)...
+                        *trapz(beta,(aSb(m+M+1,:).*exp(1i*n*beta)+exp(-1i*m*pi)*aSb(-m+M+1,:).*exp(-1i*n*beta)));
+                    D(m+M+1, n+M+1) = Dmn;
+                end
+            end
+        else
+            for m = -M:M
+                X = ifft(aSb(m+M+1,:));
+
+                bm = zeros(1, 2*M+1);
+                bm(M+1) =  X(1);
+                bm(M+2:2*M+1) = X(2:M+1);
+                bm(M:-1:1) = X(MbA:-1:MbA-M+1);
+
+                D(m+M+1,:) = expinpi.*bm;
             end
         end
     end
     
-    aIbetaT = aIbeta.';
-
-    % 3 - solve for each row of the diffraction transfer matrix B
-    D = zeros(2*M+1, 2*M+1);
-
-    for m = -M:M
-        bm = aIbetaT\(aSb(m+M+1,:).');
-        D(m+M+1,:) = bm.';
+    if (sigFig > 0)
+        D = roundSigFig(D, sigFig);
     end
 
     DTM{nt} = D;
@@ -278,11 +331,122 @@ for nt = 1:nT
     end
     
     D = zeros(dof, 2*M+1);
+    
+    if (oldMeth)
+        for q = 1:dof
+            % force transfer matrix
+            dq = aIbetaT\fbeta(:,q);
+            D(q,:) = dq.';
+        end
+    else
+        if (symA)
+            for q = 1:dof
+                switch motFuncs(q).ISym
+                    case 1
+                        D(q,M) = -1i/2*fbeta(q);        % m = -1
+                        D(q,M+2) = 1i/2*fbeta(q);       % m = 1
+                    case 2
+                        warning('Symmtry forces assumes all 6 DOF are present for computation of sway and roll');
+                        D(q,M) = -1/2*fbeta(q-1);       % m = -1
+                        D(q,M+2) = -1/2*fbeta(q-1);      % m = 1
+                    case 3
+                        D(q,M+1) = fbeta(q);            % m = 0
+                    case 4
+                        warning('Symmtry forces assumes all 6 DOF are present for computation of sway and roll');
+                        D(q,M) = 1/2*fbeta(q+1);        % m = -1
+                        D(q,M+2) = 1/2*fbeta(q+1);      % m = 1
+                    case 5
+                        D(q,M) = -1i/2*fbeta(q);        % m = -1
+                        D(q,M+2) = 1i/2*fbeta(q);       % m = 1
+                    case 6
+                end
+            end
+        elseif (symX && ~symY)
+            for q = 1:dof
+                if ((motFuncs(q).ISym == 1) || (motFuncs(q).ISym == 3) || (motFuncs(q).ISym == 5))
+                    % surge, heave, pitch
+                    for m = -M:M
+                        Gqm = 1/pi*expinpi(m+M+1)*trapz(beta, fbeta(:,q).*cos(m*beta.'));
+                        D(q, m+M+1) = Gqm;
+                    end
+                else
+                    % sway, roll, yaw
+                    for m = -M:M
+                        Gqm = 1i/pi*expinpi(m+M+1)*trapz(beta, fbeta(:,q).*sin(m*beta.'));
+                        D(q, m+M+1) = Gqm;
+                    end
+                end
+            end
+        elseif (~symX && symY)
+            for q = 1:dof
+                if ((motFuncs(q).ISym == 2) || (motFuncs(q).ISym == 3) || (motFuncs(q).ISym == 4))
+                    % sway, heave, roll
+                    evenMode = true;
+                else
+                    % surge, pitch, yaw
+                    evenMode = false;
+                end
+                for m = -M:M
+                    if (xor(evenMode, mod(m,2)))
+                        Gqm = 1/pi*expinpi(m+M+1)*trapz(beta, fbeta(:,q).*cos(m*beta.'));
+                        D(q, m+M+1) = Gqm;
+                    else
+                        Gqm = 1i/pi*expinpi(m+M+1)*trapz(beta, fbeta(:,q).*sin(m*beta.'));
+                        D(q, m+M+1) = Gqm;
+                    end
+                end
+            end
+        elseif (symX && symY)
+            for q = 1:dof
+                if ((motFuncs(q).ISym == 1) || (motFuncs(q).ISym == 5))
+                    % surge, pitch
+                    for m = -M:M
+                        if (mod(m,2))
+                            Gqm = 2/pi*expinpi(m+M+1)*trapz(beta, fbeta(:,q).*cos(m*beta.'));
+                            D(q, m+M+1) = Gqm;
+                        end
+                    end
+                elseif ((motFuncs(q).ISym == 2) || (motFuncs(q).ISym == 4))
+                    % sway, roll
+                    for m = -M:M
+                        if (mod(m,2))
+                            Gqm = 2i/pi*expinpi(m+M+1)*trapz(beta, fbeta(:,q).*sin(m*beta.'));
+                        	D(q, m+M+1) = Gqm;
+                        end
+                    end
+                elseif (motFuncs(q).ISym == 3)
+                    % heave
+                    for m = -M:M
+                        if (~mod(m,2))
+                            Gqm = 2/pi*expinpi(m+M+1)*trapz(beta, fbeta(:,q).*cos(m*beta.'));
+                            D(q, m+M+1) = Gqm;
+                        end
+                    end
+                else
+                    % yaw
+                    for m = -M:M
+                        if (~mod(m,2))
+                            Gqm = 2i/pi*expinpi(m+M+1)*trapz(beta, fbeta(:,q).*sin(m*beta.'));
+                        	D(q, m+M+1) = Gqm;
+                        end
+                    end
+                end
+            end
+        else
+            for q = 1:dof
+                X = ifft(fbeta(:,q));
 
-    for q = 1:dof
-        % force transfer matrix
-        dq = aIbetaT\fbeta(:,q);
-        D(q,:) = dq.';
+                dq = zeros(1, 2*M+1);
+                dq(M+1) = X(1);
+                dq(M+2:2*M+1) = X(2:M+1);
+                dq(M:-1:1) = X(MbA:-1:MbA-M+1);
+                D(q,:) = expinpi.*dq;
+            end
+        end
+    end
+    
+    if (sigFig > 0)
+        D = roundSigFig(D, sigFig);
     end
     
     FTM{nt} = D;
@@ -377,5 +541,17 @@ if (accTrim)
         movie2avi(mov, movLoc, 'compression','None', 'fps', 2);
     end
 end
+end
+
+function [Drnd] = roundSigFig(Din, sigFig)
+
+Drnd = Din;
+maxVal = max(max(abs(Din)));
+expV = floor(log10(maxVal));
+cutOffVal = 10^(expV-sigFig);
+%izero = abs(Din) < cutOffVal;
+Drnd = round(Drnd./cutOffVal)*cutOffVal;
+%Drnd(izero) = 0;
+
 end
 

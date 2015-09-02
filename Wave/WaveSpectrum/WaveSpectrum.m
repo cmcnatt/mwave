@@ -39,52 +39,13 @@ classdef WaveSpectrum <handle
         
         % Constructor
         function [spec] = WaveSpectrum(Spec, f, varargin)
-            if (nargin > 0)
-                if (~isempty(varargin) > 0)
-                    dir = varargin{1};
-                else
-                    dir = [];
-                end
-                
-                if (isvector(f))
-                    if (isrow(f))
-                        f = f.';
-                    end
-                else
-                    error('The frequncies input must be a vector');
-                end
+            if (nargin > 0)                
+                dir = spec.checkValues(Spec, f, varargin);
                                 
-                nf = length(f);
-                nd = length(dir);
-                
-                if (nd == 0)
+                if (length(dir) == 0)
                     spec.isdir = 0;
-                    
-                    if (isvector(Spec))
-                        if (length(Spec) ~= nf)
-                            error('The input spectrum must be the same size as the frequencies');
-                        end
-                        if (isrow(Spec))
-                            Spec = Spec.';
-                        end
-                    else
-                        error('For the nondirectional case, the spectrum input must be a vector');
-                    end
                 else
                     spec.isdir = 1;
-                    
-                    if (isvector(dir))
-                        if (iscolumn(dir))
-                            dir = dir.';
-                        end
-                    else
-                        error('The directions input must be a vector');
-                    end
-                    
-                    [row, col] = size(Spec);
-                    if (nd ~= col || nf ~= row)
-                        error('The spectrum must be a matirx of size Nfreq x Ndir');
-                    end
                 end
 
                 spec.spectrum = Spec;
@@ -104,7 +65,7 @@ classdef WaveSpectrum <handle
         function [m0] = get.M0(spec)
             spec1 = spec.Spectrum('Nondir');
 
-            del = spec.Deltas('Frequency');
+            del = spec.Deltas('Frequency').';
             m0 = abs(sum(spec1.*del));
         end
         
@@ -123,7 +84,7 @@ classdef WaveSpectrum <handle
             Tp = 1./fp;
         end
         
-        % Spectrum
+        % Spectrum        
         function [Spec] = Spectrum(spec, varargin)
             narg = length(varargin);
             
@@ -136,8 +97,6 @@ classdef WaveSpectrum <handle
                         nondir = 1;
                     case 'WithEnergy'
                         withEnergy = 1;
-                    otherwise
-                        error('Parameter is not a valid option');
                 end
             end
 
@@ -177,8 +136,6 @@ classdef WaveSpectrum <handle
             if (~isempty(varargin))
                 if (strcmp(varargin{1}, 'WithEnergy'))
                     withEnergy = 1;
-                else
-                    error('Parameter is not a valid option');
                 end
             end
                         
@@ -197,8 +154,6 @@ classdef WaveSpectrum <handle
                 if (~isempty(varargin))
                     if (strcmp(varargin{1}, 'WithEnergy'))
                         withEnergy = 1;
-                    else
-                        error('Parameter is not a valid option');
                     end
                 end
 
@@ -251,8 +206,6 @@ classdef WaveSpectrum <handle
                         withEnergy = 1;
                     case 'RandPhase'
                         randPhase = 1;
-                    otherwise
-                        error('Parameter is not a valid option');
                 end
             end
                                    
@@ -277,8 +230,69 @@ classdef WaveSpectrum <handle
                 end
             end
             
+            if (imag(a(1,1)) ~= 0)
+                a = imag(a);
+            end
+            
             if (randPhase)
                 a = a.*exp(1i*2*pi*rand(size(a)));
+            end
+        end
+
+        function [waves] = GetPlaneWaves(spec, h, varargin)
+            f = spec.Frequencies(varargin{:});
+
+            beta = spec.Directions(varargin{:});
+            if (isempty(beta))
+                beta = 0;
+            end
+            nb = length(beta);
+            
+            a = spec.Amplitudes(varargin{:});
+
+            if (nb > 1)
+                for o = 1:length(beta)
+                    waves(o) = PlaneWaves(a(:,o), 1./f, beta(o), h);
+                end
+            else
+                waves = PlaneWaves(a, 1./f, 0, h);
+            end
+        end
+        
+        function [Ef] = EnergyFlux(spec, rho, h, varargin)
+            opts = checkOptions({{'Total'}, {'Density'}}, varargin);
+            tot = opts(1);
+            density = opts(2);
+            
+            nf = length(spec.Frequencies(varargin{:}));
+            if (density)
+                df = spec.specs(1,1).Deltas('Frequency');
+                if (df(1) < 0)
+                    df = -df;
+                end
+            end
+
+            iwaves = spec.GetPlaneWaves(h, varargin{:});
+            nb = length(iwaves);
+
+            ef = zeros(nf, nb);
+            if (nb > 1)
+                for o = 1:nb
+                    efo = iwaves(o).EnergyFlux(rho);
+                    ef(:,o) = efo;
+                end
+            else
+                ef = iwaves.EnergyFlux(rho);
+            end
+
+            if (tot)
+                Ef = sum(sum(ef));
+            else
+                if(density)
+                    Ef = ef./df;
+                else
+                    Ef = ef;
+                end
             end
         end
         
@@ -330,8 +344,6 @@ classdef WaveSpectrum <handle
             if (~isempty(varargin))
                 if (strcmp(varargin{1}, 'WithEnergy'))
                     Spec2 = WaveSpectrum(spec.Spectrum('WithEnergy'), spec.Frequencies('WithEnergy'), spec.Directions('WithEnergy'));
-                else
-                    error('Only option is ''WithEnergy''');
                 end
             else
                 Spec2 = WaveSpectrum(spec.spectrum, spec.frequencies, spec.directions);
@@ -340,7 +352,74 @@ classdef WaveSpectrum <handle
         
     end
     
+    methods (Access = protected)
+        function [] = setSpectrum(spec, specin, f, varargin)
+            dir = spec.checkValues(specin, f, varargin{:});
+            
+            if (length(dir) == 0)
+                spec.isdir = 0;
+            else
+                spec.isdir = 1;
+            end
+            
+            spec.spectrum = specin;
+            spec.frequencies = f;
+            spec.directions = dir;
+            
+            spec.cutoff = 0.01;
+        end
+    end
+    
     methods (Access = private)
+        
+        function [dir] = checkValues(spec, specin, f, varargin)
+            if (~isempty(varargin) > 0)
+                dir = varargin{1};
+            else
+                dir = [];
+            end
+                
+            if (isvector(f))
+                if (isrow(f))
+                    f = f.';
+                end
+            else
+                error('The frequncies input must be a vector');
+            end
+                                
+            nf = length(f);
+            ndir = length(dir);
+                
+            if (ndir == 0)
+                spec.isdir = 0;
+
+                if (isvector(specin))
+                    if (length(specin) ~= nf)
+                        error('The input spectrum must be the same size as the frequencies');
+                    end
+                    if (isrow(specin))
+                        specin = specin.';
+                    end
+                else
+                    error('For the nondirectional case, the spectrum input must be a vector');
+                end
+            else
+                spec.isdir = 1;
+
+                if (isvector(dir))
+                    if (iscolumn(dir))
+                        dir = dir.';
+                    end
+                else
+                    error('The directions input must be a vector');
+                end
+
+                [row, col] = size(specin);
+                if (ndir ~= col || nf ~= row)
+                    error('The spectrum must be a matirx of size Nfreq x Ndir');
+                end
+            end
+        end
         
         function [freq, ifreq] = findFreqWithEnergy(spec, cutoff)
              maxVal = max(max(spec.spectrum));

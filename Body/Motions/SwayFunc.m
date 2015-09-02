@@ -33,7 +33,11 @@ classdef SwayFunc < IMotionFunc
         end
         
         function [f] = Evaluate(sway, pos)
-            f = [0 1 0];
+            if (sway.checkEvalPoint(pos))
+                f = [0 1 0];
+            else
+                f = [0 0 0];
+            end
         end
         
         function [div] = Divergence(sway, pos)

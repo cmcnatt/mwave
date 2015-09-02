@@ -18,11 +18,59 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Contributors:
     C. McNatt
 %}
-function [E] = bretschneider(Hs, fm, f)
-% Creates a Bretschneider spectrum. Hs is the significant wave height. fm
-% in the modal frequency (Hz). f is list of the frequency at which to
-% evaluate the spectrum.  Returns the energy density spectrum.
+classdef Bretschneider < WaveSpectrum
+    
+    methods
+        function [ws] = Bretschneider(Hs, Tp, T, varargin)
+                % Creates a Bretschneider spectrum. Hs is the significant
+                % wave height. Tp is the modal period (s). T is list of periods at which to
+                % evaluate the spectrum.  E is the energy density spectrum.
+                [opts, args] = checkOptions({{'Cos2s', 3}}, varargin);
+                spread = opts(1);
 
-coef = 1.25/4*fm^4*Hs^2;
+                ws = ws@WaveSpectrum();
+                if (nargin > 0)
+                    f = 1./T;
 
-E = coef./(f.^5).*exp(-1.25*(fm./f).^4);
+                    E = Bretschneider.MakeSpec(Hs, Tp, T, varargin{:});
+                    if (spread)
+                        s = args{1}{1};
+                        dirc = args{1}{2};
+                        dir = args{1}{3};
+
+                        G = cosSpectSpread(s, dirc, dir);
+                        E = E.'*G;
+                        ws.setSpectrum(E, f, dir);
+                    else
+                        ws.setSpectrum(E, f);
+                    end
+                end
+        end
+    end
+    
+    methods (Static)
+        function [E] = MakeSpec(Hs, Tp, T, varargin)
+                % Creates a Bretschneider spectrum. Hs is the significant
+                % wave height. Tp is the modal period (s). T is list of periods at which to
+                % evaluate the spectrum.  E is the energy density spectrum.
+                %
+                [opts] = checkOptions({'T02'}, varargin);
+                isT02 = opts(1);
+
+                if (isT02)
+                    % For bretschneider, T02 = 0.71*Tp (T02 =
+                    % sqrt(m2/m0)*Tp) Ref: Holthuijsen, Waves in
+                    % Oceanic and Coastal Waters
+                    fp = 1./(Tp/0.71);
+                else
+                    fp = 1./Tp;
+                end
+                f = 1./T;
+
+                coef = 1.25/4*fp^4*Hs^2;
+
+                E = coef./(f.^5).*exp(-1.25*(fp./f).^4);
+        end
+    end
+    
+end

@@ -64,7 +64,6 @@ classdef FloatingSphereEndCyl < FloatingBody
             fb.dpto = zeros(6 + Nh, 6 + Nh);
             fb.dpar = zeros(6 + Nh, 6 + Nh);
             fb.k = zeros(6 + Nh, 6 + Nh);
-            fb.kgm = zeros(6 + Nh, 6 + Nh);
 
             fb.modes = modes;
             fb.nGen = Nh;
@@ -86,7 +85,10 @@ classdef FloatingSphereEndCyl < FloatingBody
                 end
                 fb.iLowHi = 0;
                 
-                fb.c = computeHydroStatic(rho, fb.panelGeo, 0, fb.modes);
+                if (Nh > 0)
+                    fb.c = computeHydroStatic(rho, fb.panelGeo, 0, fb.modes);
+                    fb.hasc = true;
+                end
             end
                                     
             nx = 40;

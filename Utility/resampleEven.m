@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Contributors:
     C. McNatt
 %}
-function [xo yo] = resampleEven(xi, yi, N)
+function [xo, yo] = resampleEven(xi, yi, N)
 
 dx = diff(xi);
 dy = diff(yi);

@@ -47,10 +47,11 @@ classdef FloatingCylinder < FloatingBody
             % (Nr), and z (Nz)
             
             fb = fb@FloatingBody();
-            fb.cg = [0 0 0];
+            zcg0 = -draft+height/2;
+            fb.cg = [0 0 zcg0];
 
-            fb.m = FloatingCylinder.MassMatrixCgCenter(rho, radius, height, draft);
-            fb.position = [0 0 -draft+height/2];
+            fb.m = FloatingCylinder.MassMatrix(rho, radius, height, draft);
+            fb.position = [0 0 0];
             
             fb.radius = radius;
             fb.height = height;
@@ -63,13 +64,23 @@ classdef FloatingCylinder < FloatingBody
                 Ntheta = varargin{1};
                 Nr = varargin{2};
                 Nz = varargin{3};
-                opts = checkOptions({'UseSym'}, varargin);
+                
+                opts = checkOptions({{'UseSym'}, {'NoInt'}}, varargin);
+                optsIn = {};
+                n = 0;
                 if (opts(1))
-                    panGeo = makePanel_cylinder(fb.radius, fb.draft, fb.height, Ntheta, Nr, Nz, 'Quarter');
-                else
-                    panGeo = makePanel_cylinder(fb.radius, fb.draft, fb.height, Ntheta, Nr, Nz);
+                    n = n + 1;
+                    optsIn{n} = 'Quarter';
                 end
-                panGeo.Translate(-fb.position);
+                if (opts(2))
+                    n = n + 1;
+                    optsIn{n} = 'NoInt';
+                    fb.iSurfPan = 0;
+                else
+                    fb.iSurfPan = 1;
+                end
+                
+                panGeo = makePanel_cylinder(fb.radius, fb.draft, fb.height, Ntheta, Nr, Nz, optsIn{:});
                 fb.panelGeo = panGeo;
                 fb.iLowHi = 0;
             end
@@ -101,26 +112,51 @@ classdef FloatingCylinder < FloatingBody
             else
                 panGeo = makePanel_cylinder(fb.radius, fb.draft, Ntheta, Nr, Nz);
             end
-            panGeo.Translate(-fb.position);
+            %panGeo.Translate(-fb.position);
             fb.panelGeo = panGeo;
             fb.iLowHi = 0;
         end
     end
     
+    methods (Access = protected)
+        function [] = onModifyCg(fb, cg)
+            mass = fb.m(1);
+            wetVol = pi*fb.radius^2*fb.draft;
+            rho = mass/wetVol;
+            zcg = cg(3);
+
+            fb.m = FloatingCylinder.MassMatrix(rho, fb.radius, fb.height, fb.draft, zcg);
+        end
+    end
+    
     methods (Static)
-        function [M] = MassMatrixCgCenter(rho, radius, height, draft)
+        function [M] = MassMatrix(rho, radius, height, draft, varargin)
+            if (~isempty(varargin))
+                % zcg is the vertical position in body coordinates, 
+                % where z=0 is the calm water free surface
+                zcg0 = -draft+height/2;
+                zcg = varargin{1};
+                delzcg = zcg - zcg0;
+            else
+                delzcg = 0;
+            end
             % rho is the fluid density
             % body mass equals buoyant force
             if (draft > height)
                 % assume neutrally buoyant
                 draft = height;
             end
-            Vsub = pi*radius^2*draft;
-            m = rho*Vsub;
+            wetVol = pi*radius^2*draft;
+            m = rho*wetVol;
 
             Izz = m*radius^2/2;
             Ixx = 1/12*m*(3*radius^2 + height^2);
             Iyy = Ixx;
+            
+            if (delzcg ~= 0)
+                Ixx = Ixx + m*delzcg^2;
+                Iyy = Iyy + m*delzcg^2;
+            end
 
             M = zeros(6,6);
 

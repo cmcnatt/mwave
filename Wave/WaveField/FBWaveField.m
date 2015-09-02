@@ -280,9 +280,9 @@ classdef FBWaveField < IWaveField & handle
             flux = wf.energyFlux(surf, varargin{:});
         end
         
-        function [] = RemoveGeometries(wf, bodies)
-            wf.swavefield.RemoveGeometries(bodies);
-            wf.rwavefield.RemoveGeometries(bodies);
+        function [] = RemoveGeometries(wf, bodies, varargin)
+            wf.swavefield.RemoveGeometries(bodies, varargin{:});
+            wf.rwavefield.RemoveGeometries(bodies, varargin{:});
         end
               
         % Overloaded equality operator

@@ -31,10 +31,10 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
         dpto;
         dpar;
         c;
+        hasc;
         k;
-        haskgm;
-        kgm;
         position;
+        centRot;
         wpSec;
         angle;
         modes;
@@ -42,6 +42,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
         iGenMds;
         iLowHi;
         iSurfPan;
+        panSize;
         writeFileMeth;
         writeParams;
     end
@@ -51,22 +52,25 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
         GeoFile;        % Name of .cfg geometry file (do not include ".cfg")
         PanelGeo;       % The actual panel geometry  
         Cg;             % Center of Gravity in body coordinates
+        CgGlobal;       % Center of Gravity in Global coordinates
         Cb;             % Center of Buoyancy in body coordinates
         M;              % Mass matrix
         Dpto;           % PTO Damping matrix
         Dpar;           % Parasitic damping matrix 
         C;              % Externally computed hydrostatic matrix
         K;              % Stiffness matrix
-        Kgm;            % Stiffness matric for generalized modes
         XYpos;          % XY Position of body origin in global coordinates 
         Zpos;           % Z position of body origin in global coordinates - seperate from the XYPosition because it controls the point about which the body pitches
+        CenterRot;      % Positon about which body rotated in body coordinates - if not specified, then is CG.
         WaterPlaneSec;  % (x, y) coordinates of the cross-section of the body at the water plane in the bodies coordinate system
+        WaterPlaneSecGlobal; % water plane section in global coords
         Rcir;           % Radius of circumscribed cirle
         Angle;          % Rotation angle (deg) of body x-axis relative to global x-axis
         Modes;          % Modes to be evaluated on this floating body
         Ngen;           % The number of generalized modes;
         WamIGenMds;     % Integer that specifies which NEWMODES subroutine to call.  All bodies in a given run must have the same value.
         WamILowHi;      % Indicates whether the geometry file is low-order (0) or high-order (1) (for WAMIT)
+        WamPanelSize;   % See WAMIT PANEL_SIZE .cfg parameter
         ISurfPan;       % Indicates whether the geometry has interior surface panels
         WriteFileMeth;  % Additional methods to support the writing of a geometry file
         WriteParams;    % Parameters of the WriteFileMeth
@@ -87,9 +91,9 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
                 fb.dpar = zeros(6, 6);
                 fb.k = zeros(6, 6);
                 fb.c = zeros(6, 6);
-                fb.kgm = zeros(6, 6);
-                fb.haskgm = false;
+                fb.hasc = false;
                 fb.position = zeros(1, 3);
+                fb.centRot = [];
                 fb.angle = 0;
                 fb.wpSec = [];
                 fb.modes = ModesOfMotion;
@@ -110,20 +114,16 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
                 fb.dpar = fbin.dpar;
                 fb.k = fbin.k;
                 fb.c = fbin.c;
-                fb.kgm = fbin.kgm;
-                if (any(any(fb.kgm ~= 0)))
-                    fb.haskgm = true;
-                else 
-                    fb.haskgm = false;
-                end
-
+                fb.hasc = fbin.hasc;
                 fb.position = fbin.position;
+                fb.centRot = fbin.centRot;
                 fb.angle = fbin.angle;
                 fb.wpSec = fbin.wpSec;
                 fb.modes = fbin.modes;
                 fb.nGen = fbin.nGen;
                 fb.iGenMds = fbin.iGenMds;
                 fb.iLowHi = fbin.iLowHi;
+                fb.panSize = fbin.panSize;
                 fb.iSurfPan = fbin.iSurfPan;
                 fb.writeFileMeth = fbin.writeFileMeth;
                 fb.writeParams = fbin.writeParams;
@@ -187,8 +187,18 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
         end
         function [fb] = set.Cg(fb, cg)
             % Set the center of gravity of the floating body
-            fb.checkSizeNx1(cg,3);           
+            fb.checkSizeNx1(cg,3);        
+            fb.onModifyCg(cg);
             fb.cg = cg;
+        end
+        
+        function [cgg] = get.CgGlobal(fb)
+            % Get the center of gravity of the floating body in Global
+            % coords
+            cgb = fb.cg;
+            
+            v = fb.position;
+            cgg = cgb + v;
         end
         
         function [C_b] = get.Cb(fb)
@@ -236,13 +246,19 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
         
         function [c_] = get.C(fb)
             % Get the hydrostatic stiffness matrix
-            inds = 6 + fb.nGen;
-            c_ = fb.c(1:inds,1:inds);
+            if (fb.hasc)
+%                 inds = 6 + fb.nGen;
+%                 c_ = fb.c(1:inds,1:inds);
+                c_ = fb.c;
+            else
+                c_ = [];
+            end
         end
         function [fb] = set.C(fb, c_)
             % Set the hydrostatic stiffness matrix
             fb.checkSize(c_);            
             fb.c = c_;
+            fb.hasc = true;
         end
         
         function [k_] = get.K(fb)
@@ -256,12 +272,6 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
             fb.k = k_;
         end
         
-        function [kgm_] = get.Kgm(fb)
-            % Get the stiffness matrix for generalized modes
-            inds = 6 + fb.nGen;
-            kgm_ = fb.kgm(1:inds,1:inds);
-        end
-        
         function [p] = get.XYpos(fb)
             % Get the x-y position of the body origin in global coordinates 
             p = fb.position(1:2);
@@ -269,6 +279,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
         function [fb] = set.XYpos(fb, p)
             % Set the x-y position of the body origin in global coordinates 
             fb.checkSizeNx1(p,2);
+            v = [0 0 0];
             for n = 1:2
                 fb.position(n) = p(n);
             end
@@ -280,7 +291,23 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
         end
         function [fb] = set.Zpos(fb, p)
             % Set the z position of the body origin in global coordinates 
+            v = [0 0 p];
+            fb.onModifyPos(v);
             fb.position(3) = p;
+        end
+        
+        function [p] = get.CenterRot(fb)
+            % Positon about which body rotated in body coordinates - if not specified, then is CG.
+            if (isempty(fb.centRot))
+                p = fb.cg;
+            else
+                p = fb.centRot;
+            end
+        end
+        function [fb] = set.CenterRot(fb, p)
+            % Positon about which body rotated in body coordinates - if not specified, then is CG.
+            fb.checkSizeNx1(p,3);
+            fb.centRot = p;
         end
         
         function [wp] = get.WaterPlaneSec(fb)
@@ -303,6 +330,17 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
             end
             
             fb.wpSec = wp;
+        end
+        
+        function [wpSecG] = get.WaterPlaneSecGlobal(fb)
+            % move the waterplane section
+            vxy = fb.position(1:2);
+            
+            wpSecG = fb.wpSec;
+            N = size(fb.wpSec, 1);
+            for n = 1:N
+                wpSecG = wpSecG + vxy;
+            end
         end
         
         function [r] = get.Rcir(fb)
@@ -384,6 +422,17 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
             fb.iLowHi = ilh;
         end
         
+        function [ilh] = get.WamPanelSize(fb)
+            ilh = fb.panSize;
+        end
+        function [fb] = set.WamPanelSize(fb, ps)
+            if (~isInt(ps))
+                error('value must be an integer');
+            end
+            fb.panSize = ps;
+        end
+        
+        
         function [isp] = get.ISurfPan(fb)
             % Indicates whether the geometry has interior surface panels
             isp = fb.iSurfPan;
@@ -438,6 +487,14 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
             if (fail)
                 error(['Value must be a ' num2str(N) 'x1 or a 1x' num2str(N) ' vector']);
             end
+        end
+        
+        function [] = onModifyCg(fb, cg)
+            % do nothing in the superclass
+        end
+        
+        function [] = onModifyPos(fb, v)
+            % do nothing in the superclass
         end
     end 
 end

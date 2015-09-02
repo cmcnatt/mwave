@@ -127,19 +127,20 @@ classdef KochinFunc
                 df_ = zeros(size(theta));
 
                 for m = 1:M
-%                     Amexp = Am(m)*exp(1i*m*(theta+pi/2));         
-%                     Anmexp = Anm(m)*exp(-1i*m*(theta+pi/2));
-                     Amexp = Am(m)*exp(1i*m*(theta-pi/2));         % This is the version that corresponds to the wave spectrum
-                     Anmexp = Anm(m)*exp(-1i*m*(theta-pi/2));
-%                     f_ = f_ + (1i^m*Amexp + 1i^(-m)*Anmexp);
-%                     df_ = df_ + m*(1i^(m + 1)*Amexp - 1i^(-m + 1)*Anmexp);
+                    Amexp = Am(m)*exp(1i*m*(theta+pi/2));         
+                    Anmexp = Anm(m)*exp(-1i*m*(theta+pi/2));
+%                      Amexp = Am(m)*exp(1i*m*(theta-pi/2));         % This is the version that corresponds to the wave spectrum
+%                      Anmexp = Anm(m)*exp(-1i*m*(theta-pi/2));
+
                     f_ = f_ + (Amexp + Anmexp);
                     df_ = df_ + m*(1i^(m + 1)*Amexp - 1i^(-m + 1)*Anmexp);
                 end
 
+                f_ = 1/pi*f_;                                        % This is the normalization used in the thesis
+                df_ = 1/pi*df_;
                 
-                f_ = sqrt(2/pi)*exp(1i*pi/4)*f_;
-                df_ = sqrt(2/pi)*exp(1i*pi/4)*df_;
+%                 f_ = sqrt(2/pi)*exp(1i*pi/4)*f_;
+%                 df_ = sqrt(2/pi)*exp(1i*pi/4)*df_;
             else
                 f_ = interp1(kf.thet, kf.f, theta);
                 df_ = interp1(kf.thet, kf.df, theta);

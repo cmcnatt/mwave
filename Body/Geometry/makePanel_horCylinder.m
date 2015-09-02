@@ -20,10 +20,12 @@ Contributors:
 %}
 function [geo] = makePanel_horCylinder(radius, beam, Nr, Ntheta, Ny, varargin)
 
-[opts, args] = checkOptions({{'SphereEnd', 1}, {'FlareEnd', 1}}, varargin);
+[opts, args] = checkOptions({{'SphereEnd', 1}, {'FlareEnd', 1}, {'CustProf', 1}}, varargin);
 
+makeEnds = true;
 if (opts(1))
     sphLen = args{1};
+    makeEnds = false;
 else
     sphLen = 0;
 end
@@ -32,6 +34,14 @@ if (opts(2))
     flareRad = args{2};
 else
     flareRad = 0;
+end
+
+if (opts(3))
+    useCpr = true;
+    custProf = args{3};
+else
+    useCpr = false;
+    custProf = [];
 end
 
 if (2*sphLen > beam)
@@ -62,8 +72,6 @@ else
     
 end
 
-
-
 dtheta = 2*pi/Ntheta;
 theta = 0:dtheta:2*pi;
 
@@ -75,6 +83,37 @@ y = -beam/2:dy:beam/2;
 
 rad = radius;
 rp1 = radius;
+
+if (useCpr)
+    cy1 = custProf(:,1);
+    cr1 = custProf(:,2);
+    
+    if ((abs(cy1(1)) > 1e-6) || (abs(cy1(end) - beam/2) > 1e-6))
+        error('End locations of horizontal cylinder custom profile must be 0 and beam/2');
+    end
+    
+    if (any(cr1 < 0))
+        error('For a custom profile, all radius values must be non negative');
+    end
+    
+    fcy1 = flip(cy1);
+    cy1 = [-fcy1; cy1(2:end)];
+    
+    fcr1 = flip(cr1);
+    cr1 = [fcr1; cr1(2:end)];
+    
+    cpr = interp1(cy1, cr1, y, 'linear');
+    
+    if (abs(cpr(1)) < 1e-6)
+        makeEnds = false;
+        Nr = 0;
+        rad = 0;
+    else
+        rad = cpr(1);
+        r = cpr(1):-dr:0;
+        Nr = length(r) - 1;
+    end
+end
 
 if (sphLen > 0)
     Nr = 0;
@@ -92,7 +131,7 @@ np = 0;
 
 for n = 1:Ntheta
     
-    if (sphLen == 0)
+    if (makeEnds)
         for m = 1:Nr
             verts = zeros(4,3);
             verts(1,:) = [r(Nr-m+2)*ctheta(n) y(1) r(Nr-m+2)*stheta(n)];
@@ -129,6 +168,10 @@ for n = 1:Ntheta
             end            
         end
         
+        if (useCpr)
+            rp1 = cpr(m+1);
+        end
+        
         verts = zeros(4,3);
         verts(1,:) = [rad*ctheta(n) y(m) rad*stheta(n)];
         verts(2,:) = [rp1*ctheta(n) y(m+1) rp1*stheta(n)];
@@ -144,7 +187,7 @@ for n = 1:Ntheta
         rad = rp1;
     end
 
-    if (sphLen == 0)
+    if (makeEnds)
         for m = 1:Nr
             verts = zeros(4,3);
             verts(1,:) = [r(m)*ctheta(n) y(end) r(m)*stheta(n)];

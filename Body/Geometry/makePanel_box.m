@@ -20,7 +20,9 @@ Contributors:
 %}
 function [geo] = makePanel_box(length, width, draft, Nx, Ny, Nz, varargin)
 
-quart = checkOptions({'Quarter'}, varargin);
+opts = checkOptions({{'Quarter'}, {'NoInt'}}, varargin);
+quart = opts(1);
+noInt = opts(2);
 
 if (quart)
     if ((mod(Nx, 2) ~= 0) || (mod(Ny, 2) ~= 0) )
@@ -98,19 +100,21 @@ if (quart)
     end
     
     % top - looking up
-    for n = 1:Nx
-        for m = 1:Ny
-            verts = zeros(4,3);
-            verts(1,:) = [x(n) y(m+1) 0]; % top right
-            verts(2,:) = [x(n) y(m) 0]; % top left
-            verts(3,:) = [x(n+1) y(m) 0]; % bottom left
-            verts(4,:) = [x(n+1) y(m+1) 0]; % bottom right
+    if (~noInt)
+        for n = 1:Nx
+            for m = 1:Ny
+                verts = zeros(4,3);
+                verts(1,:) = [x(n) y(m+1) 0]; % top right
+                verts(2,:) = [x(n) y(m) 0]; % top left
+                verts(3,:) = [x(n+1) y(m) 0]; % bottom left
+                verts(4,:) = [x(n+1) y(m+1) 0]; % bottom right
 
-            np = np + 1;
-            pans(np) = Panel(verts);
-            pans(np).IsWet = true;
-            pans(np).IsBody = true;
-            pans(np).IsInterior = true;
+                np = np + 1;
+                pans(np) = Panel(verts);
+                pans(np).IsWet = true;
+                pans(np).IsBody = true;
+                pans(np).IsInterior = true;
+            end
         end
     end
     
