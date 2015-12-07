@@ -21,7 +21,7 @@ Contributors:
 classdef ConstraintMatComp
     
     methods (Static)
-        function [P] = Hinge(bods, hins, varargin)
+        function [P] = HingedBodies(bods, hins, varargin)
             % bods = N x 3 matrix of {x, y, z} body coordinates, where N is
             % the number of bodies
             % hins = (N-1) x 3 matrix of {x, y, z} hinge coordinates. The
@@ -43,60 +43,73 @@ classdef ConstraintMatComp
                 error('The number of hinges must be one less than the number of bodies');
             end
             
-            if ((size(bods, 2) ~= 3) || (size(hins, 2) ~= 3))
-                error('The body coordinates and hinge coordinates must have x,y,z locations');
+            if (Nbod > 1)
+                if ((size(bods, 2) ~= 3) || (size(hins, 2) ~= 3))
+                    error('The body coordinates and hinge coordinates must have x,y,z locations');
+                end
             end
             
             PT = zeros(6*Nbod, 6 + Nhin);
             
-            dhbR = zeros(3, Nbod);
-            dhbL = zeros(3, Nbod);
+            sR = zeros(Nbod, 3);
+            sL = zeros(Nbod, 3);
             
             for n = 1:Nbod
                 if (n < Nbod)
-                    dhbR(n,:) = hins(n,:) - bods(n,:);
+                    sR(n,:) = hins(n,:) - bods(n,:);
                 end
                 
                 if (n > 1)
-                    dhbL(n,:) = hins(n-1,:) - bods(n,:);
+                    sL(n,:) = hins(n-1,:) - bods(n,:);
                 end
             end
             
-            dorgh1 = hin(1,:) - org;
-                        
+            sO = bods(1,:) - org;
+              
             for n = 1:Nbod
                 PTn = zeros(6, 6 + Nhin);
                 for m = 1:6
                     PTn(m, m) = 1;
                 end
                 
-                PTn(1,5) = dorgh1(3);
-                PTn(1,6) = dorgh1(2);
-                PTn(2,4) = dorgh1(3);
-                PTn(2,6) = dorgh1(1);
-                PTn(3,4) = dorgh1(2);
-                PTn(3,5) = dorgh1(1);
+                svect = -sO;
                 
-                for m = 1:n
-                    PTn(1,5) = PTn(1,5) + dhbL(m,3) - dhbR(m,3);
-                    PTn(1,6) = PTn(1,6) + dhbL(m,2) - dhbR(m,2);
-                    PTn(2,4) = PTn(2,4) + dhbL(m,3) - dhbR(m,3);
-                    PTn(2,6) = PTn(2,6) + dhbL(m,1) - dhbR(m,1);
-                    PTn(3,4) = PTn(3,4) + dhbL(m,2) - dhbR(m,2);
-                    PTn(3,5) = PTn(3,5) + dhbL(m,1) - dhbR(m,1);
+                for m = 2:n
+                    svect = svect - sR(n-1,:) + sL(n,:);
                 end
                 
-                PTn(1,6) = -PTn(1,6);
-                PTn(2,4) = -PTn(2,4);
-                PTn(3,5) = -PTn(3,5);
+                Sx = ConstraintMatComp.skewMat(svect);
+                PTn(1:3,4:6) = Sx;
                 
-                for m = (6+Nhin):n
-                    PTn(5, m) = 1;
+                PTn(5,7:(5+n)) = ones(1,n-1);
+                
+                if (n > 1)
+                    svect = [-sL(n,3), 0, sL(n,1)];
+                    for m = (n-1):-1:2
+                        svect = svect + [-sL(m,3), 0, sL(m,1)] - [-sR(m,3), 0, sR(m,1)];
+                    end
+                    PTn(1:3,n+5) = svect';
                 end
-                                
+                
                 istart = (n - 1)*6 + 1;
-                PT(istart:(istart + 6)) = PTn;
+                PT(istart:(istart + 5), :) = PTn;
             end
+            
+            P = PT.';
+        end
+    end
+    
+    methods (Static, Access = private)
+        
+        function [M] = skewMat(v)
+            M = zeros(3, 3);
+            
+            M(1,2) = -v(3);
+            M(1,3) = v(2);
+            M(2,1) = v(3);
+            M(2,3) = -v(1);
+            M(3,1) = -v(2);
+            M(3,2) = v(1);
         end
     end
 end

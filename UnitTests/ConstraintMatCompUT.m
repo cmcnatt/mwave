@@ -21,8 +21,164 @@ Contributors:
 classdef ConstraintMatCompUT < matlab.unittest.TestCase
 
     methods (Test)
-       
+        
         function test1(testCase)
+            % one body, no hinge, global cg at cg 1
+            cgs = [0, 0, 0];
+            hin = [];
+            
+            P = ConstraintMatComp.HingedBodies(cgs, hin);
+            
+            Pex = diag([1 1 1 1 1 1]);
+            
+            for m = 1:6
+                for n = 1:6
+                    testCase.verifyEqual(P(m,n), Pex(m,n), 'AbsTol', 1e-12);
+                end
+            end
+        end
+        
+        function test2(testCase)
+            % one body, no hinge, global cg somewhere else
+            cgs = [0, 0, 0];
+            hin = [];
+            org = [1, 0, 0];
+            
+            P = ConstraintMatComp.HingedBodies(cgs, hin, 'Origin', org);
+            
+            % composite body moves by x = 1, y = 2, z = 3
+            % and rolls 1, pitches 2, and yaws 0.
+            s = [1 2 3 1 2 0]';
+            
+            % new origin doesn't change wrt roll, yaw is 0, so only effect
+            % is in pitch. Positive pitch of 2, inceases z position by 2*-(-1),
+            % so z = 3 + 2*1, x and y are the same
+            % anges of body 1 should all be the same
+            qex = [1 2 5 1 2 0].';
+            q = P.'*s;
+
+            for m = 1:6
+                testCase.verifyEqual(q(m), qex(m), 'AbsTol', 1e-12);
+            end
+            
+            % composite body moves by x = 1, y = 2, z = 3
+            % and rolls 1, pitches 0, and yaws 2.
+            s = [1 2 3 1 0 2]';
+            
+            % new origin doesn't change wrt roll, pitch is 0, so only effect
+            % is in yaw. Positive yaw of 2, decreases y position by 2*1,
+            % so y = 2 - 2*1, x and z are the same
+            % anges of body 1 should all be the same
+            qex = [1 0 3 1 0 2].';
+            q = P.'*s;
+
+            for m = 1:6
+                testCase.verifyEqual(q(m), qex(m), 'AbsTol', 1e-12);
+            end
+            
+            % try another location
+            hin = [];
+            org = [1, -3, -2];
+            
+            P = ConstraintMatComp.HingedBodies(cgs, hin, 'Origin', org);
+            
+            % composite body moves by x = 1, y = 2, z = 3
+            % and rolls 1, pitches 2, and yaws 3.
+            s = [1 2 3 1 2 3]';
+            
+            % translation:  x = 1,      y = 2,      z = 3
+            % roll:         x = +0,     y = -1*2,   z = +1*3
+            % pitch:        x = +2*2,   y = +0,     z = +2*1
+            % yaw:          x = -3*3,   y = -3*1,   z = +0
+            % total:        x = -4,     y = -3,      z = 8
+            % anges of body 1 should all be the same
+            qex = [-4 -3 8 1 2 3].';
+            q = P.'*s;
+
+            for m = 1:6
+                testCase.verifyEqual(q(m), qex(m), 'AbsTol', 1e-12);
+            end
+        end
+        
+        function test3(testCase)
+            % two bodies, one hinge, 
+            % global cg at body 1
+            cgs = [-1, 0, -1; 1, 0, -2];
+            hin = [0, 0, 0];
+            
+            P = ConstraintMatComp.HingedBodies(cgs, hin);
+
+        end
+        
+        function test4(testCase)
+            % two bodies, one hinge, 
+            % global cg at hinge
+            cgs = [-1, 0, 2; 3, 0, -4];
+            hin = [0, 0, 0];
+            org = hin;
+            
+            P = ConstraintMatComp.HingedBodies(cgs, hin, 'Origin', org);
+
+            % composite body moves by x = 1, y = 2, z = 3
+            % and rolls 1, pitches 2, yaws 3, and flexes 4
+            s = [1 2 3 1 2 3 4]';
+            
+            qex = zeros(12, 1);
+            % Body 1
+            % translation:  x = 1,      y = 2,      z = 3
+            % roll:         x = +0,     y = -1*2,   z = -1*0
+            % pitch:        x = +2*2,   y = +0,     z = +2*1
+            % yaw:          x = -3*0,   y = -3*1,   z = +0
+            % total:        x = 5,      y = -3,      z = 5
+            % anges of body 1 should all be the same
+            qex(1) = 5;
+            qex(2) = -3;
+            qex(3) = 5;
+            qex(4) = 1;
+            qex(5) = 2;
+            qex(6) = 3;
+            
+            % Body 2
+            % pitch angle is: 4 + 2
+            % translation:  x = 1,          y = 2,      z = 3
+            % roll:         x = +0,         y = 1*4,    z = -1*0
+            % pitch:        x = -(4+2)*4,   y = +0,     z = -(4+2)*3
+            % yaw:          x = -3*0,       y = 3*3,   z = +0
+            % total:        x = -23,        y = 15,     z = -15
+            % anges of body 2 should all be the same
+            qex(7) = -23;
+            qex(8) = 15;
+            qex(9) = -15;
+            qex(10) = 1;
+            qex(11) = 6;
+            qex(12) = 3;
+            
+            q = P.'*s;
+
+            for m = 1:12
+                testCase.verifyEqual(q(m), qex(m), 'AbsTol', 1e-12);
+            end
+        end
+        
+        function test5(testCase)
+            % two bodies, one hinge, 
+            % global cg somewhere else
+            P = ConstraintMatComp.Hinge(cgs, hin);
+        end
+        
+         function test6(testCase)
+            % three bodies, two hinges, 
+            % global cg at cg 1
+            P = ConstraintMatComp.Hinge(cgs, hin);
+         end
+        
+         function test7(testCase)
+            % three bodies, two hinges, 
+            % global cg somewhere else
+            P = ConstraintMatComp.Hinge(cgs, hin);
+        end
+       
+        function test8(testCase)
             
             %             ______
             %    _______ |      |
