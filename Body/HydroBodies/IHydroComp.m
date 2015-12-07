@@ -412,6 +412,15 @@ classdef IHydroComp < handle
             end
         end
         
+        function [] = SetM(hcomp, m_)
+            % Set the Mass value, currently does not change the
+            % values of the floating bodies
+            
+            hcomp.checkMatSize(m_);
+
+            hcomp.m = m_;
+        end
+        
         function [] = SetDpto(hcomp, d_)
             % Set the PTO damping values, currently does not change the
             % values of the floating bodies

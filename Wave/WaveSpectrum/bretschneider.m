@@ -67,9 +67,9 @@ classdef Bretschneider < WaveSpectrum
                 end
                 f = 1./T;
 
-                coef = 1.25/4*fp^4*Hs^2;
+                coef = 5/16*fp^4*Hs^2;
 
-                E = coef./(f.^5).*exp(-1.25*(fp./f).^4);
+                E = coef./(f.^5).*exp(-5/4*(fp./f).^4);
         end
     end
     

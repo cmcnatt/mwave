@@ -66,7 +66,7 @@ classdef WaveSpectrum <handle
             spec1 = spec.Spectrum('Nondir');
 
             del = spec.Deltas('Frequency').';
-            m0 = abs(sum(spec1.*del));
+            m0 = abs(sum(spec1.*del.'));
         end
         
         % SigWaveHeight

@@ -45,7 +45,7 @@ classdef Trapazoid
         
         function [cen] = get.Centroid(tr)
             cen3 = tr.panel.Centroid;
-            cen = cen3(1:2);
+            cen = [cen3(1) cen3(2)];
         end
         
         function [I] = get.Interia(tr)

@@ -35,6 +35,7 @@ classdef WamitRunCondition < IBemRunCondition
         ncpu;
         ramGB;
         maxItt;
+        useDirect;
     end
 
     properties (Dependent)
@@ -53,6 +54,7 @@ classdef WamitRunCondition < IBemRunCondition
         NCPU;               % The number of cpus to be used in the Wamit computation
         RAMGBmax;           % The max RAM to be used in the Wamit computation
         MaxItt;
+        UseDirectSolver;
     end
 
     methods
@@ -69,6 +71,7 @@ classdef WamitRunCondition < IBemRunCondition
             run.ncpu = 1;
             run.ramGB = 2;
             run.maxItt = 35;
+            run.useDirect = false;
             run.geoFiles = [];
             if (nargin == 0)
                 run.folder = ' ';
@@ -304,6 +307,19 @@ classdef WamitRunCondition < IBemRunCondition
             run.maxItt = mi;
         end
         
+        function [ud] = get.UseDirectSolver(run)
+            % Use the direct solver
+            ud = run.useDirect;
+        end
+        function [run] = set.UseDirectSolver(run, ud)
+             % Use the direct solver
+            if (~isBool(ud))                
+                error('UseDirectSolver must be a boolean');
+            end
+            
+            run.useDirect = ud;
+        end
+        
         function [] = WriteRun(run, varargin)
             % Writes the Input files (except for the .gdf) for a WAMIT run
             
@@ -324,7 +340,7 @@ classdef WamitRunCondition < IBemRunCondition
                     run.geoFiles{n} = geoFile;
                     %run.floatBods(n).WriteGdf(run.folder, fileName);
                 else
-                    run.geoFiles{n} = run.floatBods(1).GeoFile;
+                    run.geoFiles{n} = run.floatBods(n).GeoFile;
                 end
             end
             
@@ -524,7 +540,18 @@ classdef WamitRunCondition < IBemRunCondition
             end
             fprintf(fileID, 'IPOTEN = 1\n');
             fprintf(fileID, 'ISCATT = 0\n');
-            fprintf(fileID, 'ISOLVE = 0\n');
+            if (run.useDirect)
+                % User input to use the direct solver
+                fprintf(fileID, 'ISOLVE = 1\n');
+            else
+                if (run.floatBods(1).WamILowHi)
+                    % Use direct solver for higher order panel method
+                    fprintf(fileID, 'ISOLVE = 1\n');
+                else
+                    % Use iterative solver for lower order panel method
+                    fprintf(fileID, 'ISOLVE = 0\n');
+                end
+            end
             if (run.computeBody && run.computeVelocity)
                 fprintf(fileID, 'ISOR = 1\n');
             else
