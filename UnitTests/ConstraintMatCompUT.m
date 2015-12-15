@@ -99,18 +99,8 @@ classdef ConstraintMatCompUT < matlab.unittest.TestCase
                 testCase.verifyEqual(q(m), qex(m), 'AbsTol', 1e-12);
             end
         end
-        
+                
         function test3(testCase)
-            % two bodies, one hinge, 
-            % global cg at body 1
-            cgs = [-1, 0, -1; 1, 0, -2];
-            hin = [0, 0, 0];
-            
-            P = ConstraintMatComp.HingedBodies(cgs, hin);
-
-        end
-        
-        function test4(testCase)
             % two bodies, one hinge, 
             % global cg at hinge
             cgs = [-1, 0, 2; 3, 0, -4];
@@ -160,35 +150,140 @@ classdef ConstraintMatCompUT < matlab.unittest.TestCase
             end
         end
         
-        function test5(testCase)
+        function test4(testCase)
             % two bodies, one hinge, 
-            % global cg somewhere else
-            P = ConstraintMatComp.Hinge(cgs, hin);
+            % global cg at body 1
+            cgs = [-1, 0, 2; 3, 0, -4];
+            hin = [0, 0, 0];
+            
+            P = ConstraintMatComp.HingedBodies(cgs, hin);
+            
+            % composite body moves by x = 1, y = 2, z = 3
+            % and rolls 1, pitches 2, yaws 3, and flexes 4
+            s = [1 2 3 1 2 3 4]';
+            
+            qex = zeros(12, 1);
+            % Body 1
+            % origin is at cg 1
+            % position and angles of body 1 should be the same
+            qex(1) = 1;
+            qex(2) = 2;
+            qex(3) = 3;
+            qex(4) = 1;
+            qex(5) = 2;
+            qex(6) = 3;
+            
+            % Body 2
+            % pitch angle of 2 is: 4 + 2
+            % translation:  x = 1,          y = 2,      z = 3
+            % Body 1
+            % roll:         x = 0,          y = 1*2,    z = 0
+            % pitch:        x = -2*2,       y = 0,      z = -2*1
+            % yaw:          x = 0,          y = 3*1,    z = 0
+            % body 2
+            % roll:         x = 0,          y = 1*4,    z = 0
+            % pitch:        x = -(4+2)*4,   y = 0,      z = -(4+2)*3
+            % yaw:          x = 0,          y = 3*3,    z = 0
+            % total:        x = -27,        y = 20,     z = -17
+            % anges of body 2 should all be the same
+            qex(7) = -27;
+            qex(8) = 20;
+            qex(9) = -17;
+            qex(10) = 1;
+            qex(11) = 6;
+            qex(12) = 3;
+            
+            q = P.'*s;
+
+            for m = 1:12
+                testCase.verifyEqual(q(m), qex(m), 'AbsTol', 1e-12);
+            end
         end
         
-         function test6(testCase)
+         function test5(testCase)
             % three bodies, two hinges, 
             % global cg at cg 1
-            P = ConstraintMatComp.Hinge(cgs, hin);
-         end
-        
-         function test7(testCase)
-            % three bodies, two hinges, 
-            % global cg somewhere else
-            P = ConstraintMatComp.Hinge(cgs, hin);
-        end
-       
-        function test8(testCase)
+            cgs = [-1, 0, 2; 3, 0, -4; 5, 0, 6];
+            hins = [0, 0, 0; 4, 0, 0];
             
-            %             ______
-            %    _______ |      |
-            %   |   1   ||  2   |
-            %   |_______||      |
-            %            |______|
+            P = ConstraintMatComp.HingedBodies(cgs, hins);
+            
+            % composite body moves by x = 1, y = 2, z = 3
+            % and rolls 1, pitches 2, yaws 3, and flexes1 4, flexes2 -4
+            s = [1 2 3 1 2 3 4 -4]';
+            
+            qex = zeros(18, 1);
+            % Body 1
+            % origin is at cg 1
+            % position and angles of body 1 should be the same
+            qex(1) = 1;
+            qex(2) = 2;
+            qex(3) = 3;
+            qex(4) = 1;
+            qex(5) = 2;
+            qex(6) = 3;
+            
+            % Body 2
+            % pitch angle of 2 is: 4 + 2
+            % translation:  x = 1,          y = 2,      z = 3
+            % Body 1
+            % roll:         x = 0,          y = 1*2,    z = 0
+            % pitch:        x = -2*2,       y = 0,      z = -2*1
+            % yaw:          x = 0,          y = 3*1,    z = 0
+            % body 2
+            % roll:         x = 0,          y = 1*4,    z = 0
+            % pitch:        x = -(4+2)*4,   y = 0,      z = -(4+2)*3
+            % yaw:          x = 0,          y = 3*3,    z = 0
+            % total:        x = -27,        y = 20,     z = -17
+            qex(7) = -27;
+            qex(8) = 20;
+            qex(9) = -17;
+            qex(10) = 1;
+            qex(11) = 6;
+            qex(12) = 3;
+            
+            % Body 3
+            % pitch angle of 3 is: (2 + 4) - 4 = 2
+            % start at position of body 2
+            % translation:  x = -27,        y = 20,     z = -17
+            % Body 2
+            % roll:         x = 0,          y = -1*4,   z = 0
+            % pitch:        x = (4+2)*4,    y = 0,      z = -(4+2)*1
+            % yaw:          x = 0,          y = 3*1,    z = 0
+            % Body 3
+            % roll:         x = 0,          y = -1*6,   z = 0
+            % pitch:        x = 2*6,        y = 0,      z = -2*1
+            % yaw:          x = 0,          y = 3*1,    z = 0
+            % total:        x = 9           y = 16,     z = -25
+            qex(13) = 9;
+            qex(14) = 16;
+            qex(15) = -25;
+            qex(16) = 1;
+            qex(17) = 2;
+            qex(18) = 3;
+            
+            q = P.'*s;
+
+            for m = 1:18
+                testCase.verifyEqual(q(m), qex(m), 'AbsTol', 1e-12);
+            end
+         end
+               
+        function test6(testCase)
+            % check the computation of the mass matrix of composite hinge
+            % body
+            
+            % symmetric blocks, origin at hinge
+            
+            %             
+            %    _______  _______      
+            %   |   1   ||   2   |
+            %   |_______||_______|
+            %            
             %
             
-            len1 = 5;
-            wid1 = 4;
+            len1 = 6;
+            wid1 = 1;
             hei1 = 2;
             
             len2 = len1;
@@ -198,7 +293,166 @@ classdef ConstraintMatCompUT < matlab.unittest.TestCase
             M1 = ConstraintMatCompUT.massBlock(len1, wid1, hei1);
             M2 = ConstraintMatCompUT.massBlock(len2, wid2, hei2);
             
-            Mq = [M1; M2];
+            Mq = zeros(12,12);
+            Mq(1:6, 1:6) = M1;
+            Mq(7:12, 7:12) = M2;
+                        
+            cg1 = [-len1/2, 0, 0];
+            cg2 = [len2/2, 0, 0];
+            
+            cgs = [cg1; cg2];
+            hin = [0 0 0];
+            org = hin;
+            
+            P = ConstraintMatComp.HingedBodies(cgs, hin, 'Origin', org);
+            
+            Ms = P*Mq*P.';
+            
+            % single large block
+            Mex66 = ConstraintMatCompUT.massBlock(len1 + len2, wid1, hei1);
+            
+            Mex = zeros(7, 7);
+            Mex(1:6, 1:6) = Mex66;
+            % parallel axis theorem to get flex inertia (i.e. flex intertia
+            % is pitch inertia of second body about hinge
+            m2 = M2(1,1);
+            r2 = len2/2;
+            Ipp2 = M2(5,5);
+            Mex(7,7) = Ipp2 + m2*r2^2;
+            % heave-flex is the moment created in flex due to a positve 
+            % motion in heave
+            Mex(3,7) = -m2*r2;
+            Mex(7,3) = Mex(3,7);
+            
+            % pitch-flex is the moment created in flex due to a postive
+            % pitch
+            Mex(5,7) = Mex(7,7);
+            Mex(7,5) = Mex(7,7);
+            
+            for m = 1:7
+                for n = 1:7
+                    testCase.verifyEqual(Ms(m,n), Mex(m,n), 'AbsTol', 1e-12);
+                end
+            end
+        end
+        
+        function test7(testCase)
+            % check the computation of the mass matrix of composite hinge
+            % body
+            
+            % origin at hinge
+            
+            %             _________
+            %    _______ |         |     
+            %   |   1   ||    2    |
+            %   |_______||         |
+            %            |_________|
+            %
+            
+            len1 = 6;
+            wid1 = 1;
+            hei1 = 2;
+            
+            len2 = 9;
+            wid2 = wid1;
+            hei2 = 4;
+            
+            M1 = ConstraintMatCompUT.massBlock(len1, wid1, hei1);
+            M2 = ConstraintMatCompUT.massBlock(len2, wid2, hei2);
+            
+            Mq = zeros(12,12);
+            Mq(1:6, 1:6) = M1;
+            Mq(7:12, 7:12) = M2;
+                        
+            cg1 = [-len1/2, 0, 0];
+            cg2 = [len2/2, 0, 0];
+            
+            cgs = [cg1; cg2];
+            hin = [0 0 0];
+            org = hin;
+            
+            P = ConstraintMatComp.HingedBodies(cgs, hin, 'Origin', org);
+            
+            Ms = P*Mq*P.';
+            
+            Mex = zeros(7, 7);
+            m1 = M1(1,1);
+            m2 = M2(1,1);
+            r1 = len1/2;
+            r2 = len2/2;
+            
+            % mass
+            m = m1 + m2;
+            Mex(1,1) = m;
+            Mex(2,2) = m;
+            Mex(3,3) = m;
+            % Roll - both on same roll axis
+            Mex(4,4) = M1(4,4) + M2(4,4);
+            % Pitch
+            Mex(5,5) = M1(5,5) + m1*r1^2 + M2(5,5) + m2*r2^2;
+            % Yaw
+            Mex(6,6) = M1(6,6) + m1*r1^2 + M2(6,6) + m2*r2^2;
+            
+            % parallel axis theorem to get flex inertia (i.e. flex intertia
+            % is pitch inertia of second body about hinge
+            Mex(7,7) = M2(5,5) + m2*r2^2;
+            
+            % heave-pitch is the moment created in pitch due to a positive
+            % heave about origin (i.e. hinge)
+            cg0 = (m1*cgs(1,:) + m2*cgs(2,:))./m;
+            r0 = org - cg0;
+            Mex(3,5) = m*r0(1);
+            Mex(5,3) = Mex(3,5);
+            
+            % surge-yaw is just like heave-pitch, but negative (rotations
+            % of pitch and yaw are opposite)
+            Mex(2,6) = -m*r0(1);
+            Mex(6,2) = Mex(2,6);
+                        
+            % heave-flex is the moment created in flex due to a positve 
+            % motion in heave
+            Mex(3,7) = -m2*r2;
+            Mex(7,3) = Mex(3,7);
+            
+            % pitch-flex is the moment created in flex due to a postive
+            % pitch
+            Mex(5,7) = Mex(7,7);
+            Mex(7,5) = Mex(7,7);
+            
+            for m = 1:7
+                for n = 1:7
+                    testCase.verifyEqual(Ms(m,n), Mex(m,n), 'AbsTol', 1e-12);
+                end
+            end
+        end
+        
+        function test8(testCase)
+            % check the computation of the mass matrix of composite hinge
+            % body
+            
+            % origin at global cg
+            
+            %             _________
+            %    _______ |         |     
+            %   |   1   ||    2    |
+            %   |_______||         |
+            %            |_________|
+            %
+            
+            len1 = 6;
+            wid1 = 1;
+            hei1 = 2;
+            
+            len2 = 9;
+            wid2 = wid1;
+            hei2 = 4;
+            
+            M1 = ConstraintMatCompUT.massBlock(len1, wid1, hei1);
+            M2 = ConstraintMatCompUT.massBlock(len2, wid2, hei2);
+            
+            Mq = zeros(12,12);
+            Mq(1:6, 1:6) = M1;
+            Mq(7:12, 7:12) = M2;
                         
             cg1 = [-len1/2, 0, 0];
             cg2 = [len2/2, 0, 0];
@@ -206,15 +460,54 @@ classdef ConstraintMatCompUT < matlab.unittest.TestCase
             cgs = [cg1; cg2];
             hin = [0 0 0];
             
-            P = ConstraintMatComp.Hinge(cgs, hin);
+            m1 = M1(1,1);
+            m2 = M2(1,1);
+            m = m1 + m2;
+                        
+            cg0 = (m1*cgs(1,:) + m2*cgs(2,:))./m;
+            
+            org = cg0;
+            
+            P = ConstraintMatComp.HingedBodies(cgs, hin, 'Origin', org);
             
             Ms = P*Mq*P.';
             
-            Mex66 = ConstraintMatCompUT.massBlock(len1 + len2, wid1 + wid2, hei1 + hei2);
-            
             Mex = zeros(7, 7);
-            Mex(1:6, 1:6) = Mex66;
-            Mex(7,7) = Mex66(5,5);
+            
+            % mass
+            Mex(1,1) = m;
+            Mex(2,2) = m;
+            Mex(3,3) = m;
+            % Roll - both on same roll axis
+            Mex(4,4) = M1(4,4) + M2(4,4);
+            
+            r1 = cg1 - cg0;
+            r1 = r1(1);
+            r2 = cg2 - cg0;
+            r2 = r2(1);
+            
+            % Pitch
+            Mex(5,5) = M1(5,5) + m1*r1^2 + M2(5,5) + m2*r2^2;
+            % Yaw
+            Mex(6,6) = M1(6,6) + m1*r1^2 + M2(6,6) + m2*r2^2;
+            
+            % parallel axis theorem to get flex inertia (i.e. flex intertia
+            % is pitch inertia of second body about hinge
+            rh2 = len2/2;
+            Mex(7,7) = M2(5,5) + m2*rh2^2;
+                                    
+            % heave-flex is the moment created in flex due to a positve 
+            % motion in heave
+            Mex(3,7) = -m2*rh2;
+            Mex(7,3) = Mex(3,7);
+            
+            % pitch-flex is the moment created in flex due to a postive
+            % pitch
+            % Fix this*****************
+            dr = cg0 - hin;
+            dr = dr(1);
+            Mex(5,7) = Mex(5,5) + m*dr^2 + Mex(7,7);
+            Mex(7,5) = Mex(5,7);
             
             for m = 1:7
                 for n = 1:7

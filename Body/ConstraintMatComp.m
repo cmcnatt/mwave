@@ -68,29 +68,39 @@ classdef ConstraintMatComp
               
             for n = 1:Nbod
                 PTn = zeros(6, 6 + Nhin);
-                for m = 1:6
-                    PTn(m, m) = 1;
-                end
                 
+                % Identity matrices
+                PTn(1:3, 1:3) = eye(3);
+                PTn(4:6, 4:6) = eye(3);
+                                
+                % cross-product matrix
                 svect = -sO;
-                
                 for m = 2:n
-                    svect = svect - sR(n-1,:) + sL(n,:);
+                    svect = svect - sR(m-1,:) + sL(m,:);
                 end
-                
                 Sx = ConstraintMatComp.skewMat(svect);
                 PTn(1:3,4:6) = Sx;
                 
-                PTn(5,7:(5+n)) = ones(1,n-1);
-                
-                if (n > 1)
+                for o = 2:n
                     svect = [-sL(n,3), 0, sL(n,1)];
-                    for m = (n-1):-1:2
-                        svect = svect + [-sL(m,3), 0, sL(m,1)] - [-sR(m,3), 0, sR(m,1)];
-                    end
-                    PTn(1:3,n+5) = svect';
-                end
                 
+                    for m = n:-1:(o+1)
+                        svect = svect + [-sL(m-1,3), 0, sL(m-1,1)] + [sR(m-1,3), 0, -sR(m-1,1)];
+                    end
+                    
+                    PTn(1:3,o+5) = svect';
+                end
+%                 if (n > 1)
+%                     svect = [-sL(n,3), 0, sL(n,1)];
+%                     for m = (n-1):-1:2
+%                         svect = svect + [-sL(m,3), 0, sL(m,1)] - [-sR(m,3), 0, sR(m,1)];
+%                     end
+%                     PTn(1:3,n+5) = svect';
+%                 end
+%                 
+                % row of 1's in pitch for flex modes
+                PTn(5,7:(5+n)) = ones(1,n-1);
+                                
                 istart = (n - 1)*6 + 1;
                 PT(istart:(istart + 5), :) = PTn;
             end
