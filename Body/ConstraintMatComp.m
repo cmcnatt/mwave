@@ -22,11 +22,22 @@ classdef ConstraintMatComp
     
     methods (Static)
         function [P] = HingedBodies(bods, hins, varargin)
-            % bods = N x 3 matrix of {x, y, z} body coordinates, where N is
-            % the number of bodies
-            % hins = (N-1) x 3 matrix of {x, y, z} hinge coordinates. The
-            % y-coordinate is not really necessary as it's a hinge about an
-            % axis parallel to the y-axis
+            % Inputs:
+            %   bods = N x 3 matrix of {x, y, z} body coordinates, where N 
+            %       is the number of bodies
+            %   hins = (N-1) x 3 matrix of {x, y, z} hinge coordinates. The
+            %       y-coordinate is not really necessary as it's a hinge 
+            %       about an axis parallel to the y-axis
+            %
+            % Optional Inputs:
+            %   'Origin', org = org is a 1 x 3 vector indicating the origin
+            %       of the composite body. If the optional 'Origin'
+            %       argument is not provided, the default is is the body
+            %       coordinates of body 1
+            %
+            % Returns:
+            %   P = the velocity transformation matrix 
+            %       (not PT, i.e. the transpose) 
             
             [opts, args] = checkOptions({{'Origin', 1}}, varargin);
             
@@ -40,12 +51,14 @@ classdef ConstraintMatComp
             Nhin = size(hins, 1);
             
             if (Nhin ~= (Nbod - 1))
-                error('The number of hinges must be one less than the number of bodies');
+                error(['The number of hinges must be one less than the '...
+                'number of bodies']);
             end
             
             if (Nbod > 1)
                 if ((size(bods, 2) ~= 3) || (size(hins, 2) ~= 3))
-                    error('The body coordinates and hinge coordinates must have x,y,z locations');
+                    error(['The body coordinates and hinge coordinates '...
+                        'must have x,y,z locations']);
                 end
             end
             
@@ -85,19 +98,13 @@ classdef ConstraintMatComp
                     svect = [-sL(n,3), 0, sL(n,1)];
                 
                     for m = n:-1:(o+1)
-                        svect = svect + [-sL(m-1,3), 0, sL(m-1,1)] + [sR(m-1,3), 0, -sR(m-1,1)];
+                        svect = svect + [-sL(m-1,3), 0, sL(m-1,1)] ...
+                            + [sR(m-1,3), 0, -sR(m-1,1)];
                     end
                     
                     PTn(1:3,o+5) = svect';
                 end
-%                 if (n > 1)
-%                     svect = [-sL(n,3), 0, sL(n,1)];
-%                     for m = (n-1):-1:2
-%                         svect = svect + [-sL(m,3), 0, sL(m,1)] - [-sR(m,3), 0, sR(m,1)];
-%                     end
-%                     PTn(1:3,n+5) = svect';
-%                 end
-%                 
+
                 % row of 1's in pitch for flex modes
                 PTn(5,7:(5+n)) = ones(1,n-1);
                                 
@@ -113,13 +120,18 @@ classdef ConstraintMatComp
         
         function [M] = skewMat(v)
             M = zeros(3, 3);
+            x = v(1);
+            y = v(2);
+            z = v(3);
             
-            M(1,2) = -v(3);
-            M(1,3) = v(2);
-            M(2,1) = v(3);
-            M(2,3) = -v(1);
-            M(3,1) = -v(2);
-            M(3,2) = v(1);
+            M(1,2) = -z;
+            M(1,3) = y;
+            
+            M(2,1) = z;
+            M(2,3) = -x;
+            
+            M(3,1) = -y;
+            M(3,2) = x;
         end
     end
 end

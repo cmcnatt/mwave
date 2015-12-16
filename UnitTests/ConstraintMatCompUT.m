@@ -331,7 +331,8 @@ classdef ConstraintMatCompUT < matlab.unittest.TestCase
             
             for m = 1:7
                 for n = 1:7
-                    testCase.verifyEqual(Ms(m,n), Mex(m,n), 'AbsTol', 1e-12);
+                    testCase.verifyEqual(Ms(m,n), Mex(m,n), 'AbsTol', ...
+                        1e-12);
                 end
             end
         end
@@ -421,7 +422,8 @@ classdef ConstraintMatCompUT < matlab.unittest.TestCase
             
             for m = 1:7
                 for n = 1:7
-                    testCase.verifyEqual(Ms(m,n), Mex(m,n), 'AbsTol', 1e-12);
+                    testCase.verifyEqual(Ms(m,n), Mex(m,n), 'AbsTol', ...
+                        1e-12);
                 end
             end
         end
@@ -503,15 +505,110 @@ classdef ConstraintMatCompUT < matlab.unittest.TestCase
             
             % pitch-flex is the moment created in flex due to a postive
             % pitch
-            % Fix this*****************
-            dr = cg0 - hin;
+            dr = cg2 - hin;
             dr = dr(1);
-            Mex(5,7) = Mex(5,5) + m*dr^2 + Mex(7,7);
+            Mex(5,7) = m2*dr*r2 + M2(5,5);
             Mex(7,5) = Mex(5,7);
             
             for m = 1:7
                 for n = 1:7
-                    testCase.verifyEqual(Ms(m,n), Mex(m,n), 'AbsTol', 1e-12);
+                    testCase.verifyEqual(Ms(m,n), Mex(m,n), 'AbsTol', ...
+                        1e-12);
+                end
+            end
+        end
+        
+        function test9(testCase)
+            % check the computation of the mass matrix of composite hinge
+            % body
+            
+            % origin at global cg, including dz in the hinge
+            
+            %    _______  _________
+            %   |       ||         |     
+            %   |   1   ||    2    |
+            %   |_______||         |
+            %            |_________|
+            %
+            
+            len1 = 6;
+            wid1 = 1;
+            hei1 = 2;
+            
+            len2 = 9;
+            wid2 = wid1;
+            hei2 = 4;
+            
+            M1 = ConstraintMatCompUT.massBlock(len1, wid1, hei1);
+            M2 = ConstraintMatCompUT.massBlock(len2, wid2, hei2);
+            
+            Mq = zeros(12,12);
+            Mq(1:6, 1:6) = M1;
+            Mq(7:12, 7:12) = M2;
+                        
+            cg1 = [-len1/2, 0, 2];
+            cg2 = [len2/2, 0, 0];
+            
+            cgs = [cg1; cg2];
+            hin = [0 0 1];
+            
+            m1 = M1(1,1);
+            m2 = M2(1,1);
+            m = m1 + m2;
+                        
+            cg0 = (m1*cgs(1,:) + m2*cgs(2,:))./m;
+            
+            org = cg0;
+            
+            P = ConstraintMatComp.HingedBodies(cgs, hin, 'Origin', org);
+            
+            Ms = P*Mq*P.';
+            
+            Mex = zeros(7, 7);
+            
+            % mass
+            Mex(1,1) = m;
+            Mex(2,2) = m;
+            Mex(3,3) = m;
+            
+            r1 = cg1 - cg0;
+            r2 = cg2 - cg0;
+            
+            % Roll
+            Mex(4,4) = M1(4,4) + M2(4,4) + m1*r1(3)^2 + m2*r2(3)^2;
+            
+            % Pitch
+            Mex(5,5) = M1(5,5) + m1*sum(r1.^2) + M2(5,5) + m2*sum(r2.^2);
+            % Yaw
+            Mex(6,6) = M1(6,6) + m1*r1(1)^2 + M2(6,6) + m2*r2(1)^2;
+            
+            % There is also a roll-yaw coupling, because of the difference
+            % in the z-pos of the CGs of each body, which creates new
+            % roll and yaw pricipal axes.
+            Mex(4,6) = Ms(4,6);
+            Mex(6,4) = Mex(4,6);
+            
+            % parallel axis theorem to get flex inertia (i.e. flex intertia
+            % is pitch inertia of second body about hinge
+            rh2 = cg2 - hin;
+            Mex(7,7) = M2(5,5) + m2*(rh2*rh2');
+                                    
+            % heave-flex is the moment created in flex due to a positve 
+            % motion in heave
+            Mex(1,7) = m2*rh2(3);
+            Mex(7,1) = Mex(1,7);
+            Mex(3,7) = -m2*rh2(1);
+            Mex(7,3) = Mex(3,7);
+            
+            % pitch-flex is the moment created in flex due to a postive
+            % pitch
+            Mex(5,7) = m2*r2*rh2' + M2(5,5);
+            Mex(7,5) = Mex(5,7);
+            
+            for m = 1:7
+                for n = 1:7
+                    testCase.verifyEqual(Ms(m,n), Mex(m,n), 'AbsTol', ...
+                        1e-12);
                 end
             end
         end
