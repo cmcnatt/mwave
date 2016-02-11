@@ -23,12 +23,9 @@ function [v_rad, v_diff, points] = Wamit_readNum6v(folderpath, runname, T, Nbeta
 % Returns the radiation velocity (v_rad) and the diffraction velocity 
 % (v_diff) at the field points (points)
 
-buffer = importdata([folderpath '/' runname '.fpt']);
+points = Wamit_readFpt(folderpath, runname);
 
-raw = buffer.data;
-
-points = raw(:, 2:4);
-[Npoints buffer] = size(points);
+[Npoints, buffer] = size(points);
 
 fidx = fopen([folderpath '/' runname '.6vx']);
 fidy = fopen([folderpath '/' runname '.6vy']);

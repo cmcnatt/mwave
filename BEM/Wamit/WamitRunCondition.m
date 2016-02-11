@@ -65,9 +65,9 @@ classdef WamitRunCondition < IBemRunCondition
             run.computeBody = false;
             run.solveDiff = true;
             run.solveRad = true;
-            run.exePath = 'N:\wamitv7';
-            run.scratchPath = 'N:\wamitv7\scratch';
-            run.useridPath = 'N:\wamitv7';
+            run.exePath = 'C:\wamitv7';
+            run.scratchPath = '\wamitv7\scratch';
+            run.useridPath = '\wamitv7';
             run.ncpu = 1;
             run.ramGB = 2;
             run.maxItt = 35;

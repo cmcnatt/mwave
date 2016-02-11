@@ -29,12 +29,10 @@ if (~isempty(varargin))
     useSing = varargin{1};
 end
 
-buffer = importdata([folderpath '\' runname '.fpt']);
+points = Wamit_readFpt(folderpath, runname);
 
-raw = buffer.data;
-
-points = raw(:, 2:4);
 [Npoints buffer] = size(points);
+
 
 fid = fopen([folderpath '/' runname '.6p']);
 % ignore the header line

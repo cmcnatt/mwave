@@ -86,14 +86,24 @@ for n = 1:Ntheta
         pans(np) = Panel(verts);
         if (topZero)
             pans(np).IsWet = true;
+            if (noInt)
+                pans(np).IsInterior = true;
+            else
+                pans(np).IsInterior = false;
+            end
         else
             pans(np).IsWet = false;
         end
-        if (topZero && ~noInt)
-            pans(np).IsInterior = true;
-        else
-            pans(np).IsInterior = false;
-        end
+%         if (topZero)
+%             pans(np).IsWet = true;
+%         else
+%             pans(np).IsWet = false;
+%         end
+%         if (topZero && ~noInt)
+%             pans(np).IsInterior = true;
+%         else
+%             pans(np).IsInterior = false;
+%         end
         pans(np).IsBody = true;
     end
     
