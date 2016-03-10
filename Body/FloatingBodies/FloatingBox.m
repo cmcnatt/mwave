@@ -101,9 +101,9 @@ classdef FloatingBox < FloatingBody
     
     methods (Static)
         function [M] = MassMatrix(rho, length, beam, height, draft)
-            V = length*beam*draft;
+            Vsub = length*beam*draft;
 
-            m = rho*V;
+            m = rho*Vsub;
 
             Ixx = 1/12*m*(beam^2 + height^2);
             Iyy = 1/12*m*(length^2 + height^2);

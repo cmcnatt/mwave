@@ -23,8 +23,9 @@ classdef ConstraintMatComp
     methods (Static)
         function [P] = HingedBodies(bods, hins, varargin)
             % Inputs:
-            %   bods = N x 3 matrix of {x, y, z} body coordinates, where N 
-            %       is the number of bodies
+            %   bods = N x 3 matrix of {x, y, z} body coordinates (location
+            %       of the body in global coordinates), where N is the 
+            %       number of bodies
             %   hins = (N-1) x 3 matrix of {x, y, z} hinge coordinates. The
             %       y-coordinate is not really necessary as it's a hinge 
             %       about an axis parallel to the y-axis
@@ -91,7 +92,7 @@ classdef ConstraintMatComp
                 for m = 2:n
                     svect = svect - sR(m-1,:) + sL(m,:);
                 end
-                Sx = ConstraintMatComp.skewMat(svect);
+                Sx = skewMat(svect);
                 PTn(1:3,4:6) = Sx;
                 
                 for o = 2:n
@@ -113,25 +114,6 @@ classdef ConstraintMatComp
             end
             
             P = PT.';
-        end
-    end
-    
-    methods (Static, Access = private)
-        
-        function [M] = skewMat(v)
-            M = zeros(3, 3);
-            x = v(1);
-            y = v(2);
-            z = v(3);
-            
-            M(1,2) = -z;
-            M(1,3) = y;
-            
-            M(2,1) = z;
-            M(2,3) = -x;
-            
-            M(3,1) = -y;
-            M(3,2) = x;
         end
     end
 end

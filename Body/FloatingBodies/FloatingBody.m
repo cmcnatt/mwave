@@ -426,9 +426,6 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
             ilh = fb.panSize;
         end
         function [fb] = set.WamPanelSize(fb, ps)
-            if (~isInt(ps))
-                error('value must be an integer');
-            end
             fb.panSize = ps;
         end
         
