@@ -86,43 +86,74 @@ classdef WaveSpectrum <handle
         
         % Spectrum        
         function [Spec] = Spectrum(spec, varargin)
-            narg = length(varargin);
+            [opts, args] = checkOptions({{'Nondir'}, {'WithEnergy'},...
+                {'Period'}, {'Wavelength', 1}}, varargin);
             
-            nondir = 0;
-            withEnergy = 0;
-            
-            for n = 1:narg
-                switch (varargin{n})
-                    case 'Nondir'
-                        nondir = 1;
-                    case 'WithEnergy'
-                        withEnergy = 1;
-                end
+            nondir = opts(1);
+            withEnergy = opts(2);
+            period = opts(3);
+            wavelen = opts(4);
+            if wavelen
+                h = args{4};
             end
-
-            if (nondir)
-                if (spec.isdir)
-                    del = spec.Deltas('Direction');
-                    %del = del.'*ones(1, length(spec.frequencies));
-                    Spec = (spec.spectrum*del.');
-                else
-                    Spec = spec.spectrum;
+            
+            if period || wavelen
+                
+                ind = 1;
+                args = {};
+                if nondir
+                    args{ind} = 'Nondir';
+                    ind = ind + 1;
                 end
                 
-                if (withEnergy)
-                    [~, ifreq] = spec.findFreqWithEnergy(spec.cutoff);
-                    Spec = Spec(ifreq);
+                if withEnergy
+                    args{ind} = 'WithEnergy';
+                    ind = ind + 1;
                 end
-            else
-                Spec = spec.spectrum;
-                if (withEnergy)
-                    [~, ifreq] = spec.findFreqWithEnergy(spec.cutoff);
                     
+                a = spec.Amplitudes(args{:});
+                f = spec.Frequencies(args{:});
+                T = 1./f;
+                if (period)
+                    del = computeDelta(T);
+                elseif (wavelen)
+                    lam = IWaves.T2Lam(T, h);
+                    del = computeDelta(lam);
+                end
+                
+                if spec.isdir
+                    Spec = spec.getNonDensitySpec;
+                else
+                    df = spec.Deltas('Frequency');
+                    Spec = spec.spectrum.*df;
+                end
+                
+                Spec = abs(Spec./del);
+            else
+                if nondir
                     if (spec.isdir)
-                        [~, idir] = spec.findDirWithEnergy(spec.cutoff);
-                        Spec = Spec(ifreq, idir);
+                        del = spec.Deltas('Direction');
+                        %del = del.'*ones(1, length(spec.frequencies));
+                        Spec = (spec.spectrum*del.');
                     else
+                        Spec = spec.spectrum;
+                    end
+
+                    if (withEnergy)
+                        [~, ifreq] = spec.findFreqWithEnergy(spec.cutoff);
                         Spec = Spec(ifreq);
+                    end
+                else
+                    Spec = spec.spectrum;
+                    if (withEnergy)
+                        [~, ifreq] = spec.findFreqWithEnergy(spec.cutoff);
+
+                        if (spec.isdir)
+                            [~, idir] = spec.findDirWithEnergy(spec.cutoff);
+                            Spec = Spec(ifreq, idir);
+                        else
+                            Spec = Spec(ifreq);
+                        end
                     end
                 end
             end

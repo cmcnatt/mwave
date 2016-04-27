@@ -500,6 +500,7 @@ classdef WamitRunCondition < IBemRunCondition
             filename = [run.folder '\' run.runName '.cfg'];
             fileID = fopen(filename, 'wt');
 
+            fprintf(fileID, 'IDELFILES = 2\n');
             fprintf(fileID, 'IALTPOT = 2\n');
             if (run.floatBods(1).ISurfPan)
                 irr = 1;

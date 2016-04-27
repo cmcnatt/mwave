@@ -25,15 +25,17 @@ classdef WaveClimate < handle
         freqOcc;
         h;
         rho;
+        name;
+        hs;
+        t02;
     end
     
     properties (Dependent)
         WaveSpectra;
         H;
         T;
-        Hs;
-        T02;
         Rho;
+        Name;
     end
     
     methods 
@@ -55,6 +57,20 @@ classdef WaveClimate < handle
                     wc.h = varargin{1};
                     wc.rho = varargin{2};
                 end
+                
+                [opts, args] = checkOptions({{'Hs', 1}, {'T02', 1}}, varargin);
+                if (opts(1))
+                    wc.hs = args{1};
+                else
+                    wc.hs = [];
+                end
+                
+                if (opts(2))
+                    wc.t02 = args{2};
+                else
+                    wc.t02 = [];
+                end
+                
                 WaveClimate.checkSpectra(spectra, freqOccur)
 
                 wc.specs = spectra;
@@ -62,6 +78,13 @@ classdef WaveClimate < handle
             end
         end
                 
+        function [val] = get.Name(wc)
+            val = wc.name;
+        end
+        function [] = set.Name(wc, val)
+            wc.name = val;
+        end
+        
         function [ws] = get.WaveSpectra(wc)
             ws = wc.specs;
         end
@@ -122,31 +145,41 @@ classdef WaveClimate < handle
         function [t] = get.T(wc)
             t = [];
             if (~isempty(wc.specs))
-                t = w./wc.specs(1,1).Frequencies;
+                t = 1./wc.specs(1,1).Frequencies;
             end
         end
         
-        function [hs] = get.Hs(wc)
-            [M, N] = size(wc.specs);
-            hs = zeros(M, N);
-            for m = 1:M
-                for n = 1:N
-                    hs(m, n) = wc.specs(m,n).SigWaveHeight;
+        function [hs] = Hs(wc, varargin)
+            [opts] = checkOptions({'Intended'}, varargin);
+            if (opts(1))
+                hs = wc.hs;
+            else
+                [M, N] = size(wc.specs);
+                hs = zeros(M, N);
+                for m = 1:M
+                    for n = 1:N
+                        hs(m, n) = wc.specs(m,n).SigWaveHeight;
+                    end
                 end
             end
         end
         
-        function [t02] = get.T02(wc)
-            [M, N] = size(wc.specs);
-            t02 = zeros(M, N);
-            f = wc.specs(1,1);
-            for m = 1:M
-                for n = 1:N
-                    sp = wc.specs(m,n).Spectrum('Nondir');
-                    m0 = abs(trapz(f,sp));
-                    m2 = abs(trapz(f,f.^2.*sp));
+        function [t02] = T02(wc, varargin)
+            [opts] = checkOptions({'Intended'}, varargin);
+            if (opts(1))
+                t02 = wc.t02;
+            else
+                [M, N] = size(wc.specs);
+                t02 = zeros(M, N);
+                f = wc.specs(1,1).Frequencies;
+                for m = 1:M
+                    for n = 1:N
+                        sp = wc.specs(m,n).Spectrum('Nondir');
+                        m0 = abs(trapz(f,sp));
+                        m2 = abs(trapz(f,f.^2.*sp));
 
-                    t02(m, n) = sqrt(m0/m2);
+                        t02(m, n) = sqrt(m0/m2);
+                    end
                 end
             end
         end
@@ -169,6 +202,58 @@ classdef WaveClimate < handle
                     Ef{m, n} = ws.EnergyFlux(wc.rho, wc. h, varargin{:});
                 end
             end
+        end
+        
+        function [spec] = AverageSpectrum(wc)
+            [M, N] = size(wc.specs);
+            f = wc.specs(1,1).Frequencies;
+            dir = wc.specs(1,1).Directions;
+            if (isempty(dir))
+                sp0 = zeros(1, length(f));
+            else
+                sp0 = zeros(length(f), length(dir));
+            end
+            
+            for m = 1:M
+                for n = 1:N
+                    sp = wc.specs(m,n).Spectrum;
+                    fr = wc.freqOcc(m,n);
+                    sp0 = sp0 + sp*fr;
+                end
+            end
+            
+            if (isempty(dir))
+                spec = WaveSpectrum(sp0, f);
+            else
+                spec = WaveSpectrum(sp0, f, dir);
+            end
+        end
+        
+        function [] = PlotScatter(clim)
+            Hs = clim.Hs('Intended');
+            HsLab = cell(1,length(Hs));
+            for n = 1:length(Hs)
+                HsLab{n} = num2str(Hs(n), '%4.1f');
+            end
+            T02 = clim.T02('Intended');
+            T02Lab = cell(1,length(T02));
+            for n = 1:length(T02)
+                T02Lab{n} = num2str(T02(n), '%4.1f');
+            end
+
+            freqO = clim.FreqOccurance('hours');
+
+            imagesc(freqO);
+            indsHs = 1:length(Hs);
+            indsT = 1:2:length(T02);
+            set(gca, 'XAxisLocation','top',...
+                'ytick', indsHs, 'yticklabel', HsLab(indsHs),...
+                'xtick', indsT, 'xticklabel', T02Lab(indsT));
+            fet;
+            xlabel('T02 (s)');
+            ylabel('Hs (m)');
+            cb = colorbar;
+            ylabel(cb, 'hours/year');
         end
     end
     
@@ -216,7 +301,11 @@ classdef WaveClimate < handle
                 end
             end
             
-            wc = WaveClimate(specs_, freqOcc_, h_, rho_);
+            if (~strcmpi(type, 'T02'))
+                wc = WaveClimate(specs_, freqOcc_, h_, rho_, 'Hs', Hs, 'T02', T);
+            else
+                wc = WaveClimate(specs_, freqOcc_, h_, rho_, 'Hs', Hs);
+            end
         end
     end
      

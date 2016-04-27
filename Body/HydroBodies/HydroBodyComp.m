@@ -131,6 +131,9 @@ classdef HydroBodyComp < IHydroComp
                 
                 a_ = hydro.A;
                 b_ = hydro.B;
+                
+                hbcomp.checkBadVals(b_);
+                
                 if (const)
                     ac = zeros(Nt, M, M);
                     bc = zeros(Nt, M, M);

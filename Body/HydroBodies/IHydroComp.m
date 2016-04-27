@@ -37,6 +37,7 @@ classdef IHydroComp < handle
         k;
         isComp;
         P;
+        badInds;
     end
     
     properties (Dependent)
@@ -161,6 +162,7 @@ classdef IHydroComp < handle
                 c_ = hcomp.c;
                 
                 for n = 1:hcomp.nT
+                    
 %                     a_ = squeeze(hcomp.a(n,:,:));
 %                     b_ = squeeze(hcomp.b(n,:,:));
 
@@ -190,7 +192,11 @@ classdef IHydroComp < handle
 
                     if (ndims(fex) == 2)
                         f = fex(n, :).';
-                        motions(n, :) = lhs\f;
+                        if (~hcomp.badInds(n))
+                            motions(n, :) = lhs\f;
+                        else
+                            motions(n, :) = NaN;
+                        end
                     else
                         for j = 1:hcomp.nInc
                             f = zeros(hcomp.dof,1);
@@ -198,7 +204,11 @@ classdef IHydroComp < handle
                                 f(p) = fex(n, j, p);
                             end
                             %f = squeeze(fex(n, j, :));
-                            motions(n, j, :) = lhs\f;
+                            if (~hcomp.badInds(n))
+                                motions(n, j, :) = lhs\f;
+                            else
+                                motions(n, :) = NaN;
+                            end
                         end
                     end
                 end
@@ -304,12 +314,20 @@ classdef IHydroComp < handle
 
                     if (ndims(fex) == 2)
                         f = fex(n, :).';
-                        v = hcomp.computeOptVel(f, b_, G);
+                        if (~hcomp.badInds(n))
+                            v = hcomp.computeOptVel(f, b_, G);
+                        else
+                            v = NaN;
+                        end
                         velocities(n, :) = v;
                     else
                         for j = 1:hcomp.nInc
                             f = squeeze(fex(n, j, :));
-                            v = hcomp.computeOptVel(f, b_, G);
+                            if (~hcomp.badInds(n))
+                                v = hcomp.computeOptVel(f, b_, G);
+                            else
+                                v = NaN;
+                            end
                             velocities(n, j, :) = v;
                         end
                     end
@@ -490,6 +508,8 @@ classdef IHydroComp < handle
             hcomp.c = c_;
 
             hcomp.dof = dof_;
+            
+            hcomp.badInds = zeros(hcomp.nT);
         end
         
         function [] = setIncWaves(hcomp, iwavs)
@@ -588,6 +608,20 @@ classdef IHydroComp < handle
                 end
             else
                 error('Matrix wrong size');
+            end
+        end
+        
+        function [] = checkBadVals(hcomp, B)            
+            for m_ = 1:hcomp.nT
+                b_ = squeeze(B(m_,:,:));
+                
+                [N, ~] = size(b_);
+                
+                for n = 1:N
+                    if (b_(n,n) < 0)
+                        hcomp.badInds(m_) = 1;
+                    end
+                end
             end
         end
     end
