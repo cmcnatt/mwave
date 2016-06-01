@@ -31,6 +31,8 @@ classdef IBemRunCondition < handle
         geoFiles;
         fieldArray;
         cylArray;
+        incZeroFreq;
+        incInfFreq;
     end
     
     properties (Dependent)
@@ -40,6 +42,8 @@ classdef IBemRunCondition < handle
         Folder;             % Folder location of run (input/output files) 
         FieldArray;         % Array of field points (Input is a BemFieldArray)
         CylArray;           % Cylindrical array of field poinst (Input is a BemCylArray)
+        IncZeroFreq;        % Include the zero frequency added mass solution
+        IncInfFreq;         % Include the infinite freqeuncy added mass solution
     end
     
     properties (Abstract, Dependent)
@@ -134,6 +138,30 @@ classdef IBemRunCondition < handle
                 error('CylArray array must be of type BemCylArray');
             end
             run.cylArray = ca;
+        end
+        
+        function [val] = get.IncZeroFreq(run)
+            % Include the zero frequency added mass solution
+            val = run.incZeroFreq;
+        end
+        function [] = set.IncZeroFreq(run, val)
+            % Include the zero frequency added mass solution
+            if (~isBool(val))                
+                error('IncZeroFreq must be a boolean');
+            end
+            run.incZeroFreq = val;
+        end
+        
+        function [val] = get.IncInfFreq(run)
+            % Include the infinite frequency added mass solution
+            val = run.incInfFreq;
+        end
+        function [] = set.IncInfFreq(run, val)
+            % Include the infinite frequency added mass solution
+            if (~isBool(val))                
+                error('IncInfFreq must be a boolean');
+            end
+            run.incInfFreq = val;
         end
     end
 end

@@ -18,23 +18,25 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Contributors:
     C. McNatt
 %}
-function [v_rad, v_diff, points] = Wamit_readNum5v(folderpath, runname, bodyname, T, Nbeta, Ndof, g)
+function [v_rad, v_diff, centers] = Wamit_readNum5v(folderpath, runname, bodynames, T, Nbeta, Ndof, g, varargin)
 % Reads WAMIT .5v output file
 % Returns the radiation velocity (v_rad) and the diffraction velocity 
 % (v_diff) at the field points (points)
 
-buffer = importdata([folderpath '\' bodyname '.pnl']);
+useSing = 0; % use single percision
 
-raw = buffer.data;
-
-symCount = length(unique(raw(:,1)));
-if (symCount > 1)
-    error('Not set up for symmetry yet...');
+if (~isempty(varargin))
+    useSing = varargin{1};
 end
-centers = raw(:, 3:5);
-[Npoints, buffer] = size(centers);
-areas = raw(:, 6);
-norms = raw(:, 7:9);
+
+opts = checkOptions({'bpo'}, varargin);
+readBpo = opts(1);
+
+if readBpo
+    [centers, ~, Npoints] = Wamit_readBpo(folderpath, bodynames);
+else
+    [centers, ~, ~, Npoints] = Wamit_readPnl(folderpath, bodynames);
+end
 
 fidx = fopen([folderpath '/' runname '.5vx']);
 fidy = fopen([folderpath '/' runname '.5vy']);
@@ -46,39 +48,53 @@ fgetl(fidz);
 
 Nper = length(T);
 
-v_rad = zeros(Nper, Ndof, 3, Npoints);
-v_diff = zeros(Nper, Nbeta, 3, Npoints);
+v_rad = cell(size(bodynames));
+v_diff = cell(size(bodynames));
+
+for n = 1:length(bodynames)
+    if (useSing)
+        v_rad{n} = single(zeros(Nper, Ndof, 3, Npoints(n)));
+        v_diff{n} = single(zeros(Nper, Nbeta, 3, Npoints(n)));
+    else
+        v_rad{n} = zeros(Nper, Ndof, 3, Npoints(n));
+        v_diff{n} = zeros(Nper, Nbeta, 3, Npoints(n));
+    end
+end
 
 omega = 2*pi./T;
 vdim = g./omega;
 
 for l = 1:Nper
-    for m = 1:Npoints
-        buffer = fscanf(fidx,'%f',[1 3]);
-        buffer = fscanf(fidy,'%f',[1 3]);
-        buffer = fscanf(fidz,'%f',[1 3]);
-        for n = 1:Ndof
-             % impicitly multiplying by i
-             [re_im] = fscanf(fidx,'%f',[1 2]);
-             v_rad(l, n, 1, m) = vdim(l)*complex(-re_im(2), re_im(1));
-             [re_im] = fscanf(fidy,'%f',[1 2]);
-             v_rad(l, n, 2, m) = vdim(l)*complex(-re_im(2), re_im(1));
-             [re_im] = fscanf(fidz,'%f',[1 2]);
-             v_rad(l, n, 3, m) = vdim(l)*complex(-re_im(2), re_im(1));
+    for m = 1:length(bodynames)
+        for n = 1:Npoints(m)
+            fscanf(fidx,'%f',[1 3]);
+            fscanf(fidy,'%f',[1 3]);
+            fscanf(fidz,'%f',[1 3]);
+            for o = 1:Ndof
+                 % impicitly multiplying by i
+                 [re_im] = fscanf(fidx,'%f',[1 2]);
+                 v_rad{m}(l, o, 1, n) = vdim(l)*complex(-re_im(2), re_im(1));
+                 [re_im] = fscanf(fidy,'%f',[1 2]);
+                 v_rad{m}(l, o, 2, n) = vdim(l)*complex(-re_im(2), re_im(1));
+                 [re_im] = fscanf(fidz,'%f',[1 2]);
+                 v_rad{m}(l, o, 3, n) = vdim(l)*complex(-re_im(2), re_im(1));
+            end
         end
     end
     for m = 1:Nbeta
-        for n = 1:Npoints
-            buffer = fscanf(fidx,'%f',[1 4]);
-            buffer = fscanf(fidy,'%f',[1 4]);
-            buffer = fscanf(fidz,'%f',[1 4]);
-            % impicitly multiplying by i
-            [re_im] =  fscanf(fidx,'%f',[1 2]);
-            v_diff(l, m, 1, n) = vdim(l)*complex(-re_im(2), re_im(1));
-            [re_im] =  fscanf(fidy,'%f',[1 2]);
-            v_diff(l, m, 2, n) = vdim(l)*complex(-re_im(2), re_im(1));
-            [re_im] =  fscanf(fidz,'%f',[1 2]);
-            v_diff(l, m, 3, n) = vdim(l)*complex(-re_im(2), re_im(1));
+        for n = 1:length(bodynames)
+            for o = 1:Npoints(n)
+                fscanf(fidx,'%f',[1 4]);
+                fscanf(fidy,'%f',[1 4]);
+                fscanf(fidz,'%f',[1 4]);
+                % impicitly multiplying by i
+                [re_im] =  fscanf(fidx,'%f',[1 2]);
+                v_diff{n}(l, m, 1, o) = vdim(l)*complex(-re_im(2), re_im(1));
+                [re_im] =  fscanf(fidy,'%f',[1 2]);
+                v_diff{n}(l, m, 2, o) = vdim(l)*complex(-re_im(2), re_im(1));
+                [re_im] =  fscanf(fidz,'%f',[1 2]);
+                v_diff{n}(l, m, 3, o) = vdim(l)*complex(-re_im(2), re_im(1));
+            end
         end
     end    
 end

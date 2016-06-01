@@ -261,7 +261,7 @@ classdef WamitResult < IBemResult
                 end
 
                 % Excitation force
-                [f, t_, bet] = Wamit_read2(fullpath, result.runName, result.rho, result.g);
+                [f, t_, bet] = Wamit_read23(fullpath, result.runName, result.rho, result.g);
                 
                 % Check directions
                 if (isempty(result.beta))
@@ -306,44 +306,57 @@ classdef WamitResult < IBemResult
                     error('WamitResult must contain a floating body to compute body points');
                 end
                 
-                if (length(result.floatingbodies) > 1)
-                    error('WamitResult can only contain a single floating body to computer body points.');
+                if isempty(result.floatingbodies(1).PanelGeo)
+                    opts = 'bpo';
+                else
+                    opts = '';
                 end
-                bodyGeo = result.floatingbodies(1).PanelGeo;
-                % bodyGeo is given in body coordinates, where some of to
-                % make sure it is submerged
-                bodyGeo.Translate([0, 0, result.floatingbodies(1).Zpos]);
-
-                [P_rad, P_diff, bodCenters] = Wamit_readNum5p(fullpath, result.runName, result.floatingbodies(1).GeoFile, length(result.t), length(result.beta), result.dof, result.rho, result.g, useSing);
+                
+                [P_rad, P_diff, centers] = Wamit_readNum5p(fullpath, result.runName, {result.floatingbodies.GeoFile}, length(result.t), length(result.beta), result.dof, result.rho, result.g, useSing, opts);
                 
                 if (result.readVelocity)
-                    [V_rad, V_diff] = Wamit_readNum5v(fullpath, result.runName, result.floatingbodies(1).GeoFile, result.t, length(result.beta), result.dof, result.g);
+                    [V_rad, V_diff] = Wamit_readNum5v(fullpath, result.runName, result.floatingbodies(1).GeoFile, result.t, length(result.beta), result.dof, result.g, useSing, opts);
                 end
                 
-                nBodPoints = size(bodCenters, 1);
-                if (nBodPoints ~= bodyGeo.Count)
-                    error('The number of body points must be the same as the number of panels.');
-                end
-                
-                centsBG = bodyGeo.Centroids;
-                
-                for n = 1:nBodPoints
-                    if any(abs(centsBG(n,:) - bodCenters(n,:)) > 1e-3*[1 1 1])
-                        %error('The body points and wave field points must be the same');
+                for l = 1:length(result.floatingbodies)
+
+                    bodyGeo = result.floatingbodies(l).PanelGeo;
+                    bodCenters = centers{l};
+                    
+                    if isempty(bodyGeo)
+                        bodyGeo = Wamit_readGdf(fullpath, [result.floatingbodies(l).GeoFile '_mesh']);
+                    else
+                        bodyGeo.Translate([0, 0, result.floatingbodies(1).Zpos]);
                     end
-                end
-                
-                p_rad_pts = P_rad(:, :, 1:nBodPoints);
-                p_diff_pts = P_diff(:, :, 1:nBodPoints);
-                
+                    % bodyGeo is given in body coordinates, where some of to
+                    % make sure it is submerged
+                    % TODO: fix difference between low and high order panel
+                    % stuff
+
+                    nBodPoints = size(bodCenters, 1);
+                    if (nBodPoints ~= bodyGeo.Count)
+                        error('The number of body points must be the same as the number of panels.');
+                    end
+
+                    centsBG = bodyGeo.Centroids;
+
+                    for n = 1:nBodPoints
+                        if any(abs(centsBG(n,:) - bodCenters(n,:)) > 1e-3*[1 1 1])
+                            %error('The body points and wave field points must be the same');
+                        end
+                    end
+
+                    p_rad_pts = P_rad{l}(:, :, 1:nBodPoints);
+                    p_diff_pts = P_diff{l}(:, :, 1:nBodPoints);
+
                     if (result.readVelocity)
-                        v_rad_pts = V_rad(:, :, :, 1:nBodPoints);
-                        v_diff_pts = V_diff(:, :, :, 1:nBodPoints);
+                        v_rad_pts = V_rad{l}(:, :, :, 1:nBodPoints);
+                        v_diff_pts = V_diff{l}(:, :, :, 1:nBodPoints);
                     else
                         v_rad_pts = [];
                         v_diff_pts = [];
                     end
-                    
+
                     for n = 1:result.nB
                         thisP = zeros(result.nT, nBodPoints);
                         if (useSing)
@@ -368,7 +381,7 @@ classdef WamitResult < IBemResult
                         iwfs(n) = iwfn;
                         swfs(n) = dwfn - iwfn;
                     end
-                    
+
                     iwavefield = WaveFieldCollection(iwfs, 'Direction', result.beta); 
                     swavefield = WaveFieldCollection(swfs, 'Direction', result.beta);
 
@@ -394,8 +407,10 @@ classdef WamitResult < IBemResult
                         rwfs(n) = WaveField(result.rho, result.g, result.h, result.t, thisP, thisV, 0, bodCenters);
                     end
                     rwavefield = WaveFieldCollection(rwfs, 'MotionIndex', (1:result.dof));
-
-                    result.waveBody = BodySurfWaveField(bodyGeo, iwavefield, swavefield, rwavefield);
+                    bswf(l) = BodySurfWaveField(bodyGeo, iwavefield, swavefield, rwavefield);
+                end
+                
+                result.waveBody = bswf;
             end
             
             if (isempty(result.solveField))

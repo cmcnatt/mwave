@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Contributors:
     C. McNatt
 %}
-function [p_rad, p_diff, centers] = Wamit_readNum5p(folderpath, runname, bodyname, Nper, Nbeta, Ndof, rho, g, varargin)
+function [p_rad, p_diff, centers] = Wamit_readNum5p(folderpath, runname, bodynames, Nper, Nbeta, Ndof, rho, g, varargin)
 % Reads WAMIT .5p output file
 % Returns the radiation pressure (p_rad) and the diffraction pressure 
 % (p_diff) at the field points (points)
@@ -29,46 +29,50 @@ if (~isempty(varargin))
     useSing = varargin{1};
 end
 
-buffer = importdata([folderpath '\' bodyname '.pnl']);
+opts = checkOptions({'bpo'}, varargin);
+readBpo = opts(1);
 
-raw = buffer.data;
-
-symCount = length(unique(raw(:,1)));
-if (symCount > 1)
-    error('Not set up for symmetry yet...');
+if readBpo
+    [centers, ~, Npoints] = Wamit_readBpo(folderpath, bodynames);
+else
+    [centers, ~, ~, Npoints] = Wamit_readPnl(folderpath, bodynames);
 end
-centers = raw(:, 3:5);
-[Npoints, buffer] = size(centers);
-areas = raw(:, 6);
-norms = raw(:, 7:9);
+    
+p_rad = cell(size(bodynames));
+p_diff = cell(size(bodynames));
 
+for n = 1:length(bodynames)
+    if (useSing)
+        p_rad{n} = single(zeros(Nper, Ndof, Npoints(n)));
+        p_diff{n} = single(zeros(Nper, Nbeta, Npoints(n)));
+    else
+        p_rad{n} = zeros(Nper, Ndof, Npoints(n));
+        p_diff{n} = zeros(Nper, Nbeta, Npoints(n));
+    end
+end
+
+pdim = rho*g;
 fid = fopen([folderpath '/' runname '.5p']);
 % ignore the header line
 fgetl(fid);
 
-if (useSing)
-    p_rad = single(zeros(Nper, Ndof, Npoints));
-    p_diff = single(zeros(Nper, Nbeta, Npoints));
-else
-    p_rad = zeros(Nper, Ndof, Npoints);
-    p_diff = zeros(Nper, Nbeta, Npoints);
-end
-
-pdim = rho*g;
-
 for l = 1:Nper
-    for m = 1:Npoints
-        buffer = fscanf(fid,'%f',[1 3]); 
-        for n = 1:Ndof
-            [re_im] = fscanf(fid,'%f',[1 2]);
-            p_rad(l, n, m) = pdim*complex(re_im(1), re_im(2));
+    for m = 1:length(bodynames)
+        for n = 1:Npoints(m)
+            buffer = fscanf(fid,'%f',[1 3]); 
+            for o = 1:Ndof
+                [re_im] = fscanf(fid,'%f',[1 2]);
+                p_rad{m}(l, o, n) = pdim*complex(re_im(1), re_im(2));
+            end
         end
     end
     for m = 1:Nbeta
-        for n = 1:Npoints
-            buffer = fscanf(fid,'%f',[1 4]);
-            [re_im] =  fscanf(fid,'%f',[1 2]);
-            p_diff(l, m, n) = pdim*complex(re_im(1), re_im(2));
+        for n = 1:length(bodynames)
+            for o = 1:Npoints(n)
+                buffer = fscanf(fid,'%f',[1 4]);
+                [re_im] =  fscanf(fid,'%f',[1 2]);
+                p_diff{n}(l, m, o) = pdim*complex(re_im(1), re_im(2));
+            end
         end
     end    
 end

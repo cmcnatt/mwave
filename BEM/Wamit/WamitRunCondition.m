@@ -36,6 +36,7 @@ classdef WamitRunCondition < IBemRunCondition
         ramGB;
         maxItt;
         useDirect;
+        useHaskind;
     end
 
     properties (Dependent)
@@ -55,6 +56,7 @@ classdef WamitRunCondition < IBemRunCondition
         RAMGBmax;           % The max RAM to be used in the Wamit computation
         MaxItt;
         UseDirectSolver;
+        UseHaskind;
     end
 
     methods
@@ -72,6 +74,7 @@ classdef WamitRunCondition < IBemRunCondition
             run.ramGB = 2;
             run.maxItt = 35;
             run.useDirect = false;
+            run.useHaskind = false;
             run.geoFiles = [];
             if (nargin == 0)
                 run.folder = ' ';
@@ -88,12 +91,12 @@ classdef WamitRunCondition < IBemRunCondition
             % geometry files
             rn = run.runName;
         end
-        function [run] = set.RunName(run, rn)
+        function [] = set.RunName(run, val)
             % Set the run name, which is the name that will be given to all
             % of the input files except if they have thier own name, the
             % geometry files
-            if (ischar(rn))
-                run.runName = rn;
+            if (ischar(val))
+                run.runName = val;
             else
                 error('RunName must be a string');
             end
@@ -103,36 +106,36 @@ classdef WamitRunCondition < IBemRunCondition
             % Solve the diffraction problem
             sd = run.solveDiff;
         end
-        function [run] = set.SolveDiff(run, sd)
+        function [] = set.SolveDiff(run, val)
             % Solve the diffraction problem
-            if ((sd ~= 1) && (sd ~= 0))
+            if ((val ~= 1) && (val ~= 0))
                 error('value must be boolean, 1 or 0');
             end
             
-            run.solveDiff = sd;
+            run.solveDiff = val;
         end
         
         function [sr] = get.SolveRad(run)
             % Solve the radiation problem
             sr = run.solveRad;
         end
-        function [run] = set.SolveRad(run, sr)
+        function [] = set.SolveRad(run, val)
             % Solve the radiation problem
-            if ((sr ~= 1) && (sr ~= 0))
+            if ((val ~= 1) && (val ~= 0))
                 error('value must be boolean, 1 or 0');
             end
             
-            run.solveRad = sr;
+            run.solveRad = val;
         end
                 
         function [t_] = get.T(run)
             % Get the wave periods to be run in wamit
             t_ = run.t;
         end
-        function [run] = set.T(run, t_)
+        function [] = set.T(run, val)
             % Set the wave periods to be run in wamit
-            if (isnumeric(t_))
-                run.t = t_;
+            if (isnumeric(val))
+                run.t = val;
             else
                 error('The periods must be numbers');
             end
@@ -142,15 +145,15 @@ classdef WamitRunCondition < IBemRunCondition
             % Get the wave headings to be run in wamit (radians)
             bet = run.beta;
         end
-        function [run] = set.Beta(run, bet)
+        function [] = set.Beta(run, val)
             % Set the wave headings to be run in wamit (radians)
-            if (isnumeric(bet))
-                for n = 1:length(bet)
-                    if(bet(n) < -pi || bet(n) > 2*pi)
+            if (isnumeric(val))
+                for n = 1:length(val)
+                    if(val(n) < -pi || val(n) > 2*pi)
                         error('All wave headings must be between -pi and 2pi radians');
                     end
                 end
-                run.beta = bet;
+                run.beta = val;
             else
                 error('The wave headings must be numbers');
             end
@@ -160,29 +163,29 @@ classdef WamitRunCondition < IBemRunCondition
             % Get the array of floating bodies
             fbs = run.floatBods;
         end
-        function [run] = set.FloatingBodies(run, fbs)
+        function [] = set.FloatingBodies(run, val)
             % Set the array of floating bodies
             pass = 1;
             genmds = 0;
-            if ((length(fbs) > 1) && run.computeBody)
+            if ((length(val) > 1) && run.computeBody)
                 error('Cannot compute body points for an array of floating bodies');
             end
-            for n = 1:length(fbs)
-                if (~isa(fbs(n), 'FloatingBody'))
+            for n = 1:length(val)
+                if (~isa(val(n), 'FloatingBody'))
                     pass = 0;
                 end
-                if (fbs(n).Ngen > 0)
+                if (val(n).Ngen > 0)
                     if (genmds ~= 0)
-                        if (genmds ~= fbs(n).WamIGenMds)
+                        if (genmds ~= val(n).WamIGenMds)
                             error('The Wamit IGENMDS value must be the same for all floating bodes in the array');
                         end
                     else
-                        genmds = fbs(n).WamIGenMds;
+                        genmds = val(n).WamIGenMds;
                     end
                 end
             end
             if (pass)
-                run.floatBods = fbs;
+                run.floatBods = val;
             else
                 error('All Floating Bodies must be of type FloatingBody');
             end    
@@ -192,11 +195,11 @@ classdef WamitRunCondition < IBemRunCondition
             % Get the field points to be evaluated in wamit
             fp = run.fieldPoints;
         end
-        function [run] = set.FieldPoints(run, fp)
+        function [] = set.FieldPoints(run, val)
             % Set the field points to be evaluated in wamit
             fail = 1;
-            if (ndims(fp) == 2)
-                [ro co] = size(fp);
+            if (ndims(val) == 2)
+                [ro co] = size(val);
                 if (co == 3)
                     fail = 0;
                 end
@@ -204,7 +207,7 @@ classdef WamitRunCondition < IBemRunCondition
             if (fail)
                 error('Field points must be an Nx3 array');
             end
-            run.fieldPoints = fp;
+            run.fieldPoints = val;
         end
                 
         function [cb] = get.ComputeBodyPoints(run)
@@ -212,41 +215,41 @@ classdef WamitRunCondition < IBemRunCondition
             % body
             cb = run.computeBody;
         end
-        function [run] = set.ComputeBodyPoints(run, cb)
+        function [] = set.ComputeBodyPoints(run, val)
             % Set whether or not pressure and velocity is evaluated on the
             % body
-            if ((cb ~= 1) && (cb ~= 0))
+            if ((val ~= 1) && (val ~= 0))
                 error('value must be boolean, 1 or 0');
             end
             
-            if (length(run.floatBods) > 1)
-                error('Cannot compute body point for more than one floating body');
-            end
+%             if (length(run.floatBods) > 1)
+%                 error('Cannot compute body point for more than one floating body');
+%             end
             
-            run.computeBody = cb;
+            run.computeBody = val;
         end
         
         function [cv] = get.ComputeVelocity(run)
             % Get whether or not velocity is evaluated at field points
             cv = run.computeVelocity;
         end
-        function [run] = set.ComputeVelocity(run, cv)
+        function [] = set.ComputeVelocity(run, val)
             % Set whether or not velocity is evaluated at field points
-            if ((cv ~= 1) && (cv ~= 0))
+            if ((val ~= 1) && (val ~= 0))
                 error('value must be boolean, 1 or 0');
             end
             
-            run.computeVelocity = cv;
+            run.computeVelocity = val;
         end
         
         function [sp] = get.ScratchPath(run)
             % Path location of wamit scratch folder
             sp = run.scratchPath;
         end
-        function [run] = set.ScratchPath(run, sp)
+        function [] = set.ScratchPath(run, val)
             % Path location of wamit scratch folder
-            if (ischar(sp))
-                run.scratchPath = sp;
+            if (ischar(val))
+                run.scratchPath = val;
             else
                 error('ScratchPath must be a string');
             end
@@ -256,10 +259,10 @@ classdef WamitRunCondition < IBemRunCondition
             % Path location of userid.wam license file
             idp = run.useridPath;
         end
-        function [run] = set.UseridPath(run, idp)
+        function [] = set.UseridPath(run, val)
             % Path location of userid.wam license file
-            if (ischar(idp))
-                run.useridPath = idp;
+            if (ischar(val))
+                run.useridPath = val;
             else
                 error('UseridPath must be a string');
             end
@@ -269,55 +272,68 @@ classdef WamitRunCondition < IBemRunCondition
             % The number of cpus to be used in the Wamit computation
             ncp = run.ncpu;
         end
-        function [run] = set.NCPU(run, ncp)
+        function [] = set.NCPU(run, val)
             % The number of CPUs to be used in the Wamit computation
-            if (~isInt(ncp))
+            if (~isInt(val))
                 error('The number of CPUs must be an integer');
             end
-            if (ncp < 1)
+            if (val < 1)
                 error('The number of CPUs must be greater than or equal to 1')
             end
             
-            run.ncpu = ncp;
+            run.ncpu = val;
         end
         
         function [ram] = get.RAMGBmax(run)
             % The max RAM to be used in the Wamit computation
             ram = run.ramGB;
         end
-        function [run] = set.RAMGBmax(run, ram)
+        function [] = set.RAMGBmax(run, val)
             % The max RAM to be used in the Wamit computation
-            if (ram < 0)
+            if (val < 0)
                 error('RAMGBmax must be greater than 0');
             end
             
-            run.ramGB = ram;
+            run.ramGB = val;
         end
         
         function [mi] = get.MaxItt(run)
             % The max number of iterations - default is 35
             mi = run.maxItt;
         end
-        function [run] = set.MaxItt(run, mi)
+        function [] = set.MaxItt(run, val)
              % The max number of iterations - default is 35
-            if (~isInt(mi) || (mi <= 0))                
+            if (~isInt(val) || (val <= 0))                
                 error('The MaxItt must be an integer greater than 0');
             end
             
-            run.maxItt = mi;
+            run.maxItt = val;
         end
         
         function [ud] = get.UseDirectSolver(run)
             % Use the direct solver
             ud = run.useDirect;
         end
-        function [run] = set.UseDirectSolver(run, ud)
+        function [] = set.UseDirectSolver(run, val)
              % Use the direct solver
-            if (~isBool(ud))                
+            if (~isBool(val))                
                 error('UseDirectSolver must be a boolean');
             end
             
-            run.useDirect = ud;
+            run.useDirect = val;
+        end
+        
+        function [val] = get.UseHaskind(run)
+            % Use the Haskind relation to compute forces
+            val = run.useHaskind;
+        end
+        function [] = set.UseHaskind(run, val)
+             % Use the Haskind relation to compute forces
+            if (~isBool(val))                
+                error('UseHaskind must be a boolean');
+            end
+            
+            run.useHaskind = val;
         end
         
         function [] = WriteRun(run, varargin)
@@ -390,7 +406,9 @@ classdef WamitRunCondition < IBemRunCondition
             fprintf(fileID, [run.runName '.cfg\n']);
             fprintf(fileID, [run.runName '.pot\n']);
             fprintf(fileID, [run.runName '.frc\n']);
-            fprintf(fileID, [run.geoFiles{1} '.gdf\n']);
+            for n = 1:length(run.geoFiles)
+                fprintf(fileID, [run.geoFiles{n} '.gdf\n']);
+            end
             
             fclose(fileID);
                         
@@ -526,7 +544,12 @@ classdef WamitRunCondition < IBemRunCondition
             end
             if (run.computeBody)
                 fprintf(fileID, 'INUMOPT5 = 1 \n');
-                fprintf(fileID, 'IPNLBPT = 0 \n');
+                if run.floatBods(1).WamILowHi > 0
+                    ipnlbpt = -4;
+                else
+                    ipnlbpt = 0;
+                end
+                fprintf(fileID, 'IPNLBPT = %i \n', ipnlbpt);
             end
             % Generalized modes
             Nbod = length(run.floatBods);
@@ -561,7 +584,7 @@ classdef WamitRunCondition < IBemRunCondition
             fprintf(fileID, 'MAXITT = %i\n', run.maxItt);
             fprintf(fileID, 'MAXMIT = 8\n');
             fprintf(fileID, 'MONITR = 0\n');
-            fprintf(fileID, 'NOOUT = 0  0  0  0  0  0  0  0  0\n');
+            fprintf(fileID, 'NOOUT = 1  1  1  1  0  0  0  0  0\n');
             fprintf(fileID, 'NUMHDR = 1\n');
             fprintf(fileID, 'NUMNAM = 0\n');
             fprintf(fileID, 'SCRATCH_PATH = %s\n', run.scratchPath);
@@ -598,8 +621,13 @@ classdef WamitRunCondition < IBemRunCondition
             % both potenital/source
             % 7 - mean drift forces
             iradf = 1;
-            iexH = 1;
-            iexD = 0;
+            if (run.useHaskind)
+                iexH = 1;
+                iexD = 0;
+            else
+                iexH = 0;
+                iexD = 1;
+            end
             if (~run.solveRad)
                 iradf = 0;
                 iexH = 0;
@@ -753,7 +781,20 @@ classdef WamitRunCondition < IBemRunCondition
             % NPER - number of periods
             t_ = run.t;
             nT = length(t_);
-            fprintf(fileID, '%i		Number of periods to be analyzed\n', nT);
+            nTw = nT;
+            if (run.incInfFreq)
+                nTw = nTw + 1;
+            end
+            if (run.incZeroFreq)
+                nTw = nTw + 1;
+            end
+            fprintf(fileID, '%i		Number of periods to be analyzed\n', nTw);
+            if (run.incZeroFreq)
+                fprintf(fileID, '%8.4f\n', -1);
+            end
+            if (run.incInfFreq)
+                fprintf(fileID, '%8.4f\n', 0);
+            end
             % periods
             for n = 1:nT
                 fprintf(fileID, '%8.4f\n', t_(n));

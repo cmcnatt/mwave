@@ -59,3 +59,5 @@ elseif (isx && isy)
 else
     error('Symmetry values not recognized');
 end
+
+fclose(fid);

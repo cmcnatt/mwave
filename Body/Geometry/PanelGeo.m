@@ -146,7 +146,7 @@ classdef PanelGeo < handle
                 end
             end
         end
-        function [geo] = set.Values(geo, vals)
+        function [] = set.Values(geo, vals)
             cnt = geo.Count;
             if (length(vals) ~= cnt)
                 error('The number of values must be equal to the number of panels');
@@ -233,6 +233,24 @@ classdef PanelGeo < handle
             
             geo1 = PanelGeo(pansNeg);
             geo2 = PanelGeo(pansPos);
+        end
+        
+        function [] = WriteBpi(geo, fileLoc, name)
+            fileName = [fileLoc '\' name '.bpi'];
+            fileID = fopen(fileName, 'wt');
+            
+            ulen = 1;
+            g = 9.806650;
+            
+            pans = geo.Panels;
+            nPan = length(pans);
+            fprintf(fileID, ['Model ' name ', created: ' date '\n']);
+            fprintf(fileID, '%i\n', nPan);
+            for n = 1:nPan
+                fprintf(fileID, '\t%8.4f\t%8.4f\t%8.4f\n', verts(m,1), verts(m,2), verts(m,3));
+            end
+            
+            fclose(fileID);
         end
                 
         function [] = plot(geo, varargin)
