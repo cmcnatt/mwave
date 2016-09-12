@@ -22,37 +22,47 @@ end
 
 ksu = 0;
 ksw = 0;
-
 khe = 0;
-kr = 0;
-kp = 0;
-ky = 0;
+
+kph = 0;
+kps = 0;
+
+krr = 0;
+kpp = 0;
+kyy = 0;
 
 for n = 1:nlin
     
-    ksu1 = ks(n)*cos(angvs(n))*abs(cos(anghs(n)));
-    ksw1 = ks(n)*cos(angvs(n))*abs(sin(anghs(n)));
-    khe1 = ks(n)*sin(angvs(n));
+    ksu_n = ks(n)*cos(angvs(n))*abs(cos(anghs(n)));
+    ksw_n = ks(n)*cos(angvs(n))*abs(sin(anghs(n)));
+    khe_n = ks(n)*sin(angvs(n));
     
-    ksu = ksu + ksu1;
-    ksw = ksw + ksw1;
-    khe = khe + khe1;
+    ksu = ksu + ksu_n;
+    ksw = ksw + ksw_n;
+    khe = khe + khe_n;
     
-    r = abs(poss(n,:) - cg);
+    r = poss(n,:) - cg;
     
-    kr = kr + r(2)*khe1 + r(3)*ksw1;
-    kp = kp + r(1)*khe1 + r(3)*ksu1;
-    ky = ky + r(1)*ksw1 + r(2)*ksu1;
+    kps = kps - r(3)*ksu_n;
+    kph = kph + r(1)*khe_n;
+    
+    krr = krr + r(3)^2*ksw_n + r(2)^2*khe_n;
+    kpp = kpp + r(3)^2*ksu_n + r(1)^2*khe_n;
+    kyy = kyy + r(2)^2*ksu_n + r(1)^2*ksw_n;
 end
 
 K = zeros(6,6);
 K(1,1) = ksu;
 K(2,2) = ksw;
 K(3,3) = khe;
-K(4,4) = kr;
-K(5,5) = kp;
+K(1,5) = kps;
+K(5,1) = kps;
+K(3,5) = kph;
+K(5,3) = kph;
+K(4,4) = krr;
+K(5,5) = kpp;
 if (~noyaw)
-    K(6,6) = ky;
+    K(6,6) = kyy;
 end
 
 K = round(10^9*K)/10^9;

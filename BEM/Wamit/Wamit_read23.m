@@ -18,14 +18,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Contributors:
     C. McNatt
 %}
-function [Forces, T, Beta, Modes] = Wamit_read2(folderpath, runname, rho, g)
+function [Forces, T, Beta, Modes] = Wamit_read23(folderpath, runname, rho, g)
 % reads WAMIT .2 output file
 % returns the diffraction forces (Forces), the periods (T), the headings 
 % (Beta), and the Modes (Modes)
 
 
 % read in the file and ignore the header line.
-file_data = importdata([folderpath '/' runname '.2']);
+try
+    file_data = importdata([folderpath '/' runname '.2']);
+catch
+    file_data = importdata([folderpath '/' runname '.3']);
+end
 data = file_data.data;
 
 % First, find out how many periods there are and make a vector of them.

@@ -207,10 +207,9 @@ classdef FBWaveField < IWaveField & handle
         function [] = set.IncidentWaveAmps(wf, a_)
             [row, col] = size(a_);
             
-            if (row ~= wf.nT && col ~= wf.nInc)
-                error('The incident wave array must be a matrix of size (number of periods) by (number of incident waves)');
-            end
-            
+%             if (row ~= wf.nT && col ~= wf.nInc)
+%                 error('The incident wave array must be a matrix of size (number of periods) by (number of incident waves)');
+%             end
             wf.a = a_;
         end
                 
@@ -428,7 +427,11 @@ classdef FBWaveField < IWaveField & handle
                         for m = 1:wf.nInc
                             rwfsmn = ZeroWaveField(rwfs(1));
                             for n = 1:wf.dof
-                                rwfsmn = rwfsmn + squeeze(wf.motions(:,m,n)).*rwfs(n);
+                                if ~isempty(wf.a)
+                                    rwfsmn = rwfsmn + wf.a.*squeeze(wf.motions(:,m,n)).*rwfs(n);
+                                else
+                                    rwfsmn = rwfsmn + squeeze(wf.motions(:,m,n)).*rwfs(n);
+                                end
                             end
                             rwfsMot(m) = rwfsmn;
                         end
@@ -437,6 +440,8 @@ classdef FBWaveField < IWaveField & handle
                         if (isempty(wf.a))
                             thiswf = wf.iwavefield + wf.swavefield + radwf;
                         else
+                            % incident wave added to radiated wave fields
+                            % above
                             thiswf = wf.a*(wf.iwavefield + wf.swavefield) + radwf;
                         end
                         

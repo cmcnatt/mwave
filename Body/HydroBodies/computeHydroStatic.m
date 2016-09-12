@@ -1,4 +1,4 @@
-function [C, rhoBod, C0, Km, cg, cb] = computeHydroStatic(rho, panelGeo, zpos, modes)
+function [C, rhoBod, C0, Km, cg, cb, VolWet, VolBod] = computeHydroStatic(rho, panelGeo, zpos, modes)
 
 panelGeo = PanelGeo(panelGeo);
 panelGeo.Translate([0 0 zpos]);

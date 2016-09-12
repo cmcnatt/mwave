@@ -229,6 +229,38 @@ classdef WaveClimate < handle
             end
         end
         
+        function [climI] = InterpolateTo(clim, Hs, T)
+            [t0M, hsM] = meshgrid(clim.t02, clim.hs);
+            [TM, HsM] = meshgrid(T, Hs);
+            freqOcc2 = interp2(t0M, hsM, clim.freqOcc, TM, HsM);
+            
+            freqOcc2(isnan(freqOcc2)) = 0;
+            freqOcc2 = freqOcc2./sum(sum(freqOcc2));
+            
+            climI = WaveClimate.MakeWaveClimate(class(clim.specs(1)), Hs, T,...
+                clim.specs(1).Frequencies, 'H', clim.h, 'Rho', clim.rho, 'T02');
+            climI.SetFreqOccurance(freqOcc2)
+        end
+        
+        function [climo] = plus(clim, clim2)
+            Hs1 = clim.Hs('Intended');
+            T021 = clim.T02('Intended');
+            Hs2 = clim2.Hs('Intended');
+            T022 = clim2.T02('Intended');
+            
+            if (any(Hs1 ~= Hs2) || any (T021 ~= T022))
+                error('To add wave climates, the matrix size must be the same');
+            end
+            
+            freqOcc1 = clim.FreqOccurance;
+            freqOcc2 = clim2.FreqOccurance;
+            freqOcco = (freqOcc1 + freqOcc2)./2;
+            
+            climo = WaveClimate.MakeWaveClimate(class(clim.specs(1)), Hs1, T021,...
+                clim.specs(1).Frequencies, 'Rho', clim.rho, 'T02');
+            climo.SetFreqOccurance(freqOcco)
+        end
+        
         function [] = PlotScatter(clim)
             Hs = clim.Hs('Intended');
             HsLab = cell(1,length(Hs));
@@ -301,7 +333,7 @@ classdef WaveClimate < handle
                 end
             end
             
-            if (~strcmpi(type, 'T02'))
+            if (strcmpi(Ttype, 'T02'))
                 wc = WaveClimate(specs_, freqOcc_, h_, rho_, 'Hs', Hs, 'T02', T);
             else
                 wc = WaveClimate(specs_, freqOcc_, h_, rho_, 'Hs', Hs);

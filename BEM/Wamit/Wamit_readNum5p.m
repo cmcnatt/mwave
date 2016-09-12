@@ -33,22 +33,20 @@ opts = checkOptions({'bpo'}, varargin);
 readBpo = opts(1);
 
 if readBpo
-    [centers, ~, Npoints] = Wamit_readBpo(folderpath, bodynames);
+    [centers, ~, Npoints, noConv] = Wamit_readBpo(folderpath, bodynames, false);
 else
-    [centers, ~, ~, Npoints] = Wamit_readPnl(folderpath, bodynames);
+    [centers, ~, ~, Npoints] = Wamit_readPnl(folderpath, bodynames, false);
 end
-    
-p_rad = cell(size(bodynames));
-p_diff = cell(size(bodynames));
+noConv = cell2mat(noConv.');
 
-for n = 1:length(bodynames)
-    if (useSing)
-        p_rad{n} = single(zeros(Nper, Ndof, Npoints(n)));
-        p_diff{n} = single(zeros(Nper, Nbeta, Npoints(n)));
-    else
-        p_rad{n} = zeros(Nper, Ndof, Npoints(n));
-        p_diff{n} = zeros(Nper, Nbeta, Npoints(n));
-    end
+Np = sum(Npoints);
+
+if (useSing)
+    p_rad = single(zeros(Nper, Ndof, Np));
+    p_diff = single(zeros(Nper, Nbeta, Np));
+else
+    p_rad = zeros(Nper, Ndof, Np);
+    p_diff = zeros(Nper, Nbeta, Np);
 end
 
 pdim = rho*g;
@@ -57,22 +55,26 @@ fid = fopen([folderpath '/' runname '.5p']);
 fgetl(fid);
 
 for l = 1:Nper
-    for m = 1:length(bodynames)
-        for n = 1:Npoints(m)
-            buffer = fscanf(fid,'%f',[1 3]); 
-            for o = 1:Ndof
-                [re_im] = fscanf(fid,'%f',[1 2]);
-                p_rad{m}(l, o, n) = pdim*complex(re_im(1), re_im(2));
+    for n = 1:Np
+        buffer = fscanf(fid,'%f',[1 3]); 
+        for o = 1:Ndof
+            [re_im] = fscanf(fid,'%f',[1 2]);
+            if noConv(n)
+                p_rad(l, o, n) = 0;
+            else
+                p_rad(l, o, n) = pdim*complex(re_im(1), re_im(2));
             end
         end
     end
     for m = 1:Nbeta
-        for n = 1:length(bodynames)
-            for o = 1:Npoints(n)
-                buffer = fscanf(fid,'%f',[1 4]);
-                [re_im] =  fscanf(fid,'%f',[1 2]);
-                p_diff{n}(l, m, o) = pdim*complex(re_im(1), re_im(2));
-            end
+        for o = 1:Np
+            buffer = fscanf(fid,'%f',[1 4]);
+            [re_im] =  fscanf(fid,'%f',[1 2]);
+             if noConv(o)
+                 p_diff(l, m, o) = 0;
+             else
+                 p_diff(l, m, o) = pdim*complex(re_im(1), re_im(2));
+             end
         end
     end    
 end

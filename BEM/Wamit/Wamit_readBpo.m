@@ -18,39 +18,36 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Contributors:
     C. McNatt
 %}
-function [centers, areas, norms, Npoints] = Wamit_readPnl(folderpath, bodynames, combineBodies)
-% Reads WAMIT .pnl output file
-% Returns the point centers, areas, and normals
+function [centers, norms, Npoints, noConv] = Wamit_readBpo(folderpath, bodynames, combineBodies)
+% Reads WAMIT .bpo output file
+% Returns the point centers, and normals
 
 centers = cell(size(bodynames));
-areas = cell(size(bodynames));
 norms = cell(size(bodynames));
 Npoints = zeros(size(bodynames));
+noConv = cell(size(bodynames));
 
 for n = 1:length(bodynames)
-    buffer = importdata([folderpath '\' bodynames{n} '.pnl']);
+    buffer = importdata([folderpath '\' bodynames{n} '.bpo'], ' ', 2);
 
     raw = buffer.data;
 
-    symCount = length(unique(raw(:,1)));
-    if (symCount > 1)
-        error('Not set up for symmetry yet...');
-    end
-    centers{n} = raw(:, 3:5);
+    centers{n} = raw(:, 8:10);
     [Npoints(n), ~] = size(centers{n});
-    areas{n} = raw(:, 6);
-    norms{n} = raw(:, 7:9);
+    norms{n} = raw(:, 11:13);
+    it = raw(:,7);
+    noConv{n} = it > 16;
 end
 
 if combineBodies
     c1 = centers;
-    a1 = areas;
     n1 = norms;
+    nc = noConv;
     ind = 0;
     for n = 1:length(bodynames)
         centers((ind+1):(ind+Npoints(n)),:) = c1{n};
-        areas((ind+1):(ind+Npoints(n))) = a1{n};
         norms((ind+1):(ind+Npoints(n)),:) = n1{n};
+        noConv((ind+1):(ind+Npoints(n))) = nc{n};
         ind = ind + Npoints(n);
     end
     Npoints = sum(Npoints);

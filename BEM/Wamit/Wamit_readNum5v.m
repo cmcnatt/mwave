@@ -33,10 +33,12 @@ opts = checkOptions({'bpo'}, varargin);
 readBpo = opts(1);
 
 if readBpo
-    [centers, ~, Npoints] = Wamit_readBpo(folderpath, bodynames);
+    [centers, ~, Npoints] = Wamit_readBpo(folderpath, bodynames, false);
 else
-    [centers, ~, ~, Npoints] = Wamit_readPnl(folderpath, bodynames);
+    [centers, ~, ~, Npoints] = Wamit_readPnl(folderpath, bodynames, false);
 end
+
+Np = sum(Npoints);
 
 fidx = fopen([folderpath '/' runname '.5vx']);
 fidy = fopen([folderpath '/' runname '.5vy']);
@@ -48,53 +50,46 @@ fgetl(fidz);
 
 Nper = length(T);
 
-v_rad = cell(size(bodynames));
-v_diff = cell(size(bodynames));
 
-for n = 1:length(bodynames)
-    if (useSing)
-        v_rad{n} = single(zeros(Nper, Ndof, 3, Npoints(n)));
-        v_diff{n} = single(zeros(Nper, Nbeta, 3, Npoints(n)));
-    else
-        v_rad{n} = zeros(Nper, Ndof, 3, Npoints(n));
-        v_diff{n} = zeros(Nper, Nbeta, 3, Npoints(n));
-    end
+if (useSing)
+    v_rad = single(zeros(Nper, Ndof, 3, Np));
+    v_diff = single(zeros(Nper, Nbeta, 3, Np));
+else
+    v_rad = zeros(Nper, Ndof, 3, Np);
+    v_diff = zeros(Nper, Nbeta, 3, Np);
 end
+
 
 omega = 2*pi./T;
 vdim = g./omega;
 
 for l = 1:Nper
-    for m = 1:length(bodynames)
-        for n = 1:Npoints(m)
-            fscanf(fidx,'%f',[1 3]);
-            fscanf(fidy,'%f',[1 3]);
-            fscanf(fidz,'%f',[1 3]);
-            for o = 1:Ndof
-                 % impicitly multiplying by i
-                 [re_im] = fscanf(fidx,'%f',[1 2]);
-                 v_rad{m}(l, o, 1, n) = vdim(l)*complex(-re_im(2), re_im(1));
-                 [re_im] = fscanf(fidy,'%f',[1 2]);
-                 v_rad{m}(l, o, 2, n) = vdim(l)*complex(-re_im(2), re_im(1));
-                 [re_im] = fscanf(fidz,'%f',[1 2]);
-                 v_rad{m}(l, o, 3, n) = vdim(l)*complex(-re_im(2), re_im(1));
-            end
+    for n = 1:Np
+        fscanf(fidx,'%f',[1 3]);
+        fscanf(fidy,'%f',[1 3]);
+        fscanf(fidz,'%f',[1 3]);
+        for o = 1:Ndof
+             % impicitly multiplying by i
+             [re_im] = fscanf(fidx,'%f',[1 2]);
+             v_rad(l, o, 1, n) = vdim(l)*complex(-re_im(2), re_im(1));
+             [re_im] = fscanf(fidy,'%f',[1 2]);
+             v_rad(l, o, 2, n) = vdim(l)*complex(-re_im(2), re_im(1));
+             [re_im] = fscanf(fidz,'%f',[1 2]);
+             v_rad(l, o, 3, n) = vdim(l)*complex(-re_im(2), re_im(1));
         end
     end
     for m = 1:Nbeta
-        for n = 1:length(bodynames)
-            for o = 1:Npoints(n)
-                fscanf(fidx,'%f',[1 4]);
-                fscanf(fidy,'%f',[1 4]);
-                fscanf(fidz,'%f',[1 4]);
-                % impicitly multiplying by i
-                [re_im] =  fscanf(fidx,'%f',[1 2]);
-                v_diff{n}(l, m, 1, o) = vdim(l)*complex(-re_im(2), re_im(1));
-                [re_im] =  fscanf(fidy,'%f',[1 2]);
-                v_diff{n}(l, m, 2, o) = vdim(l)*complex(-re_im(2), re_im(1));
-                [re_im] =  fscanf(fidz,'%f',[1 2]);
-                v_diff{n}(l, m, 3, o) = vdim(l)*complex(-re_im(2), re_im(1));
-            end
+        for o = 1:Np
+            fscanf(fidx,'%f',[1 4]);
+            fscanf(fidy,'%f',[1 4]);
+            fscanf(fidz,'%f',[1 4]);
+            % impicitly multiplying by i
+            [re_im] =  fscanf(fidx,'%f',[1 2]);
+            v_diff(l, m, 1, o) = vdim(l)*complex(-re_im(2), re_im(1));
+            [re_im] =  fscanf(fidy,'%f',[1 2]);
+            v_diff(l, m, 2, o) = vdim(l)*complex(-re_im(2), re_im(1));
+            [re_im] =  fscanf(fidz,'%f',[1 2]);
+            v_diff(l, m, 3, o) = vdim(l)*complex(-re_im(2), re_im(1));
         end
     end    
 end

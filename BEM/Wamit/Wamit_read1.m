@@ -18,24 +18,41 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Contributors:
     C. McNatt
 %}
-function [A, B, T, Modes] = Wamit_read1(folderpath, runname, rho)
+function [A, B, T, Modes, Ainf, A0] = Wamit_read1(folderpath, runname, rho)
 % reads WAMIT .1 output file
-% returns the added mass (A), damping (B), the periods (T), and the Modes 
-% (Modes)
+% returns the added mass (A), damping (B), the periods (T), the Modes 
+% (Modes), infinite frequency, zero period added mass (Ainf),
+% zero frequency, infinite period added mass (A0);
 
 % Read in the file and ignore the header line.
-file_data = importdata([folderpath '\' runname '.1']);
-data = file_data.data;
+fid = fopen([folderpath '\' runname '.1']);
+head = fgetl(fid);
 
-% First, find out how many periods there are and make a vector of them.
-T = unique(data(:,1));
-
-if (T(1) ~= data(1,1));
-    T = flipud(T);
+n = 0;
+while ~feof(fid)
+    n = n + 1;
+    vals = str2num(fgetl(fid));
+    modes(n, 1:2) = vals(2:3);
+    
+    t(n) = vals(1);
+    a(n) = vals(4);
+    
+    if 0 == t(n)
+        b(n) = 0;
+    elseif 0 > t(n)
+        t(n) = Inf;
+        b(n) = 0;
+    else
+        b(n) = vals(5);
+    end
 end
 
-% how many modes are there.  make a vector of the indecies.
-Modes = unique(data(:,2));
+fclose(fid);
+
+N = n;
+
+T = unique(t, 'stable');
+Modes = unique(modes);
 
 nT = length(T);
 nM = length(Modes);
@@ -43,15 +60,7 @@ nM = length(Modes);
 A = zeros(nT, nM, nM);
 B = zeros(nT, nM, nM);
 
-% for i = 1:length(T)
-%     II = find(data(:,1)==T(i));    
-%     for j = 1:length(II)
-%         A(i,data(II(j),2),data(II(j),3)) = data(II(j),4);
-%         B(i,data(II(j),2),data(II(j),3)) = data(II(j),5);
-%     end
-% end
-
-Omega = 2*pi./T;
+Omega = 2*pi./t;
 
 lastM = Modes(end);
 modei = zeros(lastM,1);
@@ -60,20 +69,45 @@ for n = 1:nM
 end
 
 
-N = size(data, 1);
-lt = data(1,1);
+lt = t(1);
 i = 1;
 for n = 1:N  
-    t = data(n,1);
-    if (abs(t-lt) > 0.0001)
+    if (abs(t(n)-lt) > 0.0001)
         i = i+1;
     end
-    j = modei(data(n, 2));
-    k = modei(data(n, 3));
-    A(i,j,k) = rho*data(n, 4);
-    B(i,j,k) = rho*Omega(i)*data(n, 5);
-    lt = t;
+    j = modei(modes(n,1));
+    k = modei(modes(n,2));
+    A(i,j,k) = rho*a(n);
+    B(i,j,k) = rho*Omega(n)*b(n);
+    lt = t(n);
 end
+
+Ainf = [];
+A0 = [];
+
+m = 0;
+for n = 1:nT
+    if (Inf == T(n)) || (0 == T(n))
+        if Inf == T(n)
+            % A0 is the zero frequency, infinite period added mass
+            A0 = squeeze(A(m+1,:,:));
+        else
+            Ainf = squeeze(A(m+1,:,:));
+        end
+        Alow = A(1:m,:,:);
+        Ahigh = A(m+2:end,:,:);
+        A = cat(1, Alow, Ahigh);
+
+        Blow = B(1:m,:,:);
+        Bhigh = B(m+2:end,:,:);
+        B = cat(1, Blow, Bhigh);            
+    else
+        m = m + 1;
+        T2(m) = T(n);
+    end
+end
+
+T = T2;
 
 
 

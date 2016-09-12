@@ -318,10 +318,10 @@ classdef WamitResult < IBemResult
                     [V_rad, V_diff] = Wamit_readNum5v(fullpath, result.runName, result.floatingbodies(1).GeoFile, result.t, length(result.beta), result.dof, result.g, useSing, opts);
                 end
                 
+                ind = 0;
                 for l = 1:length(result.floatingbodies)
 
                     bodyGeo = result.floatingbodies(l).PanelGeo;
-                    bodCenters = centers{l};
                     
                     if isempty(bodyGeo)
                         bodyGeo = Wamit_readGdf(fullpath, [result.floatingbodies(l).GeoFile '_mesh']);
@@ -333,7 +333,7 @@ classdef WamitResult < IBemResult
                     % TODO: fix difference between low and high order panel
                     % stuff
 
-                    nBodPoints = size(bodCenters, 1);
+                    nBodPoints = size(centers{l}, 1);
                     if (nBodPoints ~= bodyGeo.Count)
                         error('The number of body points must be the same as the number of panels.');
                     end
@@ -341,76 +341,81 @@ classdef WamitResult < IBemResult
                     centsBG = bodyGeo.Centroids;
 
                     for n = 1:nBodPoints
-                        if any(abs(centsBG(n,:) - bodCenters(n,:)) > 1e-3*[1 1 1])
+                        if any(abs(centsBG(n,:) - centers{l}(n,:)) > 1e-3*[1 1 1])
                             %error('The body points and wave field points must be the same');
                         end
                     end
-
-                    p_rad_pts = P_rad{l}(:, :, 1:nBodPoints);
-                    p_diff_pts = P_diff{l}(:, :, 1:nBodPoints);
-
-                    if (result.readVelocity)
-                        v_rad_pts = V_rad{l}(:, :, :, 1:nBodPoints);
-                        v_diff_pts = V_diff{l}(:, :, :, 1:nBodPoints);
-                    else
-                        v_rad_pts = [];
-                        v_diff_pts = [];
-                    end
-
-                    for n = 1:result.nB
-                        thisP = zeros(result.nT, nBodPoints);
-                        if (useSing)
-                            thisP = single(thisP);
-                        end
-                        if (result.readVelocity)
-                            thisV = zeros(result.nT, 3, nBodPoints);
-                        else
-                            thisV = [];
-                        end
-
-                        for m = 1:result.nT
-                            thisP(m, :) = squeeze(p_diff_pts(m, n, :));
-                            if (result.readVelocity)
-                                thisV(m, :, :) = squeeze(v_diff_pts(m, n, :, :));
-                            end
-                        end
-
-                        dwfn = WaveField(result.rho, result.g, result.h, result.t, thisP, thisV, 0, bodCenters);
-                        wcs = PlaneWaves(ones(size(result.t)), result.t, result.beta(n)*ones(size(result.t)), result.h);
-                        iwfn = PlaneWaveField(result.rho, wcs, false, bodCenters);
-                        iwfs(n) = iwfn;
-                        swfs(n) = dwfn - iwfn;
-                    end
-
-                    iwavefield = WaveFieldCollection(iwfs, 'Direction', result.beta); 
-                    swavefield = WaveFieldCollection(swfs, 'Direction', result.beta);
-
-                    rwfs(result.dof, 1) = WaveField;
-                    for n = 1:result.dof
-                        thisP = zeros(result.nT, nBodPoints);
-                        if (useSing)
-                            thisP = single(thisP);
-                        end
-                        if (result.readVelocity)
-                            thisV = zeros(result.nT, 3, nBodPoints);
-                        else
-                            thisV = [];
-                        end
-
-                        for m = 1:result.nT
-                            thisP(m, :) = squeeze(p_rad_pts(m, n, :));
-                            if (result.readVelocity)
-                                thisV(m, :, :) = squeeze(v_rad_pts(m, n, :, :));
-                            end
-                        end
-
-                        rwfs(n) = WaveField(result.rho, result.g, result.h, result.t, thisP, thisV, 0, bodCenters);
-                    end
-                    rwavefield = WaveFieldCollection(rwfs, 'MotionIndex', (1:result.dof));
-                    bswf(l) = BodySurfWaveField(bodyGeo, iwavefield, swavefield, rwavefield);
+                    
+                    panels((ind+1):(ind+nBodPoints)) = bodyGeo.Panels;
+                    bodCenters((ind+1):(ind+nBodPoints),:) = centers{l};
+                    ind = ind + nBodPoints;
                 end
                 
-                result.waveBody = bswf;
+                bodyGeo = PanelGeo(panels);
+                nBodPoints = ind;
+
+                p_rad_pts = P_rad(:, :, 1:nBodPoints);
+                p_diff_pts = P_diff(:, :, 1:nBodPoints);
+
+                if (result.readVelocity)
+                    v_rad_pts = V_rad(:, :, :, 1:nBodPoints);
+                    v_diff_pts = V_diff(:, :, :, 1:nBodPoints);
+                else
+                    v_rad_pts = [];
+                    v_diff_pts = [];
+                end
+
+                for n = 1:result.nB
+                    thisP = zeros(result.nT, nBodPoints);
+                    if (useSing)
+                        thisP = single(thisP);
+                    end
+                    if (result.readVelocity)
+                        thisV = zeros(result.nT, 3, nBodPoints);
+                    else
+                        thisV = [];
+                    end
+
+                    for m = 1:result.nT
+                        thisP(m, :) = squeeze(p_diff_pts(m, n, :));
+                        if (result.readVelocity)
+                            thisV(m, :, :) = squeeze(v_diff_pts(m, n, :, :));
+                        end
+                    end
+
+                    dwfn = WaveField(result.rho, result.g, result.h, result.t, thisP, thisV, 0, bodCenters);
+                    wcs = PlaneWaves(ones(size(result.t)), result.t, result.beta(n)*ones(size(result.t)), result.h);
+                    iwfn = PlaneWaveField(result.rho, wcs, false, bodCenters);
+                    iwfs(n) = iwfn;
+                    swfs(n) = dwfn - iwfn;
+                end
+
+                iwavefield = WaveFieldCollection(iwfs, 'Direction', result.beta); 
+                swavefield = WaveFieldCollection(swfs, 'Direction', result.beta);
+
+                rwfs(result.dof, 1) = WaveField;
+                for n = 1:result.dof
+                    thisP = zeros(result.nT, nBodPoints);
+                    if (useSing)
+                        thisP = single(thisP);
+                    end
+                    if (result.readVelocity)
+                        thisV = zeros(result.nT, 3, nBodPoints);
+                    else
+                        thisV = [];
+                    end
+
+                    for m = 1:result.nT
+                        thisP(m, :) = squeeze(p_rad_pts(m, n, :));
+                        if (result.readVelocity)
+                            thisV(m, :, :) = squeeze(v_rad_pts(m, n, :, :));
+                        end
+                    end
+
+                    rwfs(n) = WaveField(result.rho, result.g, result.h, result.t, thisP, thisV, 0, bodCenters);
+                end
+                rwavefield = WaveFieldCollection(rwfs, 'MotionIndex', (1:result.dof));
+                result.waveBody = BodySurfWaveField(bodyGeo, iwavefield, swavefield, rwavefield);
             end
             
             if (isempty(result.solveField))

@@ -22,6 +22,8 @@ function [pass] = isBool(arg)
 
 pass = 1;
 
-if ((arg ~= 1) && (arg ~= 0))
-    pass = 0;
+if ~isempty(arg)
+    if ((arg ~= 1) && (arg ~= 0))
+        pass = 0;
+    end
 end

@@ -21,6 +21,44 @@ Contributors:
 classdef computeMooringKUT < matlab.unittest.TestCase
 
     methods (Test)
+        
+        function test0(testCase)
+            % nlin = 1
+            knum = 8;
+            ks = knum/(sqrt(2)/2);
+            cg = [0 0 0];
+            pos = [2 0 -1];
+            anghs = 0;
+            angvs = pi/4;
+           
+            K = computeMooringK(cg, pos, ks, anghs, angvs);
+            
+            Kexp = zeros(6,6);
+            Kexp(1,1) = knum;
+            Kexp(3,3) = knum;
+            
+            r = pos - cg;
+            
+            Kexp(3,5) = r(1)*knum;
+            Kexp(5,3) = r(1)*knum;
+            Kexp(5,5) = r(1)^2*knum + r(3)^2*knum;
+            Kexp(1,5) = -r(3)*knum;Kexp(1,5) = -r(3)*knum;
+            Kexp(5,1) = -r(3)*knum;
+            
+            for m = 1:6
+                for n = 1:6
+                    testCase.verifyEqual(K(m,n), Kexp(m,n), 'AbsTol', 1e-12);
+                end
+            end
+            
+            x = [1 0 1 0 1 0].';
+            
+            Fk = -K*x;
+            
+            Tk = -r(3)*Fk(1) + r(1)*Fk(3);
+            
+            testCase.verifyEqual(Tk, Fk(5), 'AbsTol', 1e-12);
+        end
        
         function test1(testCase)
             % pos at cg

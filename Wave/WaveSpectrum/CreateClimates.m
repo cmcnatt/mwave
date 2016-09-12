@@ -22,25 +22,69 @@ classdef CreateClimates
     
     methods (Static)
         function [waveClim, Hs, T02] = EMEC(T, varargin)
+            [waveClim, Hs, T02] = CreateClimates.readClimOriginLCOESS('emec', T, varargin{:});            
+        end
+        
+        function [waveClim, Hs, T02] = BIMEP(T, varargin)
+            [waveClim, Hs, T02] = CreateClimates.readClimOriginLCOESS('bimep', T, varargin{:});            
+        end
+        
+        function [waveClim, Hs, T02] = YeuIsland(T, varargin)
+            [waveClim, Hs, T02] = CreateClimates.readClimOriginLCOESS('yeu', T, varargin{:});            
+        end
+        
+        function [waveClim, Hs, T02] = WaveHub(T, varargin)
+            [waveClim, Hs, T02] = CreateClimates.readClimOriginLCOESS('hub', T, varargin{:});            
+        end
+        
+        function [waveClim, Hs, T02] = DKNorthSea(T, varargin)
+            [waveClim, Hs, T02] = CreateClimates.readClimOriginLCOESS('dk', T, varargin{:});            
+        end
+    end
+    
+    methods (Static, Access = private)
+        function [waveClim, Hs, T02] = readClimOriginLCOESS(name, T, varargin)
             [opts, args] = checkOptions({{'HsLim', 1}}, varargin);
-            if (opts(1))
+            hslim = inf;
+            if opts(1)
                 hslim = args{1};
-            else
-                hslim = Inf;
             end
-
-            emec1 = csvread([mwavePath '\Wave\WaveSpectrum\climates\emec.csv']);
             
-            Hs = emec1(2:end,1).';
-            T02 = emec1(1,2:end);
-            freqOcc = emec1(2:end, 2:end);
+            switch name
+                case 'emec'
+                    clim = csvread([mwavePath '\Wave\WaveSpectrum\climates\emec.csv']);
+                    climName = 'EMEC';
+                case 'bimep'
+                    clim = csvread([mwavePath '\Wave\WaveSpectrum\climates\bimep.csv']);
+                    climName = 'BIMEP';
+                case 'dk'
+                    clim = csvread([mwavePath '\Wave\WaveSpectrum\climates\dk-northSea-pt2.csv']);
+                    climName = 'North Sea (DK)';
+                case 'yeu'
+                    clim = csvread([mwavePath '\Wave\WaveSpectrum\climates\yeu-island.csv']);
+                    climName = 'Yeu Island';
+                case 'hub'
+                    clim = csvread([mwavePath '\Wave\WaveSpectrum\climates\wave-hub.csv']);
+                    climName = 'Wave Hub';
+                otherwise
+                    warning('Wave climate name not recongnized');
+            end
             
-            ihs = Hs <= hslim;
-            Hs = Hs(ihs);
-            freqOcc = freqOcc(ihs,:);
+            Hs = clim(2:end,1).';
+            T02 = clim(1,2:end);
+            freqOcc = clim(2:end, 2:end);
+            
+            [Hs, freqOcc] = CreateClimates.reduceMaxHs(Hs, freqOcc, hslim);
 
             waveClim = WaveClimate.MakeWaveClimate('bretschneider', Hs, T02, 1./T);
             waveClim.SetFreqOccurance(freqOcc, 'Hours')
+            waveClim.Name = climName;
+        end
+        
+        function [HsOut, freqOccOut] = reduceMaxHs(HsIn, freqOccIn, hslim)
+            ihs = HsIn <= hslim;
+            HsOut = HsIn(ihs);
+            freqOccOut = freqOccIn(ihs,:);
         end
     end
 end

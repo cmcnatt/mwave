@@ -195,12 +195,7 @@ classdef IWaves < handle
         
         % Cg
         function [Cg] = get.Cg(wav)
-            if (isinf(wav.h))
-                nn = 0.5;
-            else
-                nn = 0.5*(1 + 2*wav.k*wav.h./sinh(2*wav.k*wav.h));
-            end
-            Cg = nn.*wav.C;
+            Cg = IWaves.GroupVel(wav.T, wav.H);
         end
         
         % DepthType
@@ -229,6 +224,11 @@ classdef IWaves < handle
          % Flux
         function [f] = EnergyFlux(wav, rho)
             f = [wav.Cg].*[wav.Energy(rho)];
+        end
+        
+        function [as] = ShoalTo(wav, h)
+            nCg = IWaves.GroupVel(wav.T, h);
+            as = wav.A.*sqrt(wav.Cg./nCg);
         end
     end
     
@@ -285,7 +285,7 @@ classdef IWaves < handle
     methods (Static)
         
         function [cg] = GroupVel(T, h)
-            g = 9.806650;
+            g = IWaves.G;
             if (isinf(h))
                 nn = 0.5;
                 c = g./(2*pi)*T;
