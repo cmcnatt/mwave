@@ -27,6 +27,10 @@ classdef FroudeScale < handle
                 scl = scale;
             elseif strcmpi(type, 'angle')
                 scl = 1;
+            elseif strcmpi(type, 'time')
+                scl = sqrt(scale);
+            elseif strcmpi(type, 'frequency')
+                scl = 1/sqrt(scale);
             elseif strcmpi(type, 'vel')
                 scl = sqrt(scale);
             elseif strcmpi(type, 'angvel')
@@ -53,6 +57,8 @@ classdef FroudeScale < handle
                 scl = scale^4;
             elseif strcmpi(type, 'power')
                 scl = scale^3.5;
+            elseif strcmpi(type, 'energy')
+                scl = scale^3;
             else
                 error('scale type not found');
             end

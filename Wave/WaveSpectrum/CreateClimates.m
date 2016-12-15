@@ -40,6 +40,14 @@ classdef CreateClimates
         function [waveClim, Hs, T02] = DKNorthSea(T, varargin)
             [waveClim, Hs, T02] = CreateClimates.readClimOriginLCOESS('dk', T, varargin{:});            
         end
+        
+        function [waveClim, Hs, T02] = SouthUist(T, varargin)
+            [waveClim, Hs, T02] = CreateClimates.readClimOriginLCOESS('uist', T, varargin{:});            
+        end
+        
+        function [waveClim, Hs, T02] = AMETS(T, varargin)
+            [waveClim, Hs, T02] = CreateClimates.readClimOriginLCOESS('amets', T, varargin{:});            
+        end
     end
     
     methods (Static, Access = private)
@@ -66,6 +74,12 @@ classdef CreateClimates
                 case 'hub'
                     clim = csvread([mwavePath '\Wave\WaveSpectrum\climates\wave-hub.csv']);
                     climName = 'Wave Hub';
+                case 'amets'
+                    clim = csvread([mwavePath '\Wave\WaveSpectrum\climates\amets.csv']);
+                    climName = 'AMETS';
+                case 'uist'
+                    clim = csvread([mwavePath '\Wave\WaveSpectrum\climates\s-uist.csv']);
+                    climName = 'South Uist';
                 otherwise
                     warning('Wave climate name not recongnized');
             end
@@ -76,7 +90,11 @@ classdef CreateClimates
             
             [Hs, freqOcc] = CreateClimates.reduceMaxHs(Hs, freqOcc, hslim);
 
-            waveClim = WaveClimate.MakeWaveClimate('bretschneider', Hs, T02, 1./T);
+            if isempty(T)
+                waveClim = WaveClimate.MakeWaveClimate('bretschneider', Hs, T02, []);
+            else
+                waveClim = WaveClimate.MakeWaveClimate('bretschneider', Hs, T02, 1./T);
+            end
             waveClim.SetFreqOccurance(freqOcc, 'Hours')
             waveClim.Name = climName;
         end

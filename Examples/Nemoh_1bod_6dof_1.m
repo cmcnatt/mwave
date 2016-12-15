@@ -42,6 +42,7 @@ Nr = 8;
 Nz = 24;                
 
 cyl = FloatingCylinder(rho, diameter/2, height, draft, Ntheta, Nr, Nz); 
+
 cyl.Handle = 'cyl';
 
 %% Run Nemoh
@@ -70,12 +71,14 @@ nem_run.BetaCount = 1;
 nem_run.FloatingBodies = cyl;       
 
 % Set the location of the Nemoh executables
-nem_run.ExePath = 'N:\Nemoh\Nemoh_mer\my-nemoh\Release';
+nem_run.ExePath = 'C:\nemoh';
 
 nem_run.WriteRun;           
 
 %%
-nem_run.Run       
+tic
+nem_run.Run
+nemRT = toc;
 
 nem_result = NemohResult(nem_run);  
 nem_result.ReadResult;          

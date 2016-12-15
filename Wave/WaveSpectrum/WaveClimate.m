@@ -71,8 +71,8 @@ classdef WaveClimate < handle
                     wc.t02 = [];
                 end
                 
-                WaveClimate.checkSpectra(spectra, freqOccur)
-
+                WaveClimate.checkSpectra(spectra, freqOccur);
+                
                 wc.specs = spectra;
                 wc.freqOcc = freqOccur;
             end
@@ -229,6 +229,11 @@ classdef WaveClimate < handle
             end
         end
         
+        function [ef] = AverageEnergyFlux(wc)
+            spec = wc.AverageSpectrum;
+            ef = spec.EnergyFlux(wc.rho, wc.h, 'total');
+        end
+        
         function [climI] = InterpolateTo(clim, Hs, T)
             [t0M, hsM] = meshgrid(clim.t02, clim.hs);
             [TM, HsM] = meshgrid(T, Hs);
@@ -237,8 +242,13 @@ classdef WaveClimate < handle
             freqOcc2(isnan(freqOcc2)) = 0;
             freqOcc2 = freqOcc2./sum(sum(freqOcc2));
             
-            climI = WaveClimate.MakeWaveClimate(class(clim.specs(1)), Hs, T,...
-                clim.specs(1).Frequencies, 'H', clim.h, 'Rho', clim.rho, 'T02');
+            if isempty(clim.specs)
+                climI = WaveClimate.MakeWaveClimate('Bretschneider', Hs, T,...
+                    [], 'H', clim.h, 'Rho', clim.rho, 'T02');
+            else
+                climI = WaveClimate.MakeWaveClimate(class(clim.specs(1)), Hs, T,...
+                    clim.specs(1).Frequencies, 'H', clim.h, 'Rho', clim.rho, 'T02');
+            end
             climI.SetFreqOccurance(freqOcc2)
         end
         
@@ -287,6 +297,15 @@ classdef WaveClimate < handle
             cb = colorbar;
             ylabel(cb, 'hours/year');
         end
+        
+        function [AEP] = AnnualEnergyProduction(clim, Hsp, T02p, Pow)
+            clim2 = clim.InterpolateTo(Hsp, T02p);
+            freqH = clim2.FreqOccurance('hours');
+            
+            kWh = Pow.*freqH;
+            
+            AEP = sum(sum(kWh))/1000;
+        end
     end
     
     methods (Static)
@@ -326,10 +345,14 @@ classdef WaveClimate < handle
                 error('Currently only bretschneider specta are supported');
             end          
                         
-            specs_(nHs, nT) = Bretschneider;
-            for m = 1:nHs
-                for n = 1:nT
-                    specs_(m,n) = Bretschneider(Hs(m), T(n), 1./f, Ttype);
+            if isempty(f)
+                specs_ = [];
+            else
+                specs_(nHs, nT) = Bretschneider;
+                for m = 1:nHs
+                    for n = 1:nT
+                        specs_(m,n) = Bretschneider(Hs(m), T(n), 1./f, Ttype);
+                    end
                 end
             end
             

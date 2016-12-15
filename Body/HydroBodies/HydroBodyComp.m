@@ -26,12 +26,14 @@ classdef HydroBodyComp < IHydroComp
         fbs;
         isHB;
         fex;
+        ffk;
     end
     
     properties (Dependent)
         IncWaves;
         Bodies;
         Fex;
+        Ffk;
     end
     
     methods
@@ -42,7 +44,7 @@ classdef HydroBodyComp < IHydroComp
             % If arg1 is a HydroBody, then arg 2 is IWaves
             % If arg1 is a HydroForces, then arg 2 is Floating Body
             
-            [opts, args] = checkOptions({{'UseBodC'}, {'Constrained', 1}}, varargin);
+            [opts, args] = checkOptions({{'UseBodC'}, {'Constrained', 1}, {'CheckNegB'}}, varargin);
             useBodC = opts(1);
             const = opts(2);
             if (const)
@@ -50,6 +52,7 @@ classdef HydroBodyComp < IHydroComp
             else
                 P = [];
             end
+            checkNegB = opts(3);
             
             hbcomp.isHB = false;
             
@@ -99,10 +102,14 @@ classdef HydroBodyComp < IHydroComp
                     hbcomp.initHydroParam(hydro.T, hydro.H, fbods, const, P);
                     hbcomp.setIncWaves(iwavs);
                     fex_ = hydro.Fex;
+                    ffk_ = hydro.Ffk;
                     if (const)
                         [M, N] =  size(P);
                         [Nt, Nb, ~] = size(fex_);
                         fexc = zeros(Nt, Nb, M);
+                        if ~isempty(ffk_)
+                            ffkc = zeros(Nt, Nb, M);
+                        end
                         for m = 1:Nt
                             for n = 1:Nb
                                 f = zeros(N, 1);
@@ -111,11 +118,23 @@ classdef HydroBodyComp < IHydroComp
                                 end
                                 %fexc(m,n,:) = P*squeeze(fex_(m,n,:));
                                 fexc(m,n,:) = P*f;
+                                if ~isempty(ffk_)
+                                    f = zeros(N, 1);
+                                    for p = 1:N
+                                        f(p) = ffk_(m,n,p);
+                                    end
+                                    %fexc(m,n,:) = P*squeeze(fex_(m,n,:));
+                                    ffkc(m,n,:) = P*f;
+                                end
                             end
                         end
-                        fex_ = fexc;    
+                        fex_ = fexc;   
+                        if ~isempty(ffk_)
+                            ffk_ = ffkc;
+                        end
                     end
                     hbcomp.fex = fex_;
+                    hbcomp.ffk = ffk_;
                 else
                     hbcomp.initHydroParam(hydro.T, hydro.H, hydro, const, P);
                     hbcomp.setIncWaves(iwavs);
@@ -132,7 +151,9 @@ classdef HydroBodyComp < IHydroComp
                 a_ = hydro.A;
                 b_ = hydro.B;
                 
-                hbcomp.checkBadVals(b_);
+                if checkNegB
+                    hbcomp.checkBadVals(b_);
+                end
                 
                 if (const)
                     ac = zeros(Nt, M, M);
@@ -194,6 +215,13 @@ classdef HydroBodyComp < IHydroComp
             hbcomp.computeIfNot();
             
             f = hbcomp.fex;
+        end
+        
+        function [f] = get.Ffk(hbcomp)
+            % The Froude-Krylov force
+            hbcomp.computeIfNot();
+            
+            f = hbcomp.ffk;
         end
         
         function [kfs, kfr] = KochinFuncs(hbcomp)

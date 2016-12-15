@@ -118,28 +118,22 @@ f = 1./T;                       % use the wave periods defined by the
                                 % then the frequencies will be decending,
                                 % but that's ok. The order must be the same
                                 % as it is in the HydroBody
-S = bretschneider(Hs, 1./Tm, f);% the bretschneider function is built into 
-                                % mwave. For another spectrum (e.g.
-                                % JONSWAP), you would need to come up the
-                                % the spectram points yourself.  
-
-% next create a directional spread
-s = 6;                              
-betac = 0;                          
-beta = linspace(-pi/2, pi/2, 9);    
-G = cosSpectSpread(s, betac, beta); 
-SG = S'*G;                          
-
-% This is the wave spectrum that will be used to define the incident
-% amplitudes when computing power in the array
-Spec = WaveSpectrum(SG, f, beta);   
+s = 6;                          % spreading parameter    
+betac = 0;                      % center direction    
+beta = linspace(-pi/2, pi/2, 9);% directions
+% create a directional spectrum
+Spec = Bretschneider(Hs, Tm, 1./f, 'Cos2s', s, betac, beta);
 
 % Let's take a quick look at the omni directional spectrum and RAO on the
 % same axis as well as the directional spectrum;
 figure;
 subplot(2,1,1);
-ax = plotyy(T, Spec.Spectrum('Nondir'), T, 1/1000*pow1);
-ylabel(ax(1), 'Spectral density (m^2/Hz)');
+S = Spec.Spectrum('Nondir');                % Spectral Density in m^2/Hz
+St = S'./(T.^2);                            % Spectral Density in m^2/s 
+                                            % (-1./T.^2) is the Jacobian 
+                                            % (but we don't need the neg)
+ax = plotyy(T, St, T, 1/1000*pow1);
+ylabel(ax(1), 'Spectral density (m^2/s)');% Note that the s
 ylabel(ax(2), 'WEC power response (kW)');  % Note that the power response 
                                            % here is for unite amplitude 
                                            % waves, not for the waves
@@ -147,10 +141,11 @@ ylabel(ax(2), 'WEC power response (kW)');  % Note that the power response
 
 subplot(2,1,2);
 S2 = Spec.Spectrum;
+S2t = S2.*(1./T'.^2*ones(1,9));
 surf(T, beta, S2');
 xlabel(gca, 'T (s)');
 ylabel(gca, 'Dir (radian)');
-zlabel(gca, 'Spectral density (m^2/Hz/rad)');
+zlabel(gca, 'Spectral density (m^2/s/rad)');
 title(gca, 'Directional spectrum');
 
 
@@ -204,9 +199,8 @@ title('Power for 5 body array in directional seas');
 Hs = 2;                         
 fm = 0.2;                       
 f = 1./T;                       
-S = bretschneider(Hs, fm, f);   
 
-Spec = WaveSpectrum(S, f);   
+Spec = Bretschneider(Hs, 1/fm, T);
 
 a = Spec.Amplitudes;    
 beta = 0;
@@ -296,6 +290,7 @@ waveField = arrayComp.WaveField(isarray, X, Y, 'NoVel');
 
 Hs_wf = waveField.SigWaveHeight('Total');
 
+figure;
 pcolor(X,Y,Hs_wf./Hs);
 fet;
 set(gca, 'clim', [0.95 1.05]);

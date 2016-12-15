@@ -78,7 +78,7 @@ nem_run.FloatingBodies = flap;
 nem_run.FieldArray = fieldArray;
 
 % Set the location of the Nemoh executables
-nem_run.ExePath = 'N:\Nemoh\Nemoh_mer\my-nemoh\Release';
+nem_run.ExePath = 'C:\nemoh';
 
 nem_run.WriteRun;           
 

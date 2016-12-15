@@ -37,10 +37,19 @@ classdef FloatingBox < FloatingBody
     methods
         % Constructor 
         function [fb] = FloatingBox(rho, length, beam, height, draft, varargin)
+            [opts, args] = checkOptions({{'NoInt'}, {'Translate', 1}}, varargin);
+            trans = [];
+            if opts(2)
+                trans = args{2};
+            end
+                            
             fb = fb@FloatingBody();
             dep = draft - height/2;
             fb.position = [0 0 0];
             fb.cg = [0 0 -dep];
+            if ~isempty(trans)
+                fb.cg = fb.cg + trans;
+            end
             fb.m = FloatingBox.MassMatrix(rho, length, beam, height, draft);
             
             fb.len = length;
@@ -48,29 +57,35 @@ classdef FloatingBox < FloatingBody
             fb.height = height;
             fb.draft = draft;
             
-            if (~isempty(varargin))
-                if (size(varargin,2) < 3)
-                    error('There must be three optional inputs to FloatingFlap: Nx, Ny, Nz');
-                end
-                
-                Nx = varargin{1};
-                Ny = varargin{2};
-                Nz = varargin{3};
-                
-                opts = checkOptions({{'NoInt'}}, varargin);
-                
-                panGeo = makePanel_box(length, beam, draft, Nx, Ny, Nz, varargin{:});
+            if ~isempty(varargin)
+                if isnumeric(varargin{1})
+                    if size(varargin,2) < 3
+                        error('There must be three optional inputs to FloatingFlap: Nx, Ny, Nz');
+                    end
 
-                fb.panelGeo = panGeo;
-                fb.iLowHi = 0;
-                if (opts(1))
-                    fb.iSurfPan = false;
-                else
-                    fb.iSurfPan = true;
+                    Nx = varargin{1};
+                    Ny = varargin{2};
+                    Nz = varargin{3};
+
+                    panGeo = makePanel_box(length, beam, draft, Nx, Ny, Nz, varargin{:});
+                    if ~isempty(trans)
+                        panGeo.Translate(trans);
+                    end
+
+                    fb.panelGeo = panGeo;
+                    fb.iLowHi = 0;
+                    if (opts(1))
+                        fb.iSurfPan = false;
+                    else
+                        fb.iSurfPan = true;
+                    end
                 end
             end
             
             fb.wpSec = [length/2 -beam/2; length/2 beam/2; -length/2 beam/2; -length/2 -beam/2; length/2 -beam/2];
+            if ~isempty(trans)
+                fb.wpSec = fb.wpSec + ones(5,1)*trans(1:2);
+            end
         end
     end
     
@@ -92,7 +107,7 @@ classdef FloatingBox < FloatingBody
         end
         
         function [] = MakePanelGeometry(fb, Nx, Ny, Nz)
-            panGeo = makePanel_box(fb.length, fb.beam, fb.draft, Nx, Ny, Nz, 'Quarter');
+            panGeo = makePanel_box(fb.length, fb.beam, fb.draft, Nx, Ny, Nz);
             %panGeo.Translate(-fb.position);
             fb.panelGeo = panGeo;
             fb.iLowHi = 0;

@@ -18,31 +18,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Contributors:
     C. McNatt
 %}
-function [xo, yo] = resampleEven(xi, yi, N)
-
-if 1 == N
-    if ~isrow(xi)
-        xo = xi';
-    else
-        xo = xi;
+classdef VideoTimeTrans
+    properties (Access = protected)
+        tvid;
+        texp;
     end
-    if ~isrow(yi)
-        yo = yi';
-    else
-        yo = yi;
-    end
-    return
+    
+    methods
+         
+        function [vtt] = VideoTimeTrans(vidObj, expdt)
+            Nfr = vidObj.Duration*vidObj.FrameRate;
+            vtt.tvid = 0:1/vidObj.FrameRate:vidObj.Duration;
+            vtt.texp = 0:expdt:Nfr*expdt;
+        end
+        
+        function [val] = VidTime(vtt, timeIn)
+            iframe = indexOf(vtt.texp, timeIn);
+            val = vtt.tvid(iframe);
+        end
+     end
 end
-
-dx = diff(xi);
-dy = diff(yi);
-
-len = sqrt(dx.^2 + dy.^2);
-del = cumsum([0 len]);
-
-delta = sum(len)/(N-1);
-
-xii = 0:delta:(N-1)*delta;
-
-xo = interp1(del, xi, xii, 'linear', 'extrap');
-yo = interp1(del, yi, xii, 'linear', 'extrap');

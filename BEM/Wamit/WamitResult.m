@@ -33,6 +33,7 @@ classdef WamitResult < IBemResult
         solveBody;
         waveBody;
         readVelocity;
+        compFK;
     end
 
     properties (Dependent)
@@ -64,6 +65,7 @@ classdef WamitResult < IBemResult
                     result.fieldPoints = runCondition.FieldPoints;
                     result.fieldArray = runCondition.FieldArray;
                     result.cylArray = runCondition.CylArray;
+                    result.compFK = runCondition.ComputeFK;
                     if (~isempty(result.fieldPoints) || ~isempty(result.fieldArray) || ~isempty(result.cylArray))
                         result.solveField = true;
                     end
@@ -216,8 +218,11 @@ classdef WamitResult < IBemResult
                 result.solveForces = false;
                 fid1 = fopen([result.folder '\' result.runName '.1']);
                 fid2 = fopen([result.folder '\' result.runName '.2']);
+                fid3 = fopen([result.folder '\' result.runName '.3']);
+                fid4 = fopen([result.folder '\' result.runName '.2fk']);
+                fid5 = fopen([result.folder '\' result.runName '.3fk']);
                 
-                if ((fid1 ~= -1) && (fid2 ~= -1))
+                if ((fid1 ~= -1) && (fid2 ~= -1) && (fid3 ~= -1) && (fid4 ~= -1) && (fid5 ~= -1))
                     result.solveForces = true;
                 end
 
@@ -228,11 +233,25 @@ classdef WamitResult < IBemResult
                 if (fid2 ~= -1)
                     fclose(fid2);
                 end
+                
+                if (fid3 ~= -1)
+                    fclose(fid3);
+                end
+                
+                if (fid4 ~= -1)
+                    fclose(fid4);
+                    result.compFK = true;
+                end
+                
+                if (fid4 ~= -1)
+                    fclose(fid4);
+                    result.compFK = true;
+                end
             end
             
             if (result.solveForces)                
                 % Added Mass and Damping 
-                [a_, b_, t_, modes] = Wamit_read1(fullpath, result.runName, result.rho);
+                [a_, b_, t_, modes, ainf, a0] = Wamit_read1(fullpath, result.runName, result.rho);
                 result.dof = length(modes);
                 
                 % Check periods
@@ -261,7 +280,14 @@ classdef WamitResult < IBemResult
                 end
 
                 % Excitation force
-                [f, t_, bet] = Wamit_read23(fullpath, result.runName, result.rho, result.g);
+                if result.compFK
+                    [f_fk] = Wamit_read23(fullpath, result.runName, result.rho, result.g, 'fk');
+                    [f_sc, t_, bet] = Wamit_read23(fullpath, result.runName, result.rho, result.g, 'sc');
+                    f = f_fk + f_sc;
+                else
+                    f_fk = [];
+                    [f, t_, bet] = Wamit_read23(fullpath, result.runName, result.rho, result.g);
+                end
                 
                 % Check directions
                 if (isempty(result.beta))
@@ -280,7 +306,7 @@ classdef WamitResult < IBemResult
     %                 end
                 end
 
-                result.hydroForces = HydroForces(result.t, result.beta, a_, b_, c_, f, result.h, result.rho);
+                result.hydroForces = HydroForces(result.t, result.beta, a_, b_, c_, f, result.h, result.rho, f_fk, a0, ainf);
             end
             
             if (isempty(result.solveBody))

@@ -20,8 +20,12 @@ Contributors:
 %}
 function [pass] = isInt(arg)
 
+N = length(arg);
 pass = 1;
 
-if (mod(arg,1) ~= 0)
-    pass = 0;
+for n = 1:N
+    if (mod(arg(n),1) ~= 0)
+        pass = 0;
+        return;
+    end
 end

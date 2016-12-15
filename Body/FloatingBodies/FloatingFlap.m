@@ -45,7 +45,7 @@ classdef FloatingFlap < FloatingBody
             fb.cg = [0 0 -draft/2];
             % put the center of rotation at the bottom
             fb.centRot = [0 0 -draft];
-            fb.m = FloatingFlap.MassMatrix(rho, length, beam, draft, fb.cg);
+            fb.m = FloatingFlap.MassMatrix(rho, length, beam, draft, fb.centRot);
             
             fb.len = length;
             fb.beam = beam;
@@ -89,14 +89,13 @@ classdef FloatingFlap < FloatingBody
         
         function [] = MakePanelGeometry(fb, Nx, Ny, Nz)
             panGeo = makePanel_box(fb.length, fb.beam, fb.draft, Nx, Ny, Nz, 'Quarter');
-            %panGeo.Translate(-fb.position);
             fb.panelGeo = panGeo;
             fb.iLowHi = 0;
         end
     end
     
     methods (Static)
-        function [M] = MassMatrix(rho, length, beam, draft, cg)
+        function [M] = MassMatrix(rho, length, beam, draft, centRot)
             V = length*beam*draft;
 
             m = rho*V;
@@ -105,19 +104,19 @@ classdef FloatingFlap < FloatingBody
             Iyy = 1/12*m*(length^2 + draft^2);
             Izz = 1/12*m*(length^2 + beam^2);
             
-            if (cg(1) ~= 0)
-                Iyy = Iyy + m*cg(1)^2;
-                Izz = Izz + m*cg(1)^2;
+            if (centRot(1) ~= 0)
+                Iyy = Iyy + m*centRot(1)^2;
+                Izz = Izz + m*centRot(1)^2;
             end
             
-            if (cg(2) ~= 0)
-                Ixx = Ixx + m*cg(2)^2;
-                Izz = Izz + m*cg(2)^2;
+            if (centRot(2) ~= 0)
+                Ixx = Ixx + m*centRot(2)^2;
+                Izz = Izz + m*centRot(2)^2;
             end
             
-            if (cg(3) ~= 0)
-                Ixx = Ixx + m*cg(3)^2;
-                Iyy = Iyy + m*cg(3)^2;
+            if (centRot(3) ~= 0)
+                Ixx = Ixx + m*centRot(3)^2;
+                Iyy = Iyy + m*centRot(3)^2;
             end
 
             M = zeros(6,6);

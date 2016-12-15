@@ -29,7 +29,8 @@ t = 0:dt:(N-1)*dt;
 
 
 [opts, args] = checkOptions({{'StartTime', 1}, {'StopTime', 1}, ...
-    {'ExpectFreq', 1} {'Window'}, {'Range', 1}, {'AdjPhase'}}, varargin);
+    {'ExpectFreq', 1} {'Window'}, {'Range', 1}, {'AdjPhase'}, ...
+    {'LimRange', 1}, {'noUpCross'}}, varargin);
 
 startT = 0;
 startI = 1;
@@ -57,13 +58,23 @@ if opts(5)
 end
 adjPhase = opts(6);
 
+limrange = [];
+if opts(7)
+    limrange = args{7};
+end
+
+noUpCross = opts(8);
 
 % guess 1
 if (opts(3))
     f1 = args{3};
     off = mean(sig2);
 else
-    [f1, a1, ep1, off, ~, S1, freqs1] = cosFit(t2, sig2);
+    if ~isempty(limrange)
+        [f1, a1, ep1, off, ~, S1, freqs1] = cosFit(t2, sig2, 'LimRange', limrange);
+    else
+        [f1, a1, ep1, off, ~, S1, freqs1] = cosFit(t2, sig2);
+    end
 end
 
 % use guess 1 to get an exact number of cycles in the window.
@@ -77,40 +88,40 @@ if (Ncyl > 1)
     stopT2 = startT + T*Ncyl;
     [~, stopI2] = min(abs(t - stopT2));
     
-    % new bit
-    sigSval = sig(startI);
-    isUp = false;
-    if (sig(startI+1) > sigSval)
-        isUp = true;
-    end
-    
-    cycIndLen = floor(T*sampleFreq);
-    
-    sigEnd = sig(stopI2-cycIndLen:stopI2);
-    minVal = 1000;
-    minValInd = 0;
-    for n = 2:length(sigEnd)
-        val = abs(sigEnd(n) - sigSval);
-        
-        if (sigEnd(n) > sigEnd(n-1))
-            if (isUp)
-                if (val < minVal)
-                    minVal = val;
-                    minValInd = n;
+    if ~noUpCross
+        sigSval = sig(startI);
+        isUp = false;
+        if (sig(startI+1) > sigSval)
+            isUp = true;
+        end
+
+        cycIndLen = floor(T*sampleFreq);
+
+        sigEnd = sig(stopI2-cycIndLen:stopI2);
+        minVal = 1000;
+        minValInd = 0;
+        for n = 2:length(sigEnd)
+            val = abs(sigEnd(n) - sigSval);
+
+            if (sigEnd(n) > sigEnd(n-1))
+                if (isUp)
+                    if (val < minVal)
+                        minVal = val;
+                        minValInd = n;
+                    end
                 end
-            end
-        else
-            if (~isUp)
-                if (val < minVal)
-                    minVal = val;
-                    minValInd = n;
+            else
+                if (~isUp)
+                    if (val < minVal)
+                        minVal = val;
+                        minValInd = n;
+                    end
                 end
             end
         end
+
+        stopI2 = stopI2 - length(sigEnd) + minValInd - 1;
     end
-    
-    stopI2 = stopI2 - length(sigEnd) + minValInd - 1;
-    % end new bit
     
     sig3 = sig(startI:stopI2) - off;
     t3 = t(startI:stopI2);
@@ -122,7 +133,11 @@ if (Ncyl > 1)
         figure;
         plot(t3, sig3);
     end
-    [f, a, ep, ~, ~, S, freqs] = cosFit(t3, sig3);
+    if ~isempty(limrange)
+        [f, a, ep, ~, ~, S, freqs] = cosFit(t3, sig3, 'LimRange', limrange);
+    else
+        [f, a, ep, ~, ~, S, freqs] = cosFit(t3, sig3);
+    end
 else
     f = f1;
     a = a1;
@@ -133,30 +148,30 @@ end
 
 a2 = 0;
 ep2 = 0;
-[maxS, ind] = max(abs(S));
-ind2 = 2*(ind - 1) + 1;
+ifreq = indexOf(freqs, f);
+ind2 = 2*(ifreq - 1) + 1;
+
+% second order coefficients
+if (ind2 < length(S))
+    a2 = abs(S(ind2));
+    ep2 = angle(S(ind2));
+end
 
 if ~isempty(range)
-    istart = indexOf(freqs, freqs(ind)-range/2);
-    istop = indexOf(freqs, freqs(ind)+range/2);
-    
+    istart = indexOf(freqs, freqs(ifreq)-range/2);
+    istop = indexOf(freqs, freqs(ifreq)+range/2);
+
     Snew = sum(S(istart:istop));
-    
+
     istart = indexOf(freqs, freqs(ind2)-range/2);
     istop = indexOf(freqs, freqs(ind2)+range/2);
     Snew2 = sum(S(istart:istop));
-    
+
     a = abs(Snew);
     ep = angle(Snew);
-    
-    a2 = abs(Snew2);
-    ep2 = angle(Snew2);
-else
-    % second order coefficients
-    if (ind2 < length(S))
-        a2 = abs(S(ind2));
-        ep2 = angle(S(ind2));
-    end
+
+%     a2 = abs(Snew2);
+%     ep2 = angle(Snew2);
 end
 
 if (adjPhase)

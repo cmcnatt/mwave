@@ -27,9 +27,12 @@ classdef HydroForces
         beta;
         nB;
         a;
+        a0;
+        ainf;
         b;
         c;
         ex;
+        fk;
         dof;
         h;
         rho;
@@ -39,9 +42,12 @@ classdef HydroForces
         T;              % Periods (s)
         Beta;           % Directions (deg)
         A;              % Added mass matrix (dof x dof)
+        A0;             % 0 frequency (infinite period) added mass
+        Ainf;           % Infinte frequency (0 period) added mass
         B;              % Hydrodynamic Damping matrix (dof x dof)
         C;              % Hydrostatic stiffness matrix (dof x dof)
         Fex;            % Exciting Forces (dof x 1)
+        Ffk;            % Froude-Krylov Forces (dof x 1)
         DoF;            % Number of degrees of freedom
         H;              % Water depth
         Rho;            % Fluid density
@@ -85,16 +91,34 @@ classdef HydroForces
                 error('Invalid exciting force vector');
             end
             
-            if (~isempty(varargin))
+            if ~isempty(varargin)
                 hf.h = varargin{1};
             else
                 hf.h = [];
             end
             
-            if (length(varargin) == 2)
+            if length(varargin) >= 2
                 hf.rho = varargin{2};
             else
                 hf.rho = [];
+            end
+            
+            if length(varargin) >= 3
+                hf.fk = varargin{3};
+            else
+                hf.fk = [];
+            end
+            
+            if length(varargin) >= 4
+                hf.a0 = varargin{4};
+            else
+                hf.a0 = [];
+            end
+            
+            if length(varargin) >= 5
+                hf.ainf = varargin{5};
+            else
+                hf.ainf = [];
             end
 
             hf.a = A;
@@ -119,6 +143,16 @@ classdef HydroForces
             a_ = hf.a;
         end
         
+         function [a_] = get.A0(hf)
+            % Get the zero frequency (infintie period) added mass
+            a_ = hf.a0;
+         end
+        
+          function [a_] = get.Ainf(hf)
+            % Get the infinite frequency (zero period) added mass
+            a_ = hf.ainf;
+        end
+        
         function [b_] = get.B(hf)
             % Get the hydrodynamic damping
             b_ = hf.b;
@@ -132,6 +166,11 @@ classdef HydroForces
         function [e] = get.Fex(hf)
             % Get the hydrodynamic excitation force
             e = hf.ex;
+        end
+        
+        function [e] = get.Ffk(hf)
+            % Get the hydrodynamic Froude-Krylov force
+            e = hf.fk;
         end
         
         function [dof_] = get.DoF(hf)

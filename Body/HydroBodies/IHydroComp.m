@@ -430,6 +430,62 @@ classdef IHydroComp < handle
             end
         end
         
+        function [frad] = Frad(hcomp, varargin)
+            
+            opts = checkOptions({{'Optimal'}, {'ConstOpt', 1}, {'OrgCoor'}}, varargin);
+            
+            if opts(3)
+                xi = hcomp.Motions;
+                orgCoor = true;
+            else
+                xi = hcomp.Motions(varargin{:});
+                orgCoor = false;
+            end
+            omega = 2*pi./hcomp.t;
+            
+            frad = zeros(size(xi));
+            
+            for n = 1:hcomp.nT
+                a_ = zeros(hcomp.dof);
+                b_ = zeros(hcomp.dof);
+                
+                for p = 1:hcomp.dof
+                    for q = 1:hcomp.dof
+                        a_(p,q) = hcomp.a(n,p,q);
+                        b_(p,q) = hcomp.b(n,p,q);
+                    end
+                end
+                if ndims(xi) == 2
+                    frad(n,:) = (-(-omega(n)^2.*a_ + 1i*omega(n)*b_)*xi(n,:).').';
+                else
+                    for j = 1:hcomp.nInc
+                        frad(n,j,:) = (-(-omega(n)^2.*a_ + 1i*omega(n)*b_)*squeeze(xi(n,j,:)));
+                    end
+                end
+            end
+            
+            if (orgCoor && ~isempty(hcomp.P))
+                frad1 = frad;
+                PT = hcomp.P.';
+                Ndim = size(PT, 1);
+                if (ndims(frad1) == 2)
+                    frad = zeros(hcomp.nT, Ndim);
+                else
+                    frad = zeros(hcomp.nT, hcomp.nInc, Ndim);
+                end
+
+                for m_ = 1:hcomp.nT
+                    for n = 1:hcomp.nInc
+                        if (ndims(frad1) == 2)
+                            frad(m_, :) = PT*frad1(m_, :);
+                        else
+                            frad(m_, n, :) = PT*squeeze(frad1(m_, n, :));
+                        end
+                    end
+                end
+            end
+        end
+        
         function [] = SetM(hcomp, m_)
             % Set the Mass value, currently does not change the
             % values of the floating bodies
@@ -689,14 +745,23 @@ classdef IHydroComp < handle
                 v = geo.Modes.Vector;
                 count = sum(v);
                 iv = find(v == 1);
+                
                 for j = 1:count
                     for p = 1:count
                         m_(lsf + j, lsf + p) = geo.M(iv(j), iv(p));
                         dpto_(lsf + j, lsf + p) = geo.Dpto(iv(j), iv(p));
                         dpar_(lsf + j, lsf + p) = geo.Dpar(iv(j), iv(p));
                         k_(lsf + j, lsf + p) = geo.K(iv(j), iv(p));
-                        if (evalC)
-                            c_(lsf + j, lsf + p) = geo.C(iv(j), iv(p));
+%                         if (evalC)
+%                             c_(lsf + j, lsf + p) = geo.C(iv(j), iv(p));
+%                         end
+                    end
+                end
+                if evalC
+                    cdof = size(geo.C,1);
+                    for j = 1:cdof
+                        for p = 1:cdof
+                            c_(lsf + j, lsf + p) = geo.C(j, p);
                         end
                     end
                 end

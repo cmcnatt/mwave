@@ -596,7 +596,7 @@ classdef NemohRunCondition < IBemRunCondition
         end
         
         function [] = writeBodyCal(run, fid, n, floatBod, geoFile)
-            pos = [floatBod.XYpos floatBod.Zpos];
+            pos = [floatBod.XYpos floatBod.Zpos] + floatBod.CenterRot;
             modes = floatBod.Modes;
             vector = modes.Vector;
             
@@ -662,7 +662,8 @@ classdef NemohRunCondition < IBemRunCondition
             fprintf(fid, '1 \n 0. 0. \n ');
             
             fprintf(fid, '%f %f %f \n', floatBod.Cg);
-            fprintf(fid,'%g \n 2 \n 0. \n 1.\n', floatBod.PanelGeo.Count);
+            npan = sum((geo.IsWets + ~geo.IsInteriors) == 2);
+            fprintf(fid,'%g \n 2 \n 0. \n 1.\n', npan);
             
             fclose(fid);
         end
@@ -673,26 +674,33 @@ classdef NemohRunCondition < IBemRunCondition
             if (geo.Ysymmetry)
                 error('Body Y-symmetry not allowed in Nemoh');
             end
-            
+
             pos = [floatBod.XYpos floatBod.Zpos];
             geo.Translate(pos);
             
             geoPans = geo.Panels;
-            npan = geo.Count;
+            npanTot = geo.Count;
+            % only include panels that are wet and are not the interior
+            % surface
+            npan = sum((geo.IsWets + ~geo.IsInteriors) == 2);
             
             % write it the simple way first (multiples of same nodes)
             nodes = zeros(npan*4, 3);
             pans = zeros(npan, 4);
             
-            for m = 1:npan
-                pan = geoPans(m);
-                verts = pan.Vertices;
-                nstart = (m - 1)*4;
-                
-                for n = 1:4
-                    inode = nstart + n;
-                    nodes(inode,:) = verts(n,:);
-                    pans(m, n) = inode;
+            m = 0;
+            for nn = 1:npanTot
+                pan = geoPans(nn);
+                if (pan.IsWet && ~pan.IsInterior)
+                    m = m + 1;
+                    verts = pan.Vertices;
+                    nstart = (m - 1)*4;
+
+                    for n = 1:4
+                        inode = nstart + n;
+                        nodes(inode,:) = verts(n,:);
+                        pans(m, n) = inode;
+                    end
                 end
             end
             

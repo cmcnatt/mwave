@@ -27,6 +27,9 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
         panelGeo;
         cg;
         cb;
+        wetVol;
+        totVol;
+        surfArea;
         m;
         dpto;
         dpar;
@@ -42,6 +45,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
         iGenMds;
         iLowHi;
         iSurfPan;
+        wdipole;
         panSize;
         writeFileMeth;
         writeParams;
@@ -54,6 +58,9 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
         Cg;             % Center of Gravity in body coordinates
         CgGlobal;       % Center of Gravity in Global coordinates
         Cb;             % Center of Buoyancy in body coordinates
+        WetVolume;      % Submerged volume
+        TotalVolume;    % Total volume
+        SurfArea;       % Total surface area
         M;              % Mass matrix
         Dpto;           % PTO Damping matrix
         Dpar;           % Parasitic damping matrix 
@@ -71,6 +78,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
         WamIGenMds;     % Integer that specifies which NEWMODES subroutine to call.  All bodies in a given run must have the same value.
         WamILowHi;      % Indicates whether the geometry file is low-order (0) or high-order (1) (for WAMIT)
         WamPanelSize;   % See WAMIT PANEL_SIZE .cfg parameter
+        WamDipoles;     % Indices of panels or patches that are thin members (dipoles)
         ISurfPan;       % Indicates whether the geometry has interior surface panels
         WriteFileMeth;  % Additional methods to support the writing of a geometry file
         WriteParams;    % Parameters of the WriteFileMeth
@@ -101,6 +109,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
                 fb.iGenMds = 0;
                 fb.iLowHi = 0;
                 fb.iSurfPan = 0;
+                fb.wdipole = [];
                 fb.writeFileMeth = [];
                 fb.writeParams = [];
             elseif (isa(varargin{1},'FloatingBody'))
@@ -125,6 +134,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
                 fb.iLowHi = fbin.iLowHi;
                 fb.panSize = fbin.panSize;
                 fb.iSurfPan = fbin.iSurfPan;
+                fb.wdipole = fbin.wdipole;
                 fb.writeFileMeth = fbin.writeFileMeth;
                 fb.writeParams = fbin.writeParams;
             else
@@ -209,6 +219,36 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
             % Set the center of buoyancy of the floating body
             fb.checkSizeNx1(cb,3);           
             fb.cb = cb;
+        end
+        
+        function [val] = get.WetVolume(fb)
+            % Get the submerged volume of the floating body
+            val = fb.wetVol;
+        end
+        function [fb] = set.WetVolume(fb, val)
+            % Set the submerged volume of the floating body
+            fb.checkSizeNx1(val, 1);        
+            fb.wetVol = val;
+        end
+        
+        function [val] = get.TotalVolume(fb)
+            % Get the total volume of the floating body
+            val = fb.totVol;
+        end
+        function [fb] = set.TotalVolume(fb, val)
+            % Set the submerged volume of the floating body
+            fb.checkSizeNx1(val, 1);        
+            fb.totVol = val;
+        end
+        
+        function [val] = get.SurfArea(fb)
+            % Get the total surface area of the floating body
+            val = fb.surfArea;
+        end
+        function [fb] = set.SurfArea(fb, val)
+            % Set the total surface area of the floating body
+            fb.checkSizeNx1(val, 1);        
+            fb.surfArea = val;
         end
         
         function [m_] = get.M(fb)
@@ -440,6 +480,20 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
                 error('value must be boolean, 1 or 0');
             end
             fb.iSurfPan = isp;
+        end
+        
+        function [val] = get.WamDipoles(fb)
+            % Indices of the panels or patches that are thin members (i.e.
+            % dipoles)
+            val = fb.wdipole;
+        end
+        function [] = set.WamDipoles(fb, val)
+           % Indices of the panels or patches that are thin members (i.e.
+            % dipoles)
+            if (~isInt(val))
+                error('values must be integers');
+            end
+            fb.wdipole = val;
         end
         
         function [wfm] = get.WriteFileMeth(fb)

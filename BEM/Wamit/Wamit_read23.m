@@ -18,17 +18,28 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Contributors:
     C. McNatt
 %}
-function [Forces, T, Beta, Modes] = Wamit_read23(folderpath, runname, rho, g)
+function [Forces, T, Beta, Modes] = Wamit_read23(folderpath, runname, rho, g, varargin)
 % reads WAMIT .2 output file
 % returns the diffraction forces (Forces), the periods (T), the headings 
 % (Beta), and the Modes (Modes)
+if ~isempty(varargin)
+    ext = varargin{1};
+    if ~strcmp(ext, 'fk') 
+        if ~strcmp(ext, 'sc')
+            error(['The additional argument for Wamit_read23 must be either ' ...
+                ' ''fk'' or ''sc'' indicating the Froude-Krylov or scattering force should be read']);
+        end
+    end
+else
+    ext = '';
+end
 
 
 % read in the file and ignore the header line.
 try
-    file_data = importdata([folderpath '/' runname '.2']);
+    file_data = importdata([folderpath '/' runname '.2' ext]);
 catch
-    file_data = importdata([folderpath '/' runname '.3']);
+    file_data = importdata([folderpath '/' runname '.3' ext]);
 end
 data = file_data.data;
 

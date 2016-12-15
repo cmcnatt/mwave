@@ -37,6 +37,7 @@ classdef WamitRunCondition < IBemRunCondition
         maxItt;
         useDirect;
         useHaskind;
+        computeFK;
     end
 
     properties (Dependent)
@@ -57,6 +58,7 @@ classdef WamitRunCondition < IBemRunCondition
         MaxItt;
         UseDirectSolver;
         UseHaskind;
+        ComputeFK;
     end
 
     methods
@@ -75,6 +77,7 @@ classdef WamitRunCondition < IBemRunCondition
             run.maxItt = 35;
             run.useDirect = false;
             run.useHaskind = false;
+            run.computeFK = false;
             run.geoFiles = [];
             if (nargin == 0)
                 run.folder = ' ';
@@ -336,6 +339,21 @@ classdef WamitRunCondition < IBemRunCondition
             run.useHaskind = val;
         end
         
+        function [val] = get.ComputeFK(run)
+            % Compute the Froude-Krylov force along with the excitation
+            % force
+            val = run.computeFK;
+        end
+        function [] = set.ComputeFK(run, val)
+             % Compute the Froude-Krylov force along with the excitation
+            % force
+            if (~isBool(val))                
+                error('ComputeFK must be a boolean');
+            end
+            
+            run.computeFK = val;
+        end
+        
         function [] = WriteRun(run, varargin)
             % Writes the Input files (except for the .gdf) for a WAMIT run
             
@@ -562,6 +580,35 @@ classdef WamitRunCondition < IBemRunCondition
                 fprintf(fileID, 'NEWMDS = %i\n', run.floatBods(1).Ngen);
                 fprintf(fileID, 'IGENMDS = %i\n', run.floatBods(1).WamIGenMds);
             end
+            % Dipole patches
+            % NPDIPOLE(2)=(5-8)
+            if Nbod > 1
+                for n = 1:Nbod
+                    dipoles = run.floatBods(n).WamDipoles;
+                    if ~isempty(dipoles)
+                        fprintf(fileID, 'NPDIPOLE(%i) = ', n);
+                        for m = 1:length(dipoles)
+                            fprintf(fileID, '%i', dipoles(m));
+                            if m ~= length(dipoles)
+                                fprintf(fileID, ', ');
+                            end
+                        end
+                        fprintf(fileID, '\n');
+                    end
+                end
+            else
+                dipoles = run.floatBods.WamDipoles;
+                if ~isempty(dipoles)
+                    fprintf(fileID, 'NPDIPOLE = ');
+                    for m = 1:length(dipoles)
+                        fprintf(fileID, '%i', dipoles(m));
+                        if m ~= length(dipoles)
+                            fprintf(fileID, ', ');
+                        end
+                    end
+                    fprintf(fileID, '\n');
+                end
+            end
             fprintf(fileID, 'IPOTEN = 1\n');
             fprintf(fileID, 'ISCATT = 0\n');
             if (run.useDirect)
@@ -621,12 +668,17 @@ classdef WamitRunCondition < IBemRunCondition
             % both potenital/source
             % 7 - mean drift forces
             iradf = 1;
+            if (run.computeFK)
+                fk = 2;
+            else
+                fk = 1;
+            end
             if (run.useHaskind)
-                iexH = 1;
+                iexH = fk;
                 iexD = 0;
             else
                 iexH = 0;
-                iexD = 1;
+                iexD = fk;
             end
             if (~run.solveRad)
                 iradf = 0;
@@ -819,7 +871,7 @@ classdef WamitRunCondition < IBemRunCondition
                 %%%%
                 cR = fb.CenterRot;
                 pos = [fb.XYpos(1) fb.XYpos(2) fb.Zpos];
-                pos = pos + cR; % add cg bc body moved so cg is the origin. 
+                pos = pos + cR; % add cr bc body moved so cr is the origin. 
                 fprintf(fileID, '%8.4f\t%8.4f\t%8.4f\t%8.4f\n', pos(1), pos(2), pos(3), fb.Angle);
                 %fprintf(fileID, '%8.4f\t%8.4f\t%8.4f\t%8.4f\n', fb.XYpos(1), fb.XYpos(2), fb.Zpos, fb.Angle);
                 % modes to be computed of body n
