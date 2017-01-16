@@ -20,7 +20,8 @@ if landscape
 end
 
 f = figure;
-set(gcf, 'PaperPosition', [0 0 wid hei]);
+set(f,'PaperPositionMode','auto');  
+set(f, 'PaperPosition', [0 0 wid hei]);
 if landscape
     f.PaperOrientation = 'landscape';
 end
