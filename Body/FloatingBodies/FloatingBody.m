@@ -47,6 +47,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
         iSurfPan;
         wdipole;
         panSize;
+        surfAboveZ0;
         writeFileMeth;
         writeParams;
     end
@@ -80,6 +81,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
         WamPanelSize;   % See WAMIT PANEL_SIZE .cfg parameter
         WamDipoles;     % Indices of panels or patches that are thin members (dipoles)
         ISurfPan;       % Indicates whether the geometry has interior surface panels
+        SurfAboveZ0;    % Indicates that there are surfaces of the geometry above the z = 0 water plane
         WriteFileMeth;  % Additional methods to support the writing of a geometry file
         WriteParams;    % Parameters of the WriteFileMeth
     end
@@ -110,6 +112,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
                 fb.iLowHi = 0;
                 fb.iSurfPan = 0;
                 fb.wdipole = [];
+                fb.surfAboveZ0 = false;
                 fb.writeFileMeth = [];
                 fb.writeParams = [];
             elseif (isa(varargin{1},'FloatingBody'))
@@ -135,6 +138,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
                 fb.panSize = fbin.panSize;
                 fb.iSurfPan = fbin.iSurfPan;
                 fb.wdipole = fbin.wdipole;
+                fb.surfAboveZ0 = fbin.surfAboveZ0;
                 fb.writeFileMeth = fbin.writeFileMeth;
                 fb.writeParams = fbin.writeParams;
             else
@@ -494,6 +498,16 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
                 error('values must be integers');
             end
             fb.wdipole = val;
+        end
+        
+        function [val] = get.SurfAboveZ0(fb)
+            val = fb.surfAboveZ0;
+        end
+        function [] = set.SurfAboveZ0(fb, val)
+            if ~isBool(val)
+                error('SurfAboveZ0 must be boolean');
+            end
+            fb.surfAboveZ0 = val;
         end
         
         function [wfm] = get.WriteFileMeth(fb)

@@ -428,7 +428,7 @@ classdef FBWaveField < IWaveField & handle
                             rwfsmn = ZeroWaveField(rwfs(1));
                             for n = 1:wf.dof
                                 if ~isempty(wf.a)
-                                    rwfsmn = rwfsmn + wf.a.*squeeze(wf.motions(:,m,n)).*rwfs(n);
+                                    rwfsmn = rwfsmn + wf.a(:,m).*squeeze(wf.motions(:,m,n)).*rwfs(n);
                                 else
                                     rwfsmn = rwfsmn + squeeze(wf.motions(:,m,n)).*rwfs(n);
                                 end

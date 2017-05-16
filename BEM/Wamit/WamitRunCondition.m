@@ -354,6 +354,45 @@ classdef WamitRunCondition < IBemRunCondition
             run.computeFK = val;
         end
         
+        function [] = CleanRunFolder(run, varargin)
+            opts = checkOptions({'ExceptGdf'}, varargin);
+            if ~opts(1)
+                delete([run.folder '\*.gdf']);
+                delete([run.folder '\*.spl']);
+                delete([run.folder '\*.ms2']);
+            end
+            delete([run.folder '\*.1']); 
+            delete([run.folder '\*.2']);
+            delete([run.folder '\*.3']);
+            delete([run.folder '\*.4']);
+            delete([run.folder '\*.5*']);
+            delete([run.folder '\*.6*']);
+            delete([run.folder '\*.7']);
+            delete([run.folder '\*.8']);
+            delete([run.folder '\*.9']);
+            delete([run.folder '\*.frc']);
+            delete([run.folder '\*.pot']);
+            delete([run.folder '\*.cfg']);
+            delete([run.folder '\*.wam']);
+            delete([run.folder '\*.bpi']);
+            delete([run.folder '\*.rao']);
+            delete([run.folder '\*.p2f']);
+            delete([run.folder '\*.log']);
+            delete([run.folder '\*.txt']);
+            delete([run.folder '\*.out']);
+            delete([run.folder '\*.num']);
+            delete([run.folder '\*.dat']);
+            delete([run.folder '\*.pnl']);
+            delete([run.folder '\*.hst']);
+            delete([run.folder '\*.fpt']);
+            delete([run.folder '\*.idf']);
+            delete([run.folder '\*.bpo']);
+            delete([run.folder '\*.dat']);
+            delete([run.folder '\*.csf']);
+            delete([run.folder '\*.bat']);
+            delete([run.folder '\*.mmx']);
+        end
+        
         function [] = WriteRun(run, varargin)
             % Writes the Input files (except for the .gdf) for a WAMIT run
             
@@ -393,19 +432,19 @@ classdef WamitRunCondition < IBemRunCondition
                     end
                     fprintf(fileID, 'set "t0=%%Time%%"\n');
                     fprintf(fileID, 'set "d0=%%Date%%"\n\n');
-                    fprintf(fileID, '%s\\wamit\n\n', run.exePath);
+                    fprintf(fileID, '"%s\\wamit"\n\n', run.exePath);
                     fprintf(fileID, ':looppre\n');
                     fprintf(fileID, 'If not exist %%fN%%.pre then goto looppre\n\n');
-                    fprintf(fileID, '%s\\defmod\n\n', run.exePath);
+                    fprintf(fileID, '"%s\\defmod"\n\n', run.exePath);
                     fprintf(fileID, ':loopmod\n');
                     fprintf(fileID, 'If not exist %%fN%%.mod then goto loopmod\n\n');
-                    fprintf(fileID, '%s\\wamit\n\n', run.exePath);
+                    fprintf(fileID, '"%s\\wamit"\n\n', run.exePath);
                     fprintf(fileID, 'set "t1=%%Time%%"\n');
                     fprintf(fileID, 'set "d1=%%Date%%"\n\n');
                 else
                     fprintf(fileID, 'set "t0=%%Time%%"\n');
                     fprintf(fileID, 'set "d0=%%Date%%"\n\n');
-                    fprintf(fileID, '%s\\wamit\n\n', run.exePath);
+                    fprintf(fileID, '"%s\\wamit"\n\n', run.exePath);
                     fprintf(fileID, 'set "t1=%%Time%%"\n');
                     fprintf(fileID, 'set "d1=%%Date%%"\n\n');
                 end
@@ -447,9 +486,9 @@ classdef WamitRunCondition < IBemRunCondition
             opts = checkOptions({'Background'}, varargin);
             
             if (opts)
-                system(['cd ' run.folder ' && ' run.folder '\wam_run.bat &']);
+                system(['cd "' run.folder '" && "' run.folder '\wam_run.bat" &']);
             else
-                system(['cd ' run.folder ' && ' run.folder '\wam_run.bat']);
+                system(['cd "' run.folder '" && "' run.folder '\wam_run.bat"']);
             end
         end
     end
@@ -552,10 +591,17 @@ classdef WamitRunCondition < IBemRunCondition
             fprintf(fileID, 'IFORCE = 1\n');
             fprintf(fileID, 'ILOWHI = %i\n', run.floatBods(1).WamILowHi);
             if (run.floatBods(1).WamILowHi)
+                if isempty(run.floatBods(1).WamPanelSize)
+                    error('WamPaneSize not set for WamILowHi = 1');
+                end
                 fprintf(fileID, 'PANEL_SIZE = %i\n', run.floatBods(1).WamPanelSize); 
             end
             if (run.floatBods(1).WamILowHi)
                 fprintf(fileID, 'ILOWGDF = 0\n');
+            end
+            if run.floatBods(1).SurfAboveZ0
+                fprintf(fileID, 'ITRIMWL = 1\n');
+                fprintf(fileID, 'XTRIM = 0.0 0.0 0.0\n');
             end
             if (~all([isempty(run.fieldArray) isempty(run.fieldPoints) isempty(run.cylArray)]))
                 fprintf(fileID, 'INUMOPT6 = 1 \n');
@@ -582,16 +628,22 @@ classdef WamitRunCondition < IBemRunCondition
             end
             % Dipole patches
             % NPDIPOLE(2)=(5-8)
+            % first body
+%             dipoles = run.floatBods(1).WamDipoles;
+%             if ~isempty(dipoles)
+%                 fprintf(fileID, 'NPDIPOLE = ');
+%                 for m = 1:length(dipoles)
+%                     fprintf(fileID, ' %i', dipoles(m));
+%                 end
+%                 fprintf(fileID, '\n');
+%             end
             if Nbod > 1
                 for n = 1:Nbod
                     dipoles = run.floatBods(n).WamDipoles;
                     if ~isempty(dipoles)
-                        fprintf(fileID, 'NPDIPOLE(%i) = ', n);
+                        fprintf(fileID, 'NPDIPOLE(%i) =', n);
                         for m = 1:length(dipoles)
-                            fprintf(fileID, '%i', dipoles(m));
-                            if m ~= length(dipoles)
-                                fprintf(fileID, ', ');
-                            end
+                            fprintf(fileID, ' %i', dipoles(m));
                         end
                         fprintf(fileID, '\n');
                     end
@@ -599,12 +651,9 @@ classdef WamitRunCondition < IBemRunCondition
             else
                 dipoles = run.floatBods.WamDipoles;
                 if ~isempty(dipoles)
-                    fprintf(fileID, 'NPDIPOLE = ');
+                    fprintf(fileID, 'NPDIPOLE =');
                     for m = 1:length(dipoles)
-                        fprintf(fileID, '%i', dipoles(m));
-                        if m ~= length(dipoles)
-                            fprintf(fileID, ', ');
-                        end
+                        fprintf(fileID, ' %i', dipoles(m));
                     end
                     fprintf(fileID, '\n');
                 end
@@ -827,7 +876,7 @@ classdef WamitRunCondition < IBemRunCondition
             end
             idiff = -1;
             if (run.solveDiff)
-                idiff = 1;
+                idiff = 0;
             end
             fprintf(fileID, '%i           %i\n', irad, idiff);
             % NPER - number of periods

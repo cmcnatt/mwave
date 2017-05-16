@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Contributors:
     C. McNatt
 %}
-function [dx] = computeDelta(x)
+function [dx, centx] = computeDelta(x)
 
 [row col] = size(x);
 
@@ -39,6 +39,7 @@ else
 end
 
 dx = midx(2:n+1) - midx(1:n);
+centx = (midx(2:end) + midx(1:end-1))./2;
 
 end
 

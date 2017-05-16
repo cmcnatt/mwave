@@ -40,7 +40,7 @@ classdef WaveSpectrum <handle
         % Constructor
         function [spec] = WaveSpectrum(Spec, f, varargin)
             if (nargin > 0)                
-                dir = spec.checkValues(Spec, f, varargin);
+                dir = spec.checkValues(Spec, f, varargin{:});
                                 
                 if (length(dir) == 0)
                     spec.isdir = 0;
@@ -65,7 +65,10 @@ classdef WaveSpectrum <handle
         function [m0] = get.M0(spec)
             spec1 = spec.Spectrum('Nondir');
 
-            del = spec.Deltas('Frequency').';
+            del = spec.Deltas('Frequency');
+            if isrow(spec1)
+                spec1 = spec1.';
+            end
             m0 = abs(sum(spec1.*del.'));
         end
         

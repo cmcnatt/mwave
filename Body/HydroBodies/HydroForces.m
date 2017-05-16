@@ -61,32 +61,38 @@ classdef HydroForces
             hf.t = t;
             hf.beta = beta;
             
-            [nt dof1 dof2] = size(A);
-            if ((nt ~= hf.nT) || (dof1 ~= dof2))
-                error('Invalid added mass matrix');
-            end
-            
-            dofA = dof1;
-            
-            [nt dof1 dof2] = size(B);
-            if ((nt ~= hf.nT) || (dof1 ~= dof2))
-                error('Invalid damping matrix');
-            end
-            
-            if (dofA ~= dof1)
-                error('HydroForces matrix size mismatch');
-            end
-            
-            [dof1 dof2] = size(C);
-            if (dof1 ~= dof2)
-                error('Invalid hydrostatic stiffness matrix');
-            end
-            
-            if (dofA ~= dof1)
-                error('HydroForces matrix size mismatch');
+            dofA = [];
+            if ~isempty(A)
+                [nt dof1 dof2] = size(A);
+                if ((nt ~= hf.nT) || (dof1 ~= dof2))
+                    error('Invalid added mass matrix');
+                end
+
+                dofA = dof1;
+
+                [nt dof1 dof2] = size(B);
+                if ((nt ~= hf.nT) || (dof1 ~= dof2))
+                    error('Invalid damping matrix');
+                end
+
+                if (dofA ~= dof1)
+                    error('HydroForces matrix size mismatch');
+                end
+
+                [dof1 dof2] = size(C);
+                if (dof1 ~= dof2)
+                    error('Invalid hydrostatic stiffness matrix');
+                end
+
+                if (dofA ~= dof1)
+                    error('HydroForces matrix size mismatch');
+                end
             end
             
             [nt nb dofe] = size(Ex);
+            if isempty(dofA)
+                dofA = dofe;
+            end
             if ((nt ~= hf.nT) || (nb ~= hf.nB) || (dofe ~= dofA))
                 error('Invalid exciting force vector');
             end

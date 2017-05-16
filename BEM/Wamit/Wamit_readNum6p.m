@@ -50,10 +50,12 @@ pdim = rho*g;
 
 for l = 1:Nper
     for m = 1:Npoints
-        buffer = fscanf(fid,'%f',[1 2]); 
-        for n = 1:Ndof
-            [re_im] = fscanf(fid,'%f',[1 2]);
-            p_rad(l, n, m) = pdim*complex(re_im(1), re_im(2));
+        if Ndof > 0
+            buffer = fscanf(fid,'%f',[1 2]); 
+            for n = 1:Ndof
+                [re_im] = fscanf(fid,'%f',[1 2]);
+                p_rad(l, n, m) = pdim*complex(re_im(1), re_im(2));
+            end
         end
     end
     for m = 1:Nbeta

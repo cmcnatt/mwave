@@ -29,7 +29,8 @@ classdef WamitResult < IBemResult
     
     properties (Access = private)
         runName;
-        solveForces;
+        solveRad;
+        solveDiff;
         solveBody;
         waveBody;
         readVelocity;
@@ -60,7 +61,8 @@ classdef WamitResult < IBemResult
                     result.beta = runCondition.Beta;
                     result.nB = length(result.beta);
                     result.h = runCondition.H;
-                    result.solveForces = runCondition.SolveRad;
+                    result.solveRad = runCondition.SolveRad;
+                    result.solveDiff = runCondition.SolveDiff;
                     result.solveBody = runCondition.ComputeBodyPoints;
                     result.fieldPoints = runCondition.FieldPoints;
                     result.fieldArray = runCondition.FieldArray;
@@ -214,16 +216,21 @@ classdef WamitResult < IBemResult
                         
             fullpath = result.folder;
             
-            if (isempty(result.solveForces))
-                result.solveForces = false;
+            if (isempty(result.solveRad) || isempty(result.solveDiff))
+                result.solveRad = false;
+                result.solveDiff = false;
                 fid1 = fopen([result.folder '\' result.runName '.1']);
                 fid2 = fopen([result.folder '\' result.runName '.2']);
                 fid3 = fopen([result.folder '\' result.runName '.3']);
                 fid4 = fopen([result.folder '\' result.runName '.2fk']);
                 fid5 = fopen([result.folder '\' result.runName '.3fk']);
                 
-                if ((fid1 ~= -1) && (fid2 ~= -1) && (fid3 ~= -1) && (fid4 ~= -1) && (fid5 ~= -1))
-                    result.solveForces = true;
+                if fid1 ~= -1
+                    result.solveRad = true;
+                end
+                
+                if (fid2 ~= -1) && (fid3 ~= -1) && (fid4 ~= -1) && (fid5 ~= -1)
+                    result.solveDiff = true;
                 end
 
                 if (fid1 ~= -1)
@@ -249,7 +256,16 @@ classdef WamitResult < IBemResult
                 end
             end
             
-            if (result.solveForces)                
+            % Defualt Values
+            a_ = [];
+            b_ = [];
+            c_ = [];
+            ainf = [];
+            a0 = [];
+            f = [];
+            f_fk = [];
+            
+            if (result.solveRad)                
                 % Added Mass and Damping 
                 [a_, b_, t_, modes, ainf, a0] = Wamit_read1(fullpath, result.runName, result.rho);
                 result.dof = length(modes);
@@ -279,6 +295,9 @@ classdef WamitResult < IBemResult
                     end
                 end
 
+            end
+            
+            if (result.solveDiff)
                 % Excitation force
                 if result.compFK
                     [f_fk] = Wamit_read23(fullpath, result.runName, result.rho, result.g, 'fk');
@@ -305,7 +324,9 @@ classdef WamitResult < IBemResult
     %                     end
     %                 end
                 end
-
+            end
+            
+            if result.solveRad || result.solveDiff
                 result.hydroForces = HydroForces(result.t, result.beta, a_, b_, c_, f, result.h, result.rho, f_fk, a0, ainf);
             end
             
@@ -464,10 +485,15 @@ classdef WamitResult < IBemResult
             % New read wave field points code for 7.0
             % Read in field points and arrays
             if (result.solveField)
-                [P_rad, P_diff, points] = Wamit_readNum6p(fullpath, result.runName, length(result.t), length(result.beta), result.dof, result.rho, result.g, useSing);
+                thisDof = result.dof;
+                if ~result.solveRad
+                    thisDof = 0;
+                end                
+                
+                [P_rad, P_diff, points] = Wamit_readNum6p(fullpath, result.runName, length(result.t), length(result.beta), thisDof, result.rho, result.g, useSing);
                 
                 if (result.readVelocity)
-                    [V_rad, V_diff] = Wamit_readNum6v(fullpath, result.runName, result.t, length(result.beta), result.dof, result.g);
+                    [V_rad, V_diff] = Wamit_readNum6v(fullpath, result.runName, result.t, length(result.beta), thisDof, result.g);
                 end
                 
                 if (~isempty(result.fieldPoints))
@@ -623,39 +649,42 @@ classdef WamitResult < IBemResult
 
                     rwfs(result.dof, 1) = WaveField;
 
-                    for n = 1:result.dof
-                        thisP = zeros([result.nT, size(X)]);
-                        if (useSing)
-                            thisP = single(thisP);
-                        end
-                        if (result.readVelocity)
-                            thisV = zeros([result.nT, 3, size(X)]);
-                        else
-                            thisV = [];
-                        end
-
-                        for m = 1:result.nT
-                            thisP(m, :, :) = squeeze(P_rad(m, n, :, :));
-                            if (result.readVelocity)
-                                thisV(m, :, :, :) = squeeze(V_rad(m, n, :, :, :));
+                    if ~isempty(P_rad)
+                        for n = 1:result.dof
+                            thisP = zeros([result.nT, size(X)]);
+                            if (useSing)
+                                thisP = single(thisP);
                             end
-                        end
-
-                        if (removeBodies)
-                            thisP(m, indBodies) = NaN;
                             if (result.readVelocity)
-                                for o = 1:3
-                                    thisV(m, o, indBodies) = NaN;
+                                thisV = zeros([result.nT, 3, size(X)]);
+                            else
+                                thisV = [];
+                            end
+
+                            for m = 1:result.nT
+                                thisP(m, :, :) = squeeze(P_rad(m, n, :, :));
+                                if (result.readVelocity)
+                                    thisV(m, :, :, :) = squeeze(V_rad(m, n, :, :, :));
                                 end
                             end
+
+                            if (removeBodies)
+                                thisP(m, indBodies) = NaN;
+                                if (result.readVelocity)
+                                    for o = 1:3
+                                        thisV(m, o, indBodies) = NaN;
+                                    end
+                                end
+                            end
+
+                            rwfs(n) = WaveField(result.rho, result.g, result.h, result.t, thisP, thisV, 1, X, Y);
                         end
 
-                        rwfs(n) = WaveField(result.rho, result.g, result.h, result.t, thisP, thisV, 1, X, Y);
+                        rwavefield = WaveFieldCollection(rwfs, 'MotionIndex', (1:result.dof));
+                        result.waveArray = FBWaveField(iwavefield, swavefield, rwavefield);
+                    else
+                        result.waveArray = FBWaveField(iwavefield, swavefield);
                     end
-                    
-                    rwavefield = WaveFieldCollection(rwfs, 'MotionIndex', (1:result.dof));
-
-                    result.waveArray = FBWaveField(iwavefield, swavefield, rwavefield);
                 end
             end
             
