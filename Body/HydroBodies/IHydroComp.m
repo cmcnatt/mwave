@@ -35,6 +35,7 @@ classdef IHydroComp < handle
         dpto;
         dpar;
         k;
+        fmor;
         isComp;
         P;
         badInds;
@@ -50,6 +51,8 @@ classdef IHydroComp < handle
         Dpto;           % PTO Damping matrix for all bodies 
         Dpar;           % Parasitic damping matrix for all bodies
         K;              % Mechanical Stiffness matrix for all bodies
+        Fmor;           % Morison excitation force (complex viscous force 
+                        % due to incident wave, independent of body motions)
         DoF;            % Degrees of freedom
         Modes;          % String description of all modes of operation
         Pmat;           % Linear constraint matrix;
@@ -117,6 +120,12 @@ classdef IHydroComp < handle
             k_ = hcomp.k;
         end
         
+        function [val] = get.Fmor(hcomp)
+            % Morison excitation force (complex viscous force 
+            % due to incident wave, independent of body motions)
+            val = hcomp.fmor;
+        end
+        
         function [dof_] = get.DoF(hcomp)
             % The number of degrees-of-freedom
             dof_ = hcomp.dof;
@@ -143,10 +152,18 @@ classdef IHydroComp < handle
             omega = 2*pi./hcomp.t;
             
             fex = hcomp.Fex;
+            if ~isempty(hcomp.fmor)
+                fex = fex + hcomp.fmor;
+            end
             
-            dfreq = false;
-            if (ndims(hcomp.dpto) == 3)
-                dfreq = true;
+            dfreqPto = false;
+            if ndims(hcomp.dpto) == 3
+                dfreqPto = true;
+            end
+            
+            dfreqPar = false;
+            if ndims(hcomp.dpar) == 3
+                dfreqPar = true;
             end
             
             kfreq = false;
@@ -157,7 +174,8 @@ classdef IHydroComp < handle
             if (~optm)
                 motions = zeros(size(fex));
                 m_ = hcomp.m;
-                dd = hcomp.dpto + hcomp.dpar;
+                ddpto = hcomp.dpto;
+                ddpar = hcomp.dpar;
                 kk = hcomp.k;
                 c_ = hcomp.c;
                 
@@ -176,10 +194,16 @@ classdef IHydroComp < handle
                         end
                     end
                     
-                    if (dfreq)
-                        d_ = squeeze(dd(n,:,:));
+                    if (dfreqPto)
+                        d_ = squeeze(ddpto(n,:,:));
                     else
-                        d_ = dd;
+                        d_ = ddpto;
+                    end
+                    
+                    if (dfreqPar)
+                        d_ = d_ + squeeze(ddpar(n,:,:));
+                    else
+                        d_ = d_ + ddpar;
                     end
                     
                     if (kfreq)
@@ -521,6 +545,17 @@ classdef IHydroComp < handle
             
             hcomp.k = k_;
         end
+        
+        function [] = SetFmor(hcomp, val)
+            % Morison excitation force (complex viscous force 
+            % due to incident wave, independent of body motions)
+            if ~isempty(val)
+                if ~all(size(hcomp.Fex) == size(val))
+                    error('Fmor must be the same size as Fex');
+                end
+            end
+            hcomp.fmor = val;
+        end
     end
     
     methods (Access = protected)        
@@ -564,6 +599,9 @@ classdef IHydroComp < handle
             hcomp.c = c_;
 
             hcomp.dof = dof_;
+            
+            % Morison excitation force;
+            hcomp.fmor = [];
             
             hcomp.badInds = zeros(hcomp.nT);
         end
