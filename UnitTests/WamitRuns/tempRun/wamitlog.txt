@@ -1,0 +1,326 @@
+
+WAMITLOG.TXT file from WAMIT run:  24-May-2017 15:24:52
+
+ Input file config.wam
+! generic configuration file:  config.wam
+RAMGBMAX= 2.0
+NCPU=1
+USERID_PATH = \wamitv7
+LICENSE_PATH=\wamitv7\license
+
+ Input file hb.cfg
+IDELFILES = 2
+IALTPOT = 2
+IRR = 1
+ILOG = 1
+IALTFRC = 2
+IFORCE = 1
+ILOWHI = 0
+NEWMDS(1) = 0
+IGENMDS(1) = 0
+NEWMDS(2) = 0
+IGENMDS(2) = 0
+IPOTEN = 1
+ISCATT = 0
+ISOLVE = 0
+ISOR = 0
+MAXITT = 200
+MAXMIT = 8
+MONITR = 0
+NOOUT = 1  1  1  1  0  0  0  0  0
+NUMHDR = 1
+NUMNAM = 0
+SCRATCH_PATH = \wamitv7\scratch
+
+POTEN run started:  24-May-2017 15:24:52
+
+ Input file hb.pot
+.pot file   Series:     Run: hb
+ -1.0000
+0           0
+58		Number of periods to be analyzed
+  1.9607
+  2.2640
+  2.5312
+  2.7728
+  2.9950
+  3.2018
+  3.3960
+  3.5797
+  3.7544
+  3.9213
+  4.0815
+  4.2355
+  4.3842
+  4.5280
+  4.6673
+  4.8026
+  4.9343
+  5.0624
+  5.1875
+  5.3095
+  5.4289
+  5.5456
+  5.6600
+  5.7721
+  5.8820
+  5.9900
+  6.0960
+  6.2002
+  6.3027
+  6.4035
+  6.5028
+  6.6006
+  6.6970
+  6.7920
+  6.8857
+  6.9781
+  7.0693
+  7.1594
+  7.2483
+  7.3362
+  7.4230
+  7.5088
+  7.5937
+  7.6776
+  7.7606
+  7.8427
+  7.9240
+  8.0044
+  8.0841
+  8.1629
+  8.2410
+  8.3184
+  8.3951
+  8.4711
+  8.5464
+  8.6210
+  8.6950
+  8.7684
+1		Number of direction headdings to be analyzed
+  0.0000
+2
+hb1.gdf
+ -7.8750	  0.0000	 -0.5000	  0.0000
+1 1 1 1 1 1
+hb2.gdf
+  7.8750	  0.0000	 -0.5000	  0.0000
+1 1 1 1 1 1
+
+ First    10 lines of input file hb1.gdf
+Model hb1, created: 24-May-2017
+  1.0000   9.8066
+0 0
+196
+	  7.5000	 -1.0000	  0.5000
+	  7.5000	 -2.0000	  0.5000
+	  7.5000	 -2.0000	 -0.5000
+	  7.5000	 -1.0000	 -0.5000
+	  7.5000	  0.0000	  0.5000
+	  7.5000	 -1.0000	  0.5000
+
+ First    10 lines of input file hb2.gdf
+Model hb2, created: 24-May-2017
+  1.0000   9.8066
+0 0
+196
+	  7.5000	 -1.0000	  0.5000
+	  7.5000	 -2.0000	  0.5000
+	  7.5000	 -2.0000	 -0.5000
+	  7.5000	 -1.0000	 -0.5000
+	  7.5000	  0.0000	  0.5000
+	  7.5000	 -1.0000	  0.5000
+
+
+ Number of processors used :   1
+
+ Estimated RAM used :  4.0E-03 Gigabytes
+
+  No convergence after MAXITT iterations 
+
+        Error in radiation solution for mode M=1
+
+
+  No convergence after MAXITT iterations 
+
+        Error in radiation solution for mode M=2
+
+
+  No convergence after MAXITT iterations 
+
+        Error in radiation solution for mode M=6
+
+
+  No convergence after MAXITT iterations 
+
+        Error in radiation solution for mode M=7
+
+
+  No convergence after MAXITT iterations 
+
+        Error in radiation solution for mode M=8
+
+
+  No convergence after MAXITT iterations 
+
+        Error in radiation solution for mode M=9
+
+
+  No convergence after MAXITT iterations 
+
+        Error in radiation solution for mode M=10
+
+
+  No convergence after MAXITT iterations 
+
+        Error in radiation solution for mode M=11
+
+
+  No convergence after MAXITT iterations 
+
+        Error in radiation solution for mode M=12
+
+
+  No convergence after MAXITT iterations 
+
+        Error in diffraction solution for heading IBETA=1
+
+
+  No convergence after MAXITT iterations 
+
+        Error in radiation solution for mode M=1
+
+
+  No convergence after MAXITT iterations 
+
+        Error in radiation solution for mode M=3
+
+
+  No convergence after MAXITT iterations 
+
+        Error in radiation solution for mode M=6
+
+
+  No convergence after MAXITT iterations 
+
+        Error in radiation solution for mode M=7
+
+
+  No convergence after MAXITT iterations 
+
+        Error in radiation solution for mode M=8
+
+
+  No convergence after MAXITT iterations 
+
+        Error in radiation solution for mode M=9
+
+
+  No convergence after MAXITT iterations 
+
+        Error in radiation solution for mode M=10
+
+
+  No convergence after MAXITT iterations 
+
+        Error in radiation solution for mode M=11
+
+
+  No convergence after MAXITT iterations 
+
+        Error in radiation solution for mode M=1
+
+
+  No convergence after MAXITT iterations 
+
+        Error in radiation solution for mode M=8
+
+
+  No convergence after MAXITT iterations 
+
+        Error in radiation solution for mode M=9
+
+
+  No convergence after MAXITT iterations 
+
+        Error in radiation solution for mode M=11
+
+
+  No convergence after MAXITT iterations 
+
+        Error in radiation solution for mode M=12
+
+
+  No convergence after MAXITT iterations 
+
+        Error in radiation solution for mode M=8
+
+
+  No convergence after MAXITT iterations 
+
+        Error in radiation solution for mode M=9
+
+
+  No convergence after MAXITT iterations 
+
+        Error in radiation solution for mode M=11
+
+
+  POTEN module run completed
+
+POTEN run completed:  24-May-2017 15:25:00
+
+FORCE run started:  24-May-2017 15:25:00
+
+ Input file hb.frc
+.frc file   Series:     Run: hb
+1  0  1  0  0  0  0 0  0
+1000.0000
+  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	
+1
+120000.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0
+  0.0000	120000.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0
+  0.0000	  0.0000	120000.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0
+  0.0000	  0.0000	  0.0000	250000.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0
+  0.0000	  0.0000	  0.0000	  0.0000	2340000.0000	  0.0000	  0.0000	  0.0000	  0.
+  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	2410000.0000	  0.0000	  0.0000	  0.
+  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	120000.0000	  0.0000	  0.0
+  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	120000.0000	  0.0
+  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	120000.0
+  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000
+  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000
+  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000
+1
+  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000
+  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000
+  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000
+  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000
+  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000
+  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000
+  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000
+  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000
+  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000
+  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000
+  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000
+  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000
+1
+  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000
+  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000
+  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000
+  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000
+  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000
+  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000
+  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000
+  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000
+  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000
+  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000
+  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000
+  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000	  0.0000
+0
+0
+
+FORCE run completed:  24-May-2017 15:25:00
+
+  WAMIT run completed
+
+ See WARNING messages in ERRORP.LOG file 

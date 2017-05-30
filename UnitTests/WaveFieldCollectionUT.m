@@ -95,7 +95,8 @@ classdef WaveFieldCollectionUT < matlab.unittest.TestCase
             fm = 0.2;
             df = 0.1;
             f = 0.1:df:1;
-            S = bretschneider(Hs, fm, f);
+            Spec = Bretschneider(Hs, 1./fm, 1./f);
+            S = Spec.Spectrum;
 
             s = 10;
             thetac = pi/180*0;
@@ -164,7 +165,8 @@ classdef WaveFieldCollectionUT < matlab.unittest.TestCase
             fm = 0.2;
             df = 0.1;
             f = 0.1:df:1;
-            S = bretschneider(Hs, fm, f);
+            Spec = Bretschneider(Hs, 1./fm, 1./f);
+            S = Spec.Spectrum;
 
             s = 10;
             thetac = pi/180*0;

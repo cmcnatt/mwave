@@ -108,9 +108,9 @@ classdef FloatingCylinder < FloatingBody
             opts = checkOptions({'UseSym'}, varargin);
             
             if (opts(1))
-                panGeo = makePanel_cylinder(fb.radius, fb.draft, Ntheta, Nr, Nz, 'Quarter');
+                panGeo = makePanel_cylinder(fb.radius, fb.draft, fb.draft, Ntheta, Nr, Nz, 'Quarter');
             else
-                panGeo = makePanel_cylinder(fb.radius, fb.draft, Ntheta, Nr, Nz);
+                panGeo = makePanel_cylinder(fb.radius, fb.draft, fb.draft, Ntheta, Nr, Nz);
             end
             %panGeo.Translate(-fb.position);
             fb.panelGeo = panGeo;

@@ -83,7 +83,7 @@ wam_result.ReadResult;              % Reading wave field results can take a
                                     % a long time, because they may contain
                                     % lots of points.
 
-hydroForces = wam_result.HydroForces;
+hydroForces = wam_result.FreqDomForces;
 
 % This is the wave field that results from the Wamit computation. 
 waveField = wam_result.WaveArray;   
@@ -225,8 +225,8 @@ end
 %% Analyze results (wave fields with motions)
 
 % Now let's apply some real motions to this body. To compute the motions,
-% use the HydroBodyComp
-hydroComp = HydroBodyComp(hydroForces, cyl);
+% use the FreqDomComp
+hydroComp = FreqDomComp(hydroForces, cyl);
 
 dof = cyl.Modes.DoF;
 Dpto = zeros(dof, dof);     

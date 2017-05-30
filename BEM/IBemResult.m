@@ -57,7 +57,7 @@ classdef IBemResult < handle
         FloatingBodies;     % FloatingBodies (plural because of multiple bodies)
         T;                  % Periods (s)
         Beta;               % Directions (deg)
-        HydroForces;        % Hydrodynamic forces computed by WAMIT
+        FreqDomForces;        % Hydrodynamic forces computed by WAMIT
         WavePoints;         % Wave field at field points
         WaveArray;          % Wave field at array locations
         ErrorLog;
@@ -144,8 +144,8 @@ classdef IBemResult < handle
             end
         end
         
-        function [hf] = get.HydroForces(result)
-            % The HydroForces object
+        function [hf] = get.FreqDomForces(result)
+            % The FreqDomForces object
             if (result.hasBeenRead)
                 hf = result.hydroForces;
             else

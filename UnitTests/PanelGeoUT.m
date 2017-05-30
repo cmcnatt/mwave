@@ -33,7 +33,7 @@ classdef PanelGeoUT < matlab.unittest.TestCase
             sphereRad = 0.1*len;
             hingePos = [-len/6; len/6];
             
-            panelGeo = makePanel_spheroidEndHorCylHinge(len, rad, sphereRad, hingePos, Nx, Ntheta);
+            panelGeo = makePanel_spheroidEndHorCyl(len, rad, sphereRad, Nx, Ntheta, 'Hinge', hingePos);
             
             figure;
             subplot(3,1,1);
@@ -59,7 +59,7 @@ classdef PanelGeoUT < matlab.unittest.TestCase
             angle = 30/180*pi;
             org = [hingePos(1), 0, 0];
             
-            hingeGeo = makePanel_spheroidEndHorCylHinge(len, rad, sphereRad, hingePos, Nx, Ntheta);
+            hingeGeo = makePanel_spheroidEndHorCyl(len, rad, sphereRad, Nx, Ntheta, 'Hinge', hingePos);
             
             hingeGeo.Rotate(ax, angle, 'Origin', org);
             
@@ -81,7 +81,7 @@ classdef PanelGeoUT < matlab.unittest.TestCase
             sphereRad = 0.1*len;
             hingePos = [-len/6; len/6];
             
-            panelGeo = makePanel_spheroidEndHorCylHinge(len, rad, sphereRad, hingePos, Nx, Ntheta);
+            panelGeo = makePanel_spheroidEndHorCyl(len, rad, sphereRad, Nx, Ntheta, 'Hinge', hingePos);
             
             figure;
             subplot(3,1,1);

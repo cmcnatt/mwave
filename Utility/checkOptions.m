@@ -67,7 +67,7 @@ for m = 1:M
 
     for n = 1:N
         inputn = inputs{n};
-        if (strcmp(inputn, posOptm))
+        if (strcmpi(inputn, posOptm))
             opts(m) = true;
             if (nargOptm > 0)
                 if (nargOptm == 1)

@@ -1,6 +1,6 @@
 .pot file   Series:     Run: ver2
  10.0000
-0           1
+0           0
 1		Number of periods to be analyzed
   2.5312
 5		Number of direction headdings to be analyzed

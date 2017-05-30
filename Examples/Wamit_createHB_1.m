@@ -59,8 +59,8 @@ sphereRad = 0.1*len;
 Nx = 80;                
 Ntheta = 24;            
 
-wec = FloatingSphereEndCylHinge(rho, len, dia/2, sphereRad, hingePos, ...
-    Nx, Ntheta);  
+wec = FloatingSphereEndCyl(rho, len, dia/2, sphereRad, hingePos, ...
+    Nx, Ntheta, 'Notch');  
 
 % Now we need to give Wamit lots of incident wave directions covering the
 % full range from 0 to 2pi (Like I said in the intro, body geometry
@@ -119,7 +119,7 @@ wam_result.ReadResult;          % Reading the results can take a while
                                 % they take up a lot space: ~GB
 
 waveCir = wam_result.WavePoints;
-hydroForces = wam_result.HydroForces;
+hydroForces = wam_result.FreqDomForces;
 
 % It can be a good idea to just say these, so that they can be reloaded 
 % later, but they are also massive files.. 

@@ -27,7 +27,7 @@ Contributors:
 % load 'wam_hb1_1_hb';    % Load the HydroBody based on its name..
 
 run_name = 'wam_hb_1';  % Or we can be more explicit if necessary         
-folder = [mwavePath '\Examples\BemRuns\' run_name];  
+folder = [mwavePath 'Examples\HydroBodies'];  
 load([folder '\wam_hb1_1_hb']);
 
 %% HydroBody Computations
@@ -50,7 +50,7 @@ load([folder '\wam_hb1_1_hb']);
 % HydroBodies don't really do anything by themselves - they need incident
 % waves to react to. These waves can come from any direction. 
 %
-% Computations are done with the handy HydroBodyComp class, which has been
+% Computations are done with the handy FreqDomComp class, which has been
 % used in other examples, except here it takes a different set of arguments
 % in the constructor - a HydroBody and IWaves (The "I" in IWaves means 
 % interface, not incident). We've loaded the HydroBody, now let's create a 
@@ -71,7 +71,7 @@ for n = 1:length(beta)
 end
 
 % Now create our comptuation with the HydroBody and the PlaneWaves
-hydroComp = HydroBodyComp(hydBody, iwaves);
+hydroComp = FreqDomComp(hydBody, iwaves);
 
 % We can use the HydroComp just like we did before to compute power, etc.
 dof = hydBody.DoF;

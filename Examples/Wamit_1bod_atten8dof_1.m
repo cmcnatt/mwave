@@ -104,7 +104,7 @@ wam_run.Run;
 wam_result = WamitResult(wam_run);  
 wam_result.ReadResult;              
 
-hydroForces = wam_result.HydroForces;
+hydroForces = wam_result.FreqDomForces;
 % Here, we have 8 DoF
 A = hydroForces.A;      
 B = hydroForces.B;      
@@ -140,7 +140,7 @@ ylabel('Nm');
 %% Analyze results
 
 
-hydroComp = HydroBodyComp(hydroForces, wec);
+hydroComp = FreqDomComp(hydroForces, wec);
 
 dof = wec.Modes.DoF;
 Dpto = zeros(dof, dof);     

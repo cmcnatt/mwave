@@ -142,7 +142,8 @@ classdef WaveFieldUT < matlab.unittest.TestCase
             fm = 0.2;
             df = 0.01;
             f = 0.1:df:1;
-            S = bretschneider(Hs, fm, f).';
+            Spec = Bretschneider(Hs, 1./fm, 1./f);
+            S = Spec.Spectrum;
 
             a = sqrt(2*df*S);
             ep = 2*pi*rand(size(a));

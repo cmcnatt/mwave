@@ -45,7 +45,7 @@ classdef FloatingFlap < FloatingBody
             fb.cg = [0 0 -draft/2];
             % put the center of rotation at the bottom
             fb.centRot = [0 0 -draft];
-            fb.m = FloatingFlap.MassMatrix(rho, length, beam, draft, fb.centRot);
+            fb.m = FloatingFlap.MassMatrix(rho, length, beam, draft, fb.centRot - fb.cg);
             
             fb.len = length;
             fb.beam = beam;
@@ -95,7 +95,7 @@ classdef FloatingFlap < FloatingBody
     end
     
     methods (Static)
-        function [M] = MassMatrix(rho, length, beam, draft, centRot)
+        function [M] = MassMatrix(rho, length, beam, draft, delCent)
             V = length*beam*draft;
 
             m = rho*V;
@@ -104,19 +104,19 @@ classdef FloatingFlap < FloatingBody
             Iyy = 1/12*m*(length^2 + draft^2);
             Izz = 1/12*m*(length^2 + beam^2);
             
-            if (centRot(1) ~= 0)
-                Iyy = Iyy + m*centRot(1)^2;
-                Izz = Izz + m*centRot(1)^2;
+            if (delCent(1) ~= 0)
+                Iyy = Iyy + m*delCent(1)^2;
+                Izz = Izz + m*delCent(1)^2;
             end
             
-            if (centRot(2) ~= 0)
-                Ixx = Ixx + m*centRot(2)^2;
-                Izz = Izz + m*centRot(2)^2;
+            if (delCent(2) ~= 0)
+                Ixx = Ixx + m*delCent(2)^2;
+                Izz = Izz + m*delCent(2)^2;
             end
             
-            if (centRot(3) ~= 0)
-                Ixx = Ixx + m*centRot(3)^2;
-                Iyy = Iyy + m*centRot(3)^2;
+            if (delCent(3) ~= 0)
+                Ixx = Ixx + m*delCent(3)^2;
+                Iyy = Iyy + m*delCent(3)^2;
             end
 
             M = zeros(6,6);

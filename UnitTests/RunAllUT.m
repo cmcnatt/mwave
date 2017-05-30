@@ -28,11 +28,29 @@ profile on;
 res = run(tests);
 profile off;
 
+%% Collect failed/incomplete tests
+
+N = length(res);
+
+ifail = 0;
+iincomp = 0;
+for n = 1:N
+    if res(n).Failed
+        ifail = ifail + 1;
+        failedTests(ifail) = tests(n);
+    end
+    if res(n).Incomplete
+        iincomp = iincomp + 1;
+        incompTests(iincomp) = tests(n);
+    end
+end
+    
+
 %% run specfic test to debug
 
-test = HydroBodyCompUT;
+test = computeMooringKUT;
 
-run(test)
+run(test, 'test2')
 
 %res = run(test, 'testIncCirWave');
 

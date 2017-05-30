@@ -1,8 +1,8 @@
  -----------------------------------------------------------------------
 
-                        WAMIT  Version 7.04(x64)       
+                        WAMIT  Version 7.2(x64)        
 
-     Copyright (c) 1999-012  WAMIT Incorporated                        
+     Copyright (c) 1999-2016 WAMIT Incorporated                        
      Copyright (c) 1998 Massachusetts Institute of Technology          
 
  -----------------------------------------------------------------------
@@ -11,15 +11,11 @@
      floating or submerged vessels.  WAMIT is a registered trademark of
      WAMIT Incorporated.  This copy of the WAMIT software is licensed to 
 
-            Institute for Energy Systems                    
-            School of Engineering                           
-            The University of Edinburgh                     
-            The King's Buildings                            
-            Mayfield Road                                   
-            Edinburgh, EH9 3JL                              
-            UK                                              
+            Mocean Energy LLC                               
+            25056 East Cherry Lane                          
+            Greensboro, MD 21639-1523                       
              
-     for end use at the above site.        Release date: 1 Nov 2012 
+     for lease.                            Release date: 20 Jun 2016
 
  -----------------------------------------------------------------------
 
@@ -27,15 +23,15 @@
  Low-order panel method  (ILOWHI=0)                                     
                                                                         
  Input from Geometric Data File:         ver11.gdf                      
- Model ver11, created: 02-Feb-2015                                      
+ Model ver11, created: 23-May-2017                                      
                                                                         
  Input from Potential Control File:      ver1.pot                       
  .pot file   Series:     Run: ver1                                      
                                                                         
                                                                         
- POTEN run date and starting time:        02-Feb-2015  --  15:06:16     
+ POTEN run date and starting time:        23-May-2017  --  14:44:41     
    Period       Time           RAD      DIFF  (max iterations)          
-    2.5312    15:06:18           9       9                              
+    2.5312    14:44:45          11      10                              
 
  Gravity:     9.80660                Length scale:        1.00000
  Water depth:        10.00000       Water density:     1000.00000
@@ -43,12 +39,13 @@
  Source formulation index:                   ISOR =     0
  Diffraction/scattering formulation index: ISCATT =     0
  Number of blocks used in linear system:   ISOLVE =     0
- Number of unknowns in linear system:        NEQN =  1280
+ Number of unknowns in linear system:        NEQN =  1792
 
  BODY PARAMETERS:
 
  Total panels:    1280  Waterline panels:     64      Symmetries: none    
- Irregular frequency index: IRR = 0
+ Irregular frequency index: IRR = 1
+ Free surface panels:     512
 
  XBODY =    0.0000 YBODY =    0.0000 ZBODY =   -0.2500 PHIBODY =   0.0
  Volumes (VOLX,VOLY,VOLZ):           3.13657      3.13657      3.13658    
@@ -63,13 +60,120 @@
  ------------------------------------------------------------------------
                             Output from  WAMIT
  ------------------------------------------------------------------------
- FORCE run date and starting time:                02-Feb-2015 -- 15:06:18
+ FORCE run date and starting time:                23-May-2017 -- 14:44:45
  ------------------------------------------------------------------------
- I/O Filenames:  ver1.frc            ver1.p2f            ver1.out            
- .frc file   Series:     Run: ver1                                       
+ I/O Files:              ver1.frc            ver1.p2f            ver1.out
+ .frc file   Series:     Run: ver1
 
  
  ************************************************************************
 
  Wave period (sec) =  2.531200E+00        Wavenumber (kL) =  6.283352E-01
  ------------------------------------------------------------------------
+
+
+    ADDED-MASS AND DAMPING COEFFICIENTS
+     I     J         A(I,J)         B(I,J)
+
+     1     1   2.528173E+00   9.263700E-01
+     1     2   2.086599E-07  -2.686284E-08
+     1     3  -5.878974E-08  -9.429641E-09
+     1     4  -1.610533E-08  -6.223672E-09
+     1     5  -2.818312E-01  -6.461219E-02
+     1     6   2.164025E-09  -8.805557E-09
+     2     1  -7.335620E-08   1.229855E-07
+     2     2   2.528174E+00   9.263705E-01
+     2     3  -6.203481E-07  -9.159339E-08
+     2     4   2.818312E-01   6.461220E-02
+     2     5  -6.540722E-08  -2.926572E-08
+     2     6  -1.340433E-08  -5.049515E-09
+     3     1  -2.370507E-08  -6.347454E-08
+     3     2   1.174561E-07   3.732353E-08
+     3     3   1.707594E+00   3.370738E-01
+     3     4   9.703513E-08   5.282850E-10
+     3     5   1.242370E-08   3.598188E-11
+     3     6   8.633590E-09   9.717305E-09
+     4     1  -4.077863E-08   3.878561E-09
+     4     2   2.824673E-01   6.559598E-02
+     4     3  -3.813843E-07   1.218354E-07
+     4     4   2.796592E-01   4.575146E-03
+     4     5  -1.625669E-08  -2.107357E-08
+     4     6   3.267203E-10  -4.524720E-10
+     5     1  -2.824673E-01  -6.559595E-02
+     5     2  -3.901781E-08  -9.977438E-09
+     5     3  -2.060187E-08  -5.108950E-08
+     5     4  -1.783817E-08   1.596395E-08
+     5     5   2.796591E-01   4.575143E-03
+     5     6   1.230395E-10  -2.229205E-10
+     6     1   3.598188E-11   4.789058E-12
+     6     2  -2.122746E-12  -6.425172E-11
+     6     3   5.815366E-09   1.431823E-08
+     6     4  -7.472245E-12   4.471867E-12
+     6     5  -1.492140E-12   6.412648E-13
+     6     6   4.678666E-08   3.811482E-13
+
+
+
+
+    DIFFRACTION EXCITING FORCES AND MOMENTS
+
+  Wave Heading (deg) :      0
+
+     I     Mod[Xh(I)]     Pha[Xh(I)]
+
+     1   2.430432E+00             81
+     2   4.188697E-07             -1
+     3   1.035137E+00             16
+     4   1.094050E-07             57
+     5   1.720984E-01            -99
+     6   4.384433E-08             16
+
+
+  Wave Heading (deg) :     23
+
+     I     Mod[Xh(I)]     Pha[Xh(I)]
+
+     1   2.245425E+00             81
+     2   9.300858E-01             81
+     3   1.035137E+00             16
+     4   6.585936E-02             81
+     5   1.589982E-01            -99
+     6   5.688046E-08             12
+
+
+  Wave Heading (deg) :     45
+
+     I     Mod[Xh(I)]     Pha[Xh(I)]
+
+     1   1.718574E+00             81
+     2   1.718575E+00             81
+     3   1.035137E+00             16
+     4   1.216920E-01             81
+     5   1.216919E-01            -99
+     6   4.403045E-08             16
+
+
+  Wave Heading (deg) :     68
+
+     I     Mod[Xh(I)]     Pha[Xh(I)]
+
+     1   9.300868E-01             81
+     2   2.245427E+00             81
+     3   1.035137E+00             16
+     4   1.589982E-01             81
+     5   6.585908E-02            -99
+     6   3.122279E-08             22
+
+
+  Wave Heading (deg) :     90
+
+     I     Mod[Xh(I)]     Pha[Xh(I)]
+
+     1   2.320663E-07            -85
+     2   2.430432E+00             81
+     3   1.035137E+00             16
+     4   1.720983E-01             81
+     5   8.447835E-08            105
+     6   4.382597E-08             16
+
+

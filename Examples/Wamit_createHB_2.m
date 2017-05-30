@@ -88,7 +88,7 @@ wam_result = WamitResult(wam_run);
 wam_result.ReadResult;          
 
 waveCir = wam_result.WavePoints;
-hydroForces = wam_result.HydroForces;
+hydroForces = wam_result.FreqDomForces;
 
 
 %% create HydroBody and save it

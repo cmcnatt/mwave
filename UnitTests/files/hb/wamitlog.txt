@@ -1,16 +1,17 @@
 
-WAMITLOG.TXT file from WAMIT run:  02-Feb-2015 14:58:46
+WAMITLOG.TXT file from WAMIT run:  23-May-2017 14:40:12
 
- Input file config.wam          
+ Input file config.wam
 ! generic configuration file:  config.wam
 RAMGBMAX= 2.0
 NCPU=1
-USERID_PATH = N:\wamitv7
+USERID_PATH = \wamitv7
 LICENSE_PATH=\wamitv7\license
 
- Input file hb.cfg              
+ Input file hb.cfg
+IDELFILES = 2
 IALTPOT = 2
-IRR = 0
+IRR = 1
 ILOG = 1
 IALTFRC = 2
 IFORCE = 1
@@ -22,20 +23,20 @@ IPOTEN = 1
 ISCATT = 0
 ISOLVE = 0
 ISOR = 0
-MAXITT = 100
+MAXITT = 35
 MAXMIT = 8
 MONITR = 0
-NOOUT = 0  0  0  0  0  0  0  0  0
+NOOUT = 1  1  1  1  0  0  0  0  0
 NUMHDR = 1
 NUMNAM = 0
-SCRATCH_PATH = N:\wamitv7\scratch
+SCRATCH_PATH = \wamitv7\scratch
 
-POTEN run started:  02-Feb-2015 14:58:46
+POTEN run started:  23-May-2017 14:40:12
 
- Input file hb.pot              
+ Input file hb.pot
 .pot file   Series:     Run: hb
  10.0000
-0           1
+0           0
 1		Number of periods to be analyzed
   2.5312
 40		Number of direction headdings to be analyzed
@@ -84,32 +85,32 @@ hb1.gdf
   0.0000	  0.0000	 -0.2500	  0.0000
 1 1 1 1 1 1
 
- First    10 lines of input file hb1.gdf             
-Model hb1, created: 02-Feb-2015
+ First    10 lines of input file hb1.gdf
+Model hb1, created: 23-May-2017
   1.0000   9.8066
 0 0
-1280
-	  1.0000	  0.0000	  0.2500
-	  1.0000	  0.0000	  0.1667
-	  0.9952	  0.0980	  0.1667
-	  0.9952	  0.0980	  0.2500
-	  1.0000	  0.0000	  0.1667
-	  1.0000	  0.0000	  0.0833
+1792
+	  0.0000	  0.0000	  0.2500
+	  0.1250	  0.0000	  0.2500
+	  0.1244	  0.0123	  0.2500
+	  0.0000	  0.0000	  0.2500
+	  0.1250	  0.0000	  0.2500
+	  0.2500	  0.0000	  0.2500
 
 
  Number of processors used :   1
 
- Estimated RAM used :  1.4E-02 Gigabytes
+ Estimated RAM used :  2.7E-02 Gigabytes
 
   POTEN module run completed
 
-POTEN run completed:  02-Feb-2015 14:58:48
+POTEN run completed:  23-May-2017 14:40:16
 
-FORCE run started:  02-Feb-2015 14:58:48
+FORCE run started:  23-May-2017 14:40:16
 
- Input file hb.frc              
+ Input file hb.frc
 .frc file   Series:     Run: hb
-1  1  0  0  0  1  0 0  0
+1  0  1  0  0  1  0 0  0
 1000.0000
   0.0000	  0.0000	  0.0000	
 1
@@ -25864,6 +25865,6 @@ FORCE run started:  02-Feb-2015 14:58:48
   1.0947	 -0.1078	-10.0000	
   1.0987	 -0.0540	-10.0000	
 
-FORCE run completed:  02-Feb-2015 14:59:46
+FORCE run completed:  23-May-2017 14:41:27
 
   WAMIT run completed

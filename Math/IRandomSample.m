@@ -1,8 +1,7 @@
-classdef IRandomSample < handle
+classdef IRandomSample < matlab.mixin.Copyable
         
     properties (Abstract)
        Mean;
-       Std;
     end
     
     methods (Abstract)

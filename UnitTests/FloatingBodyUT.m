@@ -87,8 +87,8 @@ classdef FloatingBodyUT < matlab.unittest.TestCase
             testCase.verifyEqual(fb.Length, l);
             testCase.verifyEqual(fb.Beam, b);
             testCase.verifyEqual(fb.Draft, d);
-            testCase.verifyEqual(fb.Cg, [0 0 d/2]);
-            testCase.verifyEqual(fb.Zpos, -d);
+            testCase.verifyEqual(fb.Cg, [0 0 -d/2]);
+            testCase.verifyEqual(fb.CenterRot, [0 0 -d]);
 
             m = rho*l*b*d;
 
@@ -173,7 +173,7 @@ classdef FloatingBodyUT < matlab.unittest.TestCase
             Nx = 120;
             Ntheta = 16;
 
-            fb = FloatingSphereEndCylHinge(rho, l, r, sphereRad, hingePos, Nx, Ntheta);  
+            fb = FloatingSphereEndCyl(rho, l, r, sphereRad, hingePos, Nx, Ntheta, 'notch');  
             
             testCase.verifyEqual(fb.Length, l);
             testCase.verifyEqual(fb.Radius, r);

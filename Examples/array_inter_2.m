@@ -67,7 +67,7 @@ beta = 0;
 iwaves_ua = PlaneWaves(a, T, beta, h);
 
 % create the initial array computation object
-arrayComp = HydroArrayComp(hbs, iwaves_ua);
+arrayComp = FreqDomArrayComp(hbs, iwaves_ua);
 
 %% Let's take a quick look at the body and its frequency response: RAO
 
@@ -79,7 +79,7 @@ plot(geo);
 axis equal;
 title('Single Cylinder');
 
-hComp = HydroBodyComp(hydBody, iwaves_ua);
+hComp = FreqDomComp(hydBody, iwaves_ua);
 
 nondimDpto = 2.94;      % Value from Child and Venugopal (2010)
 rho = hydBody.Rho;

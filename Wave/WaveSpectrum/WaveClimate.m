@@ -208,11 +208,13 @@ classdef WaveClimate < handle
             [M, N] = size(wc.specs);
             f = wc.specs(1,1).Frequencies;
             dir = wc.specs(1,1).Directions;
-            if (isempty(dir))
-                sp0 = zeros(1, length(f));
-            else
-                sp0 = zeros(length(f), length(dir));
-            end
+%             if (isempty(dir))
+%                 sp0 = zeros(1, length(f));
+%             else
+%                 sp0 = zeros(length(f), length(dir));
+%             end
+            
+            sp0 = zeros(size(wc.specs(1,1).Spectrum));
             
             for m = 1:M
                 for n = 1:N
@@ -221,6 +223,10 @@ classdef WaveClimate < handle
                     sp0 = sp0 + sp*fr;
                 end
             end
+            
+%             if iscolumn(sp0)
+%                 sp0 = sp0.';
+%             end
             
             if (isempty(dir))
                 spec = WaveSpectrum(sp0, f);

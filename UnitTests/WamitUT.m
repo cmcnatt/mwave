@@ -44,7 +44,7 @@ classdef WamitUT < matlab.unittest.TestCase
             ut1_result = WamitResult(ut1_run);
             ut1_result.ReadResult;
 
-            hydroComp = HydroBodyComp(ut1_result.HydroForces, cyl);
+            hydroComp = FreqDomComp(ut1_result.FreqDomForces, cyl);
 
             RAO = hydroComp.Motions;
             figure;
@@ -102,7 +102,7 @@ classdef WamitUT < matlab.unittest.TestCase
             title({'WamitUT - testWF (T = 2.8)','','Radiated Wave - Real, Uncoupled'});
 
             % Radiated 2
-            hydroComp = HydroBodyComp(ut2_result.HydroForces, cyl);
+            hydroComp = FreqDomComp(ut2_result.FreqDomForces, cyl);
 
             wave.BodyMotions = hydroComp.Motions;
 
@@ -138,8 +138,7 @@ classdef WamitUT < matlab.unittest.TestCase
             T = 5:-0.5:1;
             f = 1./T;
             Hs = 1;
-            S = bretschneider(Hs, 1./Tp, f);
-            Spec = WaveSpectrum(S,f);
+            Spec = Bretschneider(Hs, Tp, T);
 
             name = 'ut3';
             folder = [WamitUT.getMainPath name];
@@ -166,9 +165,9 @@ classdef WamitUT < matlab.unittest.TestCase
             wave = ut3_result.WaveArray;
             [X, Y] = wave.FieldPoints;
 
-            wave.IncidentWaveAmps = Spec.Amplitudes;
+            wave.IncidentWaveAmps = Spec.Amplitudes.';
 
-            hydroComp = HydroBodyComp(ut3_result.HydroForces, cyl);
+            hydroComp = FreqDomComp(ut3_result.FreqDomForces, cyl);
 
             wave.BodyMotions = hydroComp.Motions;
 
@@ -233,7 +232,7 @@ classdef WamitUT < matlab.unittest.TestCase
             wave = ut4_result.WaveArray;
             [X, Y] = wave.FieldPoints;
 
-            hydroComp = HydroBodyComp(ut4_result.HydroForces, [cyl1 cyl2]);
+            hydroComp = FreqDomComp(ut4_result.FreqDomForces, [cyl1 cyl2]);
 
             wave.BodyMotions = hydroComp.Motions;
 
@@ -292,7 +291,7 @@ classdef WamitUT < matlab.unittest.TestCase
             ut6_result = WamitResult(ut6_run);
             ut6_result.ReadResult;
             
-            hydroBody = HydroBodyComp(ut6_result.HydroForces, atten);
+            hydroBody = FreqDomComp(ut6_result.FreqDomForces, atten);
             d(2,2) = 3e4;
             hydroBody.SetDpto(d);
             P = hydroBody.Power;
@@ -353,7 +352,7 @@ classdef WamitUT < matlab.unittest.TestCase
             
             wam_result = WamitResult(wam_run);  
             wam_result.ReadResult;              
-            hydroForces = wam_result.HydroForces;
+            hydroForces = wam_result.FreqDomForces;
             
             % Here, we have 8 DoF
             A = hydroForces.A;      
@@ -386,7 +385,7 @@ classdef WamitUT < matlab.unittest.TestCase
             xlabel('Period (s)');
             ylabel('Nm');
             
-            hcomp = HydroBodyComp(hydroForces, wec);
+            hcomp = FreqDomComp(hydroForces, wec);
             hcomp.C
         end
         
@@ -401,7 +400,7 @@ classdef WamitUT < matlab.unittest.TestCase
             
             cyl = WamitUT.createCylFB();
 
-            hydroComp = HydroBodyComp(ut7_result.HydroForces, cyl);
+            hydroComp = FreqDomComp(ut7_result.FreqDomForces, cyl);
 
             wave = ut7_result.WavePoints;
             points = wave.FieldPoints;
@@ -444,7 +443,7 @@ classdef WamitUT < matlab.unittest.TestCase
             ut1_result = WamitResult(ut9_run);
             ut1_result.ReadResult;
 
-            hydroComp = HydroBodyComp(ut1_result.HydroForces, cyl);
+            hydroComp = FreqDomComp(ut1_result.FreqDomForces, cyl);
 
             RAO = hydroComp.Motions;
             RAO = squeeze(RAO(:,1,3));

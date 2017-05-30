@@ -47,7 +47,7 @@ classdef computeMooringKUT < matlab.unittest.TestCase
             
             for m = 1:6
                 for n = 1:6
-                    testCase.verifyEqual(K(m,n), Kexp(m,n), 'AbsTol', 1e-12);
+                    testCase.verifyEqual(K(m,n), Kexp(m,n), 'AbsTol', 1e-9);
                 end
             end
             
@@ -57,7 +57,7 @@ classdef computeMooringKUT < matlab.unittest.TestCase
             
             Tk = -r(3)*Fk(1) + r(1)*Fk(3);
             
-            testCase.verifyEqual(Tk, Fk(5), 'AbsTol', 1e-12);
+            testCase.verifyEqual(Tk, Fk(5), 'AbsTol', 1e-11);
         end
        
         function test1(testCase)
@@ -79,7 +79,7 @@ classdef computeMooringKUT < matlab.unittest.TestCase
             Kexp(3,3) = ks;
             
             for n = 1:6
-                testCase.verifyEqual(K(n,n), Kexp(n,n), 'AbsTol', 1e-12);
+                testCase.verifyEqual(K(n,n), Kexp(n,n), 'AbsTol', 1e-9);
             end
         end
         
@@ -104,7 +104,7 @@ classdef computeMooringKUT < matlab.unittest.TestCase
             Kexp(3,3) = Kexp(1,1);
             
             for n = 1:6
-                testCase.verifyEqual(K(n,n), Kexp(n,n), 'AbsTol', 1e-12);
+                testCase.verifyEqual(K(n,n), Kexp(n,n), 'AbsTol', 1e-9);
             end
         end
         
@@ -129,13 +129,13 @@ classdef computeMooringKUT < matlab.unittest.TestCase
             Kexp(3,3) = Kexp(2,2);
             
             for n = 1:6
-                testCase.verifyEqual(K(n,n), Kexp(n,n), 'AbsTol', 1e-12);
+                testCase.verifyEqual(K(n,n), Kexp(n,n), 'AbsTol', 1e-9);
             end
         end
         
         function test4(testCase)
             % zpos = zcg, r = 2
-            % one vertical mooring lines
+            % one vertical mooring line
             % no surge, sway, roll, yaw
             % just heave, pitch
             
@@ -151,10 +151,10 @@ classdef computeMooringKUT < matlab.unittest.TestCase
             
             Kexp = zeros(6,6);
             Kexp(3,3) = ks;
-            Kexp(5,5) = ks*r;
+            Kexp(5,5) = ks*r^2;
             
             for n = 1:6
-                testCase.verifyEqual(K(n,n), Kexp(n,n), 'AbsTol', 1e-12);
+                testCase.verifyEqual(K(n,n), Kexp(n,n), 'AbsTol', 1e-9);
             end
         end
         
@@ -176,10 +176,10 @@ classdef computeMooringKUT < matlab.unittest.TestCase
             
             Kexp = zeros(6,6);
             Kexp(3,3) = sum(ks);
-            Kexp(5,5) = sum(ks)*r;
+            Kexp(5,5) = sum(ks)*r^2;
             
             for n = 1:6
-                testCase.verifyEqual(K(n,n), Kexp(n,n), 'AbsTol', 1e-12);
+                testCase.verifyEqual(K(n,n), Kexp(n,n), 'AbsTol', 1e-9);
             end
         end
         
@@ -201,10 +201,10 @@ classdef computeMooringKUT < matlab.unittest.TestCase
             
             Kexp = zeros(6,6);
             Kexp(3,3) = sum(ks);
-            Kexp(4,4) = sum(ks)*r;
+            Kexp(4,4) = sum(ks)*r^2;
             
             for n = 1:6
-                testCase.verifyEqual(K(n,n), Kexp(n,n), 'AbsTol', 1e-12);
+                testCase.verifyEqual(K(n,n), Kexp(n,n), 'AbsTol', 1e-9);
             end
         end
         
@@ -228,7 +228,7 @@ classdef computeMooringKUT < matlab.unittest.TestCase
             Kexp = zeros(6,6);
             Kexp(1,1) = sqrt(2)/2*sum(ks);
             Kexp(3,3) = sqrt(2)/2*sum(ks);
-            Kexp(5,5) = sqrt(2)/2*sum(ks)*(rx + rz);
+            Kexp(5,5) = sqrt(2)/2*sum(ks)*(rx^2 + rz^2);
             
             for n = 1:6
                 testCase.verifyEqual(K(n,n), Kexp(n,n), 'AbsTol', 1e-9);
@@ -255,7 +255,7 @@ classdef computeMooringKUT < matlab.unittest.TestCase
             Kexp = zeros(6,6);
             Kexp(2,2) = sqrt(3)/2*sum(ks);
             Kexp(3,3) = 1/2*sum(ks);
-            Kexp(4,4) = (sqrt(3)/2*rz + 1/2*ry)*sum(ks);
+            Kexp(4,4) = (sqrt(3)/2*rz^2 + 1/2*ry^2)*sum(ks);
             
             for n = 1:6
                 testCase.verifyEqual(K(n,n), Kexp(n,n), 'AbsTol', 1e-9);
@@ -282,7 +282,7 @@ classdef computeMooringKUT < matlab.unittest.TestCase
             Kexp = zeros(6,6);
             Kexp(2,2) = sqrt(3)/2*sum(ks);
             Kexp(3,3) = 1/2*sum(ks);
-            Kexp(4,4) = (sqrt(3)/2*rz + 1/2*ry)*sum(ks);
+            Kexp(4,4) = (sqrt(3)/2*rz^2 + 1/2*ry^2)*sum(ks);
             
             for n = 1:6
                 testCase.verifyEqual(K(n,n), Kexp(n,n), 'AbsTol', 1e-9);
@@ -307,9 +307,9 @@ classdef computeMooringKUT < matlab.unittest.TestCase
             Kexp(1,1) = sqrt(3)/2*(1*ks(1) + 1/2*ks(2) + 1/2*ks(3));
             Kexp(2,2) = sqrt(3)/2*(sqrt(3)/2*ks(2) + sqrt(3)/2*ks(3));
             Kexp(3,3) = 1/2*sum(ks);
-            Kexp(4,4) = Kexp(2,2)*abs(pos(3));
-            Kexp(5,5) = Kexp(1,1)*abs(pos(3)) + Kexp(3,3)*pos(1);
-            Kexp(6,6) = Kexp(2,2)*pos(1);
+            Kexp(4,4) = Kexp(2,2)*abs(pos(3))^2;
+            Kexp(5,5) = Kexp(1,1)*abs(pos(3))^2 + Kexp(3,3)*pos(1)^2;
+            Kexp(6,6) = Kexp(2,2)*pos(1)^2;
             
             for n = 1:6
                 testCase.verifyEqual(K(n,n), Kexp(n,n), 'AbsTol', 1e-9);

@@ -88,7 +88,7 @@ classdef MotionsVideoUT < matlab.unittest.TestCase
             comp_result = WamitResult(comp_run);
             comp_result.ReadResult;
             
-            hydroComp = HydroBodyComp(comp_result.HydroForces, wec);
+            hydroComp = FreqDomComp(comp_result.FreqDomForces, wec);
             
             save([mwavePath 'UnitTests\files\mv_ut1_comp'], 'wec', 'hydroComp');
         end

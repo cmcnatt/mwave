@@ -73,7 +73,7 @@ beta = 0;
 iwaves = PlaneWaves(a, T, beta, h);
 
 % create the initial array computation object
-arrayComp = HydroArrayComp(hbs, iwaves);
+arrayComp = FreqDomArrayComp(hbs, iwaves);
 
 tic
 Aa = arrayComp.A;        
@@ -124,8 +124,8 @@ wam_result.ReadResult;
 % Even though the field points are set up using a BemCylArray, they are
 % still read with WavePoints
 wfw = wam_result.WaveArray;
-hydroForces = wam_result.HydroForces;
-wcomp = HydroBodyComp(hydroForces, wam_run.FloatingBodies);
+hydroForces = wam_result.FreqDomForces;
+wcomp = FreqDomComp(hydroForces, wam_run.FloatingBodies);
 
 Aw = hydroForces.A;        
 Bw = hydroForces.B;        

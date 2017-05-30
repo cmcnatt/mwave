@@ -38,7 +38,7 @@ classdef HydroBodyUT < matlab.unittest.TestCase
 
             pwr10 = -1;
 
-            hComp = HydroBodyComp(cylHydBod,  wComp.IncWaves);            
+            hComp = FreqDomComp(cylHydBod,  wComp.IncWaves);            
             
             A = round2val(squeeze(hComp.A), pwr10);
             B = round2val(squeeze(hComp.B), pwr10);

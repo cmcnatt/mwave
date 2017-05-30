@@ -26,7 +26,8 @@ classdef WaveSpectrumUT < matlab.unittest.TestCase
             Hs = 2;
             fm = 0.2;
             f = 0.1:0.01:1;
-            S = bretschneider(Hs, fm, f);
+            Spec = Bretschneider(Hs, 1./fm, 1./f);
+            S = Spec.Spectrum;
 
             s = 4;
             thetac = 0;
@@ -61,9 +62,7 @@ classdef WaveSpectrumUT < matlab.unittest.TestCase
             Hs = 2;
             fm = 0.2;
             f = 0.1:0.01:1;
-            S = bretschneider(Hs, fm, f);
-
-            Spec = WaveSpectrum(S, f);
+            Spec = Bretschneider(Hs, 1./fm, 1./f);
 
             if (Spec.IsDir)
                 disp('FAIL: Spectrum should not be directional but is.');

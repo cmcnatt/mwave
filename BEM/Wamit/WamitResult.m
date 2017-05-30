@@ -55,7 +55,7 @@ classdef WamitResult < IBemResult
                     result.folder = runCondition.Folder;
                     result.runName = runCondition.RunName;
                     result.floatingbodies = runCondition.FloatingBodies;
-                    result.dof = HydroBodyComp.GetDoF(result.floatingbodies);
+                    result.dof = FreqDomComp.GetDoF(result.floatingbodies);
                     result.t = runCondition.T;
                     result.nT = length(result.t);
                     result.beta = runCondition.Beta;
@@ -327,7 +327,7 @@ classdef WamitResult < IBemResult
             end
             
             if result.solveRad || result.solveDiff
-                result.hydroForces = HydroForces(result.t, result.beta, a_, b_, c_, f, result.h, result.rho, f_fk, a0, ainf);
+                result.hydroForces = FreqDomForces(result.t, result.beta, a_, b_, c_, f, result.h, result.rho, f_fk, a0, ainf);
             end
             
             if (isempty(result.solveBody))

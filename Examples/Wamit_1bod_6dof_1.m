@@ -122,8 +122,8 @@ wam_result = WamitResult(wam_run);  % create with the WamitRunCondition
 
 wam_result.ReadResult;              % Read the Wamit output files
 
-% the HydroForces class holds information on: 
-hydroForces = wam_result.HydroForces;
+% the FreqDomForces class holds information on: 
+hydroForces = wam_result.FreqDomForces;
 A = hydroForces.A;      % added mass (Nperiod x DoF xDof), real value
 B = hydroForces.B;      % hydrodynamic damping (Nperiod x DoF xDof), real
 C = hydroForces.C;      % hydrostatic restoring force (DoF x DoF), real
@@ -150,9 +150,9 @@ ylabel('N');
 
 %% Analyze results
 
-% the HydroBodyComp class computes values such as motions and power. 
-% It takes a HydroForces and a FloatingBody at its inputs
-hydroComp = HydroBodyComp(hydroForces, cyl);
+% the FreqDomComp class computes values such as motions and power. 
+% It takes a FreqDomForces and a FloatingBody at its inputs
+hydroComp = FreqDomComp(hydroForces, cyl);
 
 % power computation requires a linear mechanical damping. 
 dof = cyl.Modes.DoF;

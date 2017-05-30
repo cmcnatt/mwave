@@ -154,7 +154,7 @@ classdef NemohResult < IBemResult
                 fclose(fid);
             end
             
-            result.hydroForces = HydroForces(result.t, result.beta, A, B, C, Fe, result.h, result.rho);
+            result.hydroForces = FreqDomForces(result.t, result.beta, A, B, C, Fe, result.h, result.rho);
                         
             % Wave array and cylinder array
             rho = result.rho;

@@ -114,16 +114,16 @@ wam_run.WriteRun;
 wam_result = WamitResult(wam_run);  
 wam_result.ReadResult;              
 
-hydroForces = wam_result.HydroForces;   % The hydroForces has 22 DoF - 8 
+hydroForces = wam_result.FreqDomForces;   % The hydroForces has 22 DoF - 8 
                                         % for each attenuator and 6 for the
                                         % cylinder
 waveField = wam_result.WaveArray;   
 
 %% Analyze Results
 
-% In this case, we have to give the HydroBodyComp class the array of
+% In this case, we have to give the FreqDomComp class the array of
 % FloatingBodies
-hydroComp = HydroBodyComp(hydroForces, bodies);
+hydroComp = FreqDomComp(hydroForces, bodies);
 
 dof = hydroComp.DoF;
 dpto = 10^8;

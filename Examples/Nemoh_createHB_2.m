@@ -84,7 +84,7 @@ nem_result.ReadResult;
 % Even though the field points are set up using a BemCylArray, they are
 % still read with WavePoints
 waveCir = nem_result.WavePoints;
-hydroForces = nem_result.HydroForces;
+hydroForces = nem_result.FreqDomForces;
 
 %% create HydroBody and save it
 

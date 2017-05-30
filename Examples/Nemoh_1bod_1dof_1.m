@@ -87,7 +87,7 @@ nem_run.Run
 nem_result = NemohResult(nem_run);  
 nem_result.ReadResult;          
 
-hfn = nem_result.HydroForces;
+hfn = nem_result.FreqDomForces;
 wfn = nem_result.WaveArray;
 
 %% Run Wamit - for comparison
@@ -112,7 +112,7 @@ wam_run.Run
 wam_result = WamitResult(wam_run);  
 wam_result.ReadResult;          
 
-hfw = wam_result.HydroForces;
+hfw = wam_result.FreqDomForces;
 wfw = wam_result.WaveArray;
 
 %% Compare results

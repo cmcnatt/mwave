@@ -89,7 +89,7 @@ wam_result = WamitResult(wam_run);
 wam_result.ReadResult;                              
 
 waveC = wam_result.WavePoints;
-hydroF = wam_result.HydroForces;
+hydroF = wam_result.FreqDomForces;
 floatB = wam_result.FloatingBodies;
 
 save([mainPath 'cyl6dof_WamOutUT'], 'waveC', 'hydroF', 'floatB');
@@ -166,10 +166,10 @@ wam_result = WamitResult(wam_run);
 wam_result.ReadResult;                              
 
 wWave1cyl = wam_result.WaveArray;
-hydroF = wam_result.HydroForces;
+hydroF = wam_result.FreqDomForces;
 floatB = wam_result.FloatingBodies;
 
-wComp1cyl = HydroBodyComp(hydroF, floatB);
+wComp1cyl = FreqDomComp(hydroF, floatB);
 
 save([mainPath 'cyl1_verUT'], 'wComp1cyl', 'wWave1cyl');
 
@@ -233,10 +233,10 @@ wam_result = WamitResult(wam_run);
 wam_result.ReadResult;                              
 
 wWave2cyl = wam_result.WaveArray;
-hydroF = wam_result.HydroForces;
+hydroF = wam_result.FreqDomForces;
 floatB = wam_result.FloatingBodies;
 
-wComp2cyl = HydroBodyComp(hydroF, floatB);
+wComp2cyl = FreqDomComp(hydroF, floatB);
 
 save([mainPath 'cyl2_verUT'], 'wComp2cyl', 'wWave2cyl');
 

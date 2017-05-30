@@ -77,12 +77,12 @@ for m = 1:length(beta)
     iwaves(m) = PlaneWaves(a, T, beta(m), h);
 end
 
-% HydroArrayComp, like HydroBodyComp does all of the heavy lifting. 
-arrayComp = HydroArrayComp(hbs, iwaves);    % It takes an array of 
+% FreqDomArrayComp, like FreqDomComp does all of the heavy lifting. 
+arrayComp = FreqDomArrayComp(hbs, iwaves);    % It takes an array of 
                                             % HydroBodies and the incident 
                                             % waves in its constructor
 
-% HydroArrayComp does not actually compute any values until you ask it for
+% FreqDomArrayComp does not actually compute any values until you ask it for
 % something. So, let's do that..
 
 %% Compute array values
