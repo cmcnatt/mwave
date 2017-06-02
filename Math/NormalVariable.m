@@ -1,4 +1,4 @@
-classdef NormalValue < IRandomSample
+classdef NormalVariable < IRandomVariable
     
     properties (SetAccess = protected, GetAccess = protected)
         mean;
@@ -12,15 +12,12 @@ classdef NormalValue < IRandomSample
     
     methods    
         
-        function [rnum] = NormalValue(varargin)
+        function [rnum] = NormalVariable(varargin)
             rnum.mean = 0;
             rnum.std = 1;
             if ~isempty(varargin)
                 rnum.mean = varargin{1};
                 rnum.std = varargin{2};
-                if length(varargin) > 2
-                    rnum.distType = varargin{3};
-                end
             end
         end
         

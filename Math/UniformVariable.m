@@ -1,4 +1,4 @@
-classdef UniformValue < IRandomSample
+classdef UniformVariable < IRandomVariable
     
     properties (SetAccess = protected, GetAccess = protected)
         lims;
@@ -11,7 +11,7 @@ classdef UniformValue < IRandomSample
     
     methods    
         
-        function [rnum] = UniformValue(varargin)
+        function [rnum] = UniformVariable(varargin)
             rnum.lims = [0 1];
             if ~isempty(varargin)
                 rnum.lims = varargin{1};
