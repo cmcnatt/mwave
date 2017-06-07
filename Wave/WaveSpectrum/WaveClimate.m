@@ -88,7 +88,7 @@ classdef WaveClimate < handle
         function [ws] = get.WaveSpectra(wc)
             ws = wc.specs;
         end
-        function [wc] = set.WaveSpectra(wc, ws)
+        function [] = set.WaveSpectra(wc, ws)
             WaveClimate.checkSpectra(ws, wc.freqOcc)
             
             wc.specs = ws;
@@ -121,7 +121,7 @@ classdef WaveClimate < handle
         function [rh] = get.Rho(wc)
             rh = wc.rho;
         end
-        function [wc] = set.Rho(wc, rh)
+        function [] = set.Rho(wc, rh)
             if (rh > 0)
                 wc.rho = rh;
             else
@@ -133,7 +133,7 @@ classdef WaveClimate < handle
             % Get the water depeth
             h_ = wc.h;
         end
-        function [wc] = set.H(wc, h_)
+        function [] = set.H(wc, h_)
             % Set the water depth
             if (h_ > 0)
                 wc.h = h_;
@@ -347,8 +347,12 @@ classdef WaveClimate < handle
                 Ttype = 'T02';
             end
             
-            if (~strcmpi(type, 'bretschneider'))
-                error('Currently only bretschneider specta are supported');
+            if strcmpi(type, 'bretschneider')
+                bs = true;
+            elseif strcmpi(type, 'jonswap')
+                bs = false;
+            else
+                error('Currently only Bretschneider and JONSWAP specta are supported');
             end          
                         
             if isempty(f)
@@ -357,7 +361,11 @@ classdef WaveClimate < handle
                 specs_(nHs, nT) = Bretschneider;
                 for m = 1:nHs
                     for n = 1:nT
-                        specs_(m,n) = Bretschneider(Hs(m), T(n), 1./f, Ttype);
+                        if bs
+                            specs_(m,n) = Bretschneider(Hs(m), T(n), 1./f, Ttype);
+                        else
+                            specs_(m,n) = JONSWAP(Hs(m), T(n), 1./f, Ttype);
+                        end
                     end
                 end
             end

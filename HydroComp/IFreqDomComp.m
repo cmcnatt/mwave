@@ -510,32 +510,13 @@ classdef IFreqDomComp < IEnergyComp & handle
                 energy = pow*hrsYr./10^3;
             
             else
-                [Mc, Nc] = waveClim.Size;
-                Efs = waveClim.EnergyFlux;
-
-                Pow = zeros(Mc, Nc);
-
-                freqOccs = waveClim.FreqOccurance;
                 occlim = 1/hrsYr;     % ignore sea states that occur less than an hour per year
                 plim = 1e3;             % ignore sea states below a 1 kW total
-
-                for m_ = 1:Mc
-                    for n = 1:Nc
-                        if (freqOccs(m_, n) <= occlim)
-                            % ignore sea states that occur less than an hour per year
-                            continue;
-                        end
-
-                        if (sum(Efs{m_, n}) <= plim)
-                            % ignore sea states below a power threshold
-                            continue;
-                        end
-
-                        % power in kW
-                        Pow(m_, n) = hcomp.AveragePower(waveClim.WaveSpectra(m_, n));
-                    end
-                end
-
+                
+                Pow = PowerMatrix.CreatePowerMatrix(hcomp, [], [], ...
+                    'waveClim', waveClim, 'minPow', plim, 'minOcc', occlim);
+                
+                freqOccs = waveClim.FreqOccurance;
                 Pow = hrsYr*freqOccs.*Pow; % kWh/yr
 
                 % Total power: MWh/yr
@@ -543,6 +524,11 @@ classdef IFreqDomComp < IEnergyComp & handle
             end
             
             energy = energy*ones(sampSize);
+        end
+        
+        function [pmat] = PowerMatrix(hcomp, Hs, T, varargin)
+            
+            pmat = PowerMatrix.CreatePowerMatrix(hcomp, Hs, T, 'makeObj', varargin{:});
         end
         
         function [frad] = Frad(hcomp, varargin)

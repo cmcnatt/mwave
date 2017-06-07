@@ -21,6 +21,8 @@ Contributors:
 classdef IEnergyComp < handle
     
     properties (Abstract)
+        T;                      % Periods (s)
+        H;                      % Water depth
         DeviceCount;            % The number of devices evaluated in the EnergyComp
     end
     
@@ -28,5 +30,6 @@ classdef IEnergyComp < handle
         PowerRAO(energy, varargin);
         AnnualEnergyProd(energy, waveClim, varargin);
         AveragePower(energy, spectrum, varargin);
+        PowerMatrix(energy, Hs, T, varargin);
     end
 end
