@@ -116,7 +116,7 @@ classdef ViscDampCoef < handle
             
             val = 1/2*coef.rho*cd_.*a_;
             if lin
-                val = 8/(3*pi);
+                val = 8/(3*pi)*val;
             end
         end
     end
