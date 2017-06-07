@@ -36,6 +36,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
         c;
         hasc;
         k;
+        visc;
         position;
         centRot;
         wpSec;
@@ -67,6 +68,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
         Dpar;           % Parasitic damping matrix 
         C;              % Externally computed hydrostatic matrix
         K;              % Stiffness matrix
+        ViscDampCoefs;  % Array of the viscous damping coefficient
         XYpos;          % XY Position of body origin in global coordinates 
         Zpos;           % Z position of body origin in global coordinates - seperate from the XYPosition because it controls the point about which the body pitches
         CenterRot;      % Positon about which body rotated in body coordinates - if not specified, then is CG.
@@ -101,6 +103,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
                 fb.dpar = zeros(6, 6);
                 fb.k = zeros(6, 6);
                 fb.c = zeros(6, 6);
+                fb.visc = [];
                 fb.hasc = false;
                 fb.position = zeros(1, 3);
                 fb.centRot = [];
@@ -126,6 +129,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
                 fb.dpar = fbin.dpar;
                 fb.k = fbin.k;
                 fb.c = fbin.c;
+                fb.visc = fbin.visc;
                 fb.hasc = fbin.hasc;
                 fb.position = fbin.position;
                 fb.centRot = fbin.centRot;
@@ -150,7 +154,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
             % Get the handle (descriptive name) of the floating body
             han = fb.handle;
         end
-        function [fb] = set.Handle(fb, han)
+        function [] = set.Handle(fb, han)
             % Set the handle (descriptive name) of the floating body
             if (ischar(han))
                 fb.handle = han;
@@ -163,7 +167,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
             % Get the name of geometry file associated with this floating body
             fn = fb.geoFile;
         end
-        function [fb] = set.GeoFile(fb, fn)
+        function [] = set.GeoFile(fb, fn)
             % Set the name of geometry file associated with this floating body
             if (~isempty(fb.panelGeo))
                 error('The FloatingBody contains a panel geometry that defines the geometry, and so an external geometry file cannot be used');
@@ -187,7 +191,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
             % Get the geometry (PanelGeo) object associated with this floating body
             pg = fb.panelGeo;
         end
-        function [fb] = set.PanelGeo(fb, panGeo)
+        function [] = set.PanelGeo(fb, panGeo)
             % Set the geometry (PanelGeo) object associated with this floating body
             if (~isa(panGeo, 'PanelGeo'))
                 error('Input must be a PanelGeo');
@@ -199,7 +203,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
             % Get the center of gravity of the floating body
             C_g = fb.cg;
         end
-        function [fb] = set.Cg(fb, cg)
+        function [] = set.Cg(fb, cg)
             % Set the center of gravity of the floating body
             fb.checkSizeNx1(cg,3);        
             fb.onModifyCg(cg);
@@ -219,7 +223,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
             % Get the center of buoyancy of the floating body
             C_b = fb.cb;
         end
-        function [fb] = set.Cb(fb, cb)
+        function [] = set.Cb(fb, cb)
             % Set the center of buoyancy of the floating body
             fb.checkSizeNx1(cb,3);           
             fb.cb = cb;
@@ -229,7 +233,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
             % Get the submerged volume of the floating body
             val = fb.wetVol;
         end
-        function [fb] = set.WetVolume(fb, val)
+        function [] = set.WetVolume(fb, val)
             % Set the submerged volume of the floating body
             fb.checkSizeNx1(val, 1);        
             fb.wetVol = val;
@@ -239,7 +243,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
             % Get the total volume of the floating body
             val = fb.totVol;
         end
-        function [fb] = set.TotalVolume(fb, val)
+        function [] = set.TotalVolume(fb, val)
             % Set the submerged volume of the floating body
             fb.checkSizeNx1(val, 1);        
             fb.totVol = val;
@@ -249,7 +253,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
             % Get the total surface area of the floating body
             val = fb.surfArea;
         end
-        function [fb] = set.SurfArea(fb, val)
+        function [] = set.SurfArea(fb, val)
             % Set the total surface area of the floating body
             fb.checkSizeNx1(val, 1);        
             fb.surfArea = val;
@@ -260,7 +264,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
             inds = 6 + fb.nGen;
             m_ = fb.m(1:inds, 1:inds);
         end
-        function [fb] = set.M(fb, m_)
+        function [] = set.M(fb, m_)
             % Set the mass matrix
             fb.checkSize(m_);            
             fb.m = m_;
@@ -271,7 +275,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
             inds = 6 + fb.nGen;
             d_ = fb.dpto(1:inds, 1:inds);
         end
-        function [fb] = set.Dpto(fb, d_)
+        function [] = set.Dpto(fb, d_)
             % Set the PTO damping matrix
             fb.checkSize(d_);            
             fb.dpto = d_;
@@ -282,7 +286,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
             inds = 6 + fb.nGen;
             d_ = fb.dpar(1:inds, 1:inds);
         end
-        function [fb] = set.Dpar(fb, d_)
+        function [] = set.Dpar(fb, d_)
             % Set the parasitic damping matrix
             fb.checkSize(d_);            
             fb.dpar = d_;
@@ -298,7 +302,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
                 c_ = [];
             end
         end
-        function [fb] = set.C(fb, c_)
+        function [] = set.C(fb, c_)
             % Set the hydrostatic stiffness matrix
             fb.checkSize(c_);            
             fb.c = c_;
@@ -310,10 +314,22 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
             inds = 6 + fb.nGen;
             k_ = fb.k(1:inds,1:inds);
         end
-        function [fb] = set.K(fb, k_)
+        function [] = set.K(fb, k_)
             % Get the mechanical stiffness matrix
             fb.checkSize(k_);            
             fb.k = k_;
+        end
+        
+        function [val] = get.ViscDampCoefs(fb)
+            % The array of viscous damping coefficients
+            val = fb.visc;
+        end
+        function [] = set.ViscDampCoefs(fb, val)
+            % The array of viscous damping coefficients
+            if ~isa(val, 'ViscDampCoef')
+                error('ViscDampCoefs must be of type ViscDampCoef');
+            end
+            fb.visc = val;
         end
         
         function [p] = get.XYpos(fb)

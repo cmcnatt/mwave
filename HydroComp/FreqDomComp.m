@@ -27,6 +27,7 @@ classdef FreqDomComp < IFreqDomComp
         isHB;
         fex;
         ffk;
+        devCount;
     end
     
     properties (Dependent)
@@ -34,6 +35,7 @@ classdef FreqDomComp < IFreqDomComp
         Bodies;
         Fex;
         Ffk;
+        DeviceCount;
     end
     
     methods
@@ -190,6 +192,9 @@ classdef FreqDomComp < IFreqDomComp
                 else
                     hbcomp.fbs = hydro;
                 end
+                
+                % assume 1 device
+                hbcomp.devCount = 1;
             end
         end
                 
@@ -197,7 +202,7 @@ classdef FreqDomComp < IFreqDomComp
             % Incident waves
             iwavs = hbcomp.iwaves;
         end
-        function [hbcomp] = set.IncWaves(hbcomp, iwavs)
+        function [] = set.IncWaves(hbcomp, iwavs)
             if (~hbcomp.isHB)
                 error('Can only set the incident waves for the computation when body is a HydroBody');
             end
@@ -222,6 +227,18 @@ classdef FreqDomComp < IFreqDomComp
             hbcomp.computeIfNot();
             
             f = hbcomp.ffk;
+        end
+        
+        function [val] = get.DeviceCount(hbcomp)
+            % The number of devices evaluated in the EnergyComp
+            val = hbcomp.devCount;
+        end
+        function [] = set.DeviceCount(hbcomp, val)
+            % The number of devices evaluated in the EnergyComp
+            if ~isInt(val)
+                error('The DeviceCount must be an integer');
+            end
+            hbcomp.devCount = val;
         end
         
         function [kfs, kfr] = KochinFuncs(hbcomp)

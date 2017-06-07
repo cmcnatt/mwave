@@ -50,6 +50,7 @@ classdef FreqDomArrayComp < IFreqDomComp
         BodAng;
         CompTime;
         Fex;
+        DeviceCount;
     end
     
      methods
@@ -157,6 +158,11 @@ classdef FreqDomArrayComp < IFreqDomComp
             hacomp.computeIfNot();
             
             f = hacomp.fex;
+         end
+        
+         function [val] = get.DeviceCount(hacomp)
+            % The number of devices evaluated in the EnergyComp
+            val = hacomp.Nhb;
         end
     
          function [wf] = WaveField(hacomp, isarray, varargin)

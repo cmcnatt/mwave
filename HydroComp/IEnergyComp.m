@@ -20,6 +20,10 @@ Contributors:
 %}
 classdef IEnergyComp < handle
     
+    properties (Abstract)
+        DeviceCount;            % The number of devices evaluated in the EnergyComp
+    end
+    
     methods (Abstract)
         PowerRAO(energy, varargin);
         AnnualEnergyProd(energy, waveClim, varargin);

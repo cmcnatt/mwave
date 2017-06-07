@@ -5,13 +5,13 @@ classdef IRandomVariable < matlab.mixin.Copyable
     end
     
     methods (Abstract)
-        Sample(rnum, varargin);
+        Sample(var, varargin);
     end
     
     methods
         
-        function [val] = double(samp)
-            val = samp.Mean;
+        function [val] = double(var)
+            val = var.Mean;
         end
     end
     
@@ -20,7 +20,11 @@ classdef IRandomVariable < matlab.mixin.Copyable
         function [valOut] = TrySample(valIn, varargin)
             a = [];
             if ~isempty(varargin)
-                a = varargin{1};
+                if strcmp(varargin{1}, 'sample')
+                    a = varargin{2};
+                else
+                    a = varargin{1};
+                end
             end
             
             valOut = double(valIn);

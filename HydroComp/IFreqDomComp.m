@@ -320,7 +320,7 @@ classdef IFreqDomComp < IEnergyComp & handle
             fex = hcomp.Fex;
             
             if (~optm)
-                motions = hcomp.Motions;
+                motions = hcomp.Motions(varargin{:});
                 omega = 2*pi./hcomp.t;
 
                 velocities = zeros(size(motions));
