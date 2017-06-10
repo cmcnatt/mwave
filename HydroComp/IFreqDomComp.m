@@ -35,7 +35,8 @@ classdef IFreqDomComp < IEnergyComp & handle
         dpto;
         dpar;
         k;
-        fmor;
+        fext;
+        fpto;
         ipto;
         isComp;
         P;
@@ -52,8 +53,9 @@ classdef IFreqDomComp < IEnergyComp & handle
         Dpto;           % PTO Damping matrix for all bodies 
         Dpar;           % Parasitic damping matrix for all bodies
         K;              % Mechanical Stiffness matrix for all bodies
-        Fmor;           % Morison excitation force (complex viscous force 
-                        % due to incident wave, independent of body motions)
+        Fext;           % External excitation forces that do not contribute to PTO power absorption
+                        % e.g Morison excitation force
+        FextPto;        % External excitation forces that contribute to PTO power absorption
         DoF;            % Degrees of freedom
         PTOInds;        % Index matrix of DoFxDoF where a value of 1 indicates the PTO DoF
         Modes;          % String description of all modes of operation
@@ -122,10 +124,15 @@ classdef IFreqDomComp < IEnergyComp & handle
             k_ = hcomp.k;
         end
         
-        function [val] = get.Fmor(hcomp)
-            % Morison excitation force (complex viscous force 
-            % due to incident wave, independent of body motions)
-            val = hcomp.fmor;
+        function [val] = get.Fext(hcomp)
+            % External excitation forces that do not contribute to PTO power absorption
+            % e.g Morison excitation force
+            val = hcomp.fext;
+        end
+        
+        function [val] = get.FextPto(hcomp)
+            % External excitation forces that contribute to PTO power absorption
+            val = hcomp.fpto;
         end
         
         function [dof_] = get.DoF(hcomp)
@@ -166,8 +173,12 @@ classdef IFreqDomComp < IEnergyComp & handle
             omega = 2*pi./hcomp.t;
             
             fex = hcomp.Fex;
-            if ~isempty(hcomp.fmor)
-                fex = fex + hcomp.fmor;
+            if ~isempty(hcomp.fext)
+                fex = fex + hcomp.fext;
+            end
+            
+            if ~isempty(hcomp.fpto)
+                fex = fex + hcomp.fpto;
             end
             
             dfreqPto = false;
@@ -407,18 +418,17 @@ classdef IFreqDomComp < IEnergyComp & handle
                         for p = 1:hcomp.dof
                             u(p) = vel(n, j, p);
                         end
-                        %u = squeeze(vel(n, j, :));
-                        power(n, j, :) = 0.5*real((d_*conj(u)).*u);
+                        
+                        if ~isempty(hcomp.fpto)
+                            fp = zeros(hcomp.dof, 1);
+                            for p = 1:hcomp.dof
+                                fp(p) = hcomp.fpto(n, j, p);
+                            end
+                            power(n, j, :) = 0.5*real((d_*conj(u)).*u) + 0.5*real(conj(fp).*u);
+                        else
+                            power(n, j, :) = 0.5*real((d_*conj(u)).*u);
+                        end
                     end
-%                     if (hcomp.nB == 1)
-%                         u = squeeze(vel(n,1,:));
-%                         power(n, :) = 0.5*real((hcomp.d*conj(u)).*u);
-%                     else
-%                         for j = 1:hcomp.nB
-%                             u = squeeze(vel(n, j, :));
-%                             power(n, j, :) = 0.5*real((hcomp.d*conj(u)).*u);
-%                         end
-%                     end
                 end
             else
                 vel = hcomp.Velocities(varargin{:});
@@ -647,15 +657,25 @@ classdef IFreqDomComp < IEnergyComp & handle
             hcomp.ipto = val;
         end
         
-        function [] = SetFmor(hcomp, val)
-            % Morison excitation force (complex viscous force 
-            % due to incident wave, independent of body motions)
+        function [] = SetFext(hcomp, val)
+            % External excitation forces that do not contribute to PTO power absorption
+            % e.g Morison excitation force
             if ~isempty(val)
                 if ~all(size(hcomp.Fex) == size(val))
-                    error('Fmor must be the same size as Fex');
+                    error('Fext must be the same size as Fex');
                 end
             end
-            hcomp.fmor = val;
+            hcomp.fext = val;
+        end
+        
+        function [] = SetFpto(hcomp, val)
+            % External excitation forces that contribute to PTO power absorption
+            if ~isempty(val)
+                if ~all(size(hcomp.Fex) == size(val))
+                    error('Fpto must be the same size as Fex');
+                end
+            end
+            hcomp.fpto = val;
         end
     end
     
@@ -701,8 +721,9 @@ classdef IFreqDomComp < IEnergyComp & handle
 
             hcomp.dof = dof_;
             
-            % Morison excitation force;
-            hcomp.fmor = [];
+            % External excitation force;
+            hcomp.fext = [];
+            hcomp.fpto = [];
             
             hcomp.badInds = zeros(hcomp.nT);
             
