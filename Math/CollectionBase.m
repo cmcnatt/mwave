@@ -5,15 +5,15 @@ classdef CollectionBase < handle
         count;
     end
     
-    methods
+    methods (Access = protected)
         
-        function [list, count] = GetList(coll)
+        function [list, count] = getList(coll)
             % beware these are shallow copies!
             list = coll.list;
             count = coll.count;
         end
         
-        function [] = Add(coll, item, varargin)
+        function [] = add(coll, item, varargin)
             Nc = 1;
             if ~isempty(varargin)
                 Nc = varargin{1};

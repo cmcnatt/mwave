@@ -135,6 +135,13 @@ classdef IFreqDomComp < IEnergyComp & handle
         
         function [val] = get.PTOInds(hcomp)
             % Index matrix of DoFxDoF where a value of 1 indicates the PTO DoF
+                        
+            if isempty(hcomp.ipto)
+                if ~isempty(hcomp.dpto)
+                    hcomp.ipto = hcomp.dpto > 0;
+                end
+            end
+            
             val = hcomp.ipto;
         end
         
@@ -447,13 +454,11 @@ classdef IFreqDomComp < IEnergyComp & handle
                 compCW = true;
                 rho = args{1};
             end
-            
-            if isempty(hcomp.ipto)
-                hcomp.ipto = (sum(hcomp.dpto > 0) > 0)';
-            end
-            
+
             powFull = hcomp.Power(varargin);
-            power = sum(powFull(:,:,hcomp.ipto), 3);
+            inds = hcomp.PTOInds;
+            inds = (sum(inds) > 0)';
+            power = sum(powFull(:,:,inds), 3);
             
             if ~compCW
                 power = power./10^3;
