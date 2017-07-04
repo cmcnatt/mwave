@@ -504,9 +504,9 @@ classdef IFreqDomComp < IEnergyComp & handle
             end
         end
         
-        function [energy] = AnnualEnergyProd(hcomp, waveClim, varargin)
+        function [energy, energyMat] = AnnualEnergyProd(hcomp, waveClim, varargin)
             
-            [opts, args] = checkOptions({{'Sample', 1}}, varargin);
+            [opts, args] = checkOptions({{'Sample', 1}, {'ratedPow', 1}}, varargin);
             
             sampSize = 1;
             if opts(1)
@@ -514,6 +514,12 @@ classdef IFreqDomComp < IEnergyComp & handle
             end
             
             perOccur = false;
+            ratedPow = [];
+            if opts(2)
+                ratedPow = args{2};
+                perOccur = true;
+            end
+          
             hrsYr = 24*365;
             
             if ~perOccur
@@ -529,13 +535,14 @@ classdef IFreqDomComp < IEnergyComp & handle
                 plim = 1e3;             % ignore sea states below a 1 kW total
                 
                 Pow = PowerMatrix.CreatePowerMatrix(hcomp, [], [], ...
-                    'waveClim', waveClim, 'minPow', plim, 'minOcc', occlim);
+                    'waveClim', waveClim, 'minPow', plim, 'minOcc', occlim, ...
+                    'ratedPow', ratedPow);
                 
                 freqOccs = waveClim.FreqOccurance;
-                Pow = hrsYr*freqOccs.*Pow; % kWh/yr
+                energyMat = hrsYr*freqOccs.*Pow; % kWh/yr
 
                 % Total power: MWh/yr
-                energy = sum(sum(Pow))./1e3;
+                energy = sum(sum(energyMat))./1e3;
             end
             
             energy = energy*ones(sampSize);

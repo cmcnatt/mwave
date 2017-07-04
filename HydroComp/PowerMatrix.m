@@ -161,24 +161,11 @@ classdef PowerMatrix < IEnergyComp
                 skip = args{1};
             end
             
-            hs_ = pmat.Hs;
-            HsLab = cell(1,length(hs_));
-            for n = 1:length(hs_)
-                HsLab{n} = num2str(hs_(n), '%4.1f');
-            end
-            t02_ = pmat.T02;
-            T02Lab = cell(1,length(t02_));
-            for n = 1:length(t02_)
-                T02Lab{n} = num2str(t02_(n), '%4.1f');
-            end
+            indsHs = 1:skip:length(pmat.Hs);
+            indsT = 1:skip:length(pmat.T02);
+            
+            plotScatter(pmat.T02, pmat.Hs, pmat.mat, 'xinds', indsT, 'yinds', indsHs);
 
-            imagesc(pmat.mat);
-            indsHs = 1:skip:length(hs_);
-            indsT = 1:skip:length(t02_);
-            set(gca, 'XAxisLocation','top',...
-                'ytick', indsHs, 'yticklabel', HsLab(indsHs),...
-                'xtick', indsT, 'xticklabel', T02Lab(indsT));
-            fet;
             xlabel('T02 (s)');
             ylabel('Hs (m)');
             cb = colorbar;
@@ -195,7 +182,8 @@ classdef PowerMatrix < IEnergyComp
             end
             
             [opts, args] = checkOptions({{'waveClim', 1}, {'minPow', 1}, ...
-                {'minOcc', 1}, {'specType', 1}, {'makeObj'}}, varargin);
+                {'minOcc', 1}, {'specType', 1}, {'makeObj'}, ...
+                {'ratedPow', 1}}, varargin);
             
             type = 'bretschneider';
             if opts(4)
@@ -223,6 +211,11 @@ classdef PowerMatrix < IEnergyComp
             end
             
             makeObj = opts(5);
+            
+            ratedPow = [];
+            if opts(6)
+                ratedPow = args{6};
+            end
 
             [Mc, Nc] = waveClim.Size;
             freqOccs = waveClim.FreqOccurance;
@@ -248,6 +241,9 @@ classdef PowerMatrix < IEnergyComp
 
                     % power in kW
                     pmat(m, n) = comp.AveragePower(waveClim.WaveSpectra(m, n));
+                    if ~isempty(ratedPow)
+                        pmat(m, n) = min([pmat(m, n) ratedPow]);
+                    end
                 end
             end
             

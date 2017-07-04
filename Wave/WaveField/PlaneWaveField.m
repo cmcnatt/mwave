@@ -100,9 +100,9 @@ classdef PlaneWaveField < FuncWaveField
 %                 end
 
                 if (compVel)
-                    u = g*kcbeta/omega*Kp.*eta;
-                    v = g*ksbeta/omega*Kp.*eta;
-                    w = g*k/omega*Kpw*1i.*eta;
+                    u = g*kcbeta./omega.*Kp.*eta;
+                    v = g*ksbeta./omega.*Kp.*eta;
+                    w = g*k./omega.*Kpw.*1i.*eta;
 
                     vel = zeros([3, size(x)]);
 

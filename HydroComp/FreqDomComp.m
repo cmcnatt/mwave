@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Contributors:
     C. McNatt
 %}
-classdef FreqDomComp < IFreqDomComp
+classdef FreqDomComp < IFreqDomComp & CopyHandleBase
     % Computes properties (motions, velocity, power) for a single or an 
     % array of floating bodies in the frequency domain
     
@@ -366,6 +366,10 @@ classdef FreqDomComp < IFreqDomComp
                 hbcomp.fex = fx;
                 hbcomp.isComp = true;
             end
+        end
+        
+        function [] = setAnyProp(obj, prop, val)
+            obj.(prop) = val;
         end
     end
 end

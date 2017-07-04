@@ -277,27 +277,23 @@ classdef WaveClimate < handle
             climo.SetFreqOccurance(freqOcco)
         end
         
-        function [] = PlotScatter(clim)
+        function [] = PlotScatter(clim, varargin)
+            [opts, args] = checkOptions({{'skip', 1}}, varargin);
+            
+            skip = 2;
+            if opts(1)
+                skip = args{1};
+            end
+            
             Hs = clim.Hs('Intended');
-            HsLab = cell(1,length(Hs));
-            for n = 1:length(Hs)
-                HsLab{n} = num2str(Hs(n), '%4.1f');
-            end
             T02 = clim.T02('Intended');
-            T02Lab = cell(1,length(T02));
-            for n = 1:length(T02)
-                T02Lab{n} = num2str(T02(n), '%4.1f');
-            end
-
             freqO = clim.FreqOccurance('hours');
+            
+            indsHs = 1:skip:length(Hs);
+            indsT = 1:skip:length(T02);
+            
+            plotScatter(T02, Hs, freqO, 'xinds', indsT, 'yinds', indsHs);
 
-            imagesc(freqO);
-            indsHs = 1:length(Hs);
-            indsT = 1:2:length(T02);
-            set(gca, 'XAxisLocation','top',...
-                'ytick', indsHs, 'yticklabel', HsLab(indsHs),...
-                'xtick', indsT, 'xticklabel', T02Lab(indsT));
-            fet;
             xlabel('T02 (s)');
             ylabel('Hs (m)');
             cb = colorbar;
