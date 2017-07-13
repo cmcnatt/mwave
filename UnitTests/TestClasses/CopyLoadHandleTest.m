@@ -18,31 +18,39 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Contributors:
     C. McNatt
 %}
-classdef CopyHandleTest < CopyHandleBase
+classdef CopyLoadHandleTest < CopyLoadHandleBase
     
     properties (Access = public)
         PubProp1;
         PubProp2;
+%         PubProp3;   % delete
     end
     
     properties (Access = private)
         priProp1;
         priProp2;
+%         priProp3;   % delete
+        unSetProps;
     end
     
     properties (Access = protected)
         proProp1;
         proProp2;
+%         proProp3;   % delete
     end
     
     properties (Dependent)
         PriProp1;
         ProProp1;
+        % to delete
+%         PriProp3;
+%         ProProp3;
+        % end to delete
     end
     
     methods
         
-        function [this] = CopyHandleTest(varargin)
+        function [this] = CopyLoadHandleTest(varargin)
             if ~isempty(varargin)
                 this.priProp2 = varargin{1};
                 this.proProp2 = varargin{2};
@@ -78,11 +86,45 @@ classdef CopyHandleTest < CopyHandleBase
         function [] = SetProProp2(this, val)
             this.proProp2 = val;
         end
+        
+        function [val] = GetUnsetProps(this)
+            val = this.unSetProps;
+        end
+        
+        % To delete (comment)
+%         function [val] = get.PriProp3(this)
+%             val = this.priProp3;
+%         end
+%         function [] = set.PriProp3(this, val)
+%             this.priProp3 = val;
+%         end
+%         
+%         function [val] = get.ProProp3(this)
+%             val = this.proProp3;
+%         end
+%         function [] = set.ProProp3(this, val)
+%             this.proProp3 = val;
+%         end
+        % end to delete
     end
         
     methods (Access = protected)
         function [] = setAnyProp(obj, prop, val)
             obj.(prop) = val;
+        end
+    end
+    
+    methods (Static)
+        function [newObj] = loadobj(a)
+            if isstruct(a)
+                newObj = feval(mfilename('class'));
+                
+                [~, loadedUnset] = CopyLoadHandleBase.trySetProps(newObj, a);
+                
+                newObj.unSetProps = loadedUnset;
+            else
+                newObj = a;
+            end
         end
     end
 end

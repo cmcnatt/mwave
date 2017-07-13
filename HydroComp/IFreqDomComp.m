@@ -494,7 +494,13 @@ classdef IFreqDomComp < IEnergyComp & handle
             
             powRao = hcomp.PowerRAO;
             
-            pow0 = powRao.*spectrum.Amplitudes.^2;
+            amps = spectrum.Amplitudes;
+            if (iscolumn(powRao) && isrow(amps)) ...
+                    || (isrow(powRao) && iscolumn(amps))
+                amps = amps.';
+            end
+            
+            pow0 = powRao.*amps.^2;
             
             power = sum(sum(pow0));
             
@@ -648,18 +654,18 @@ classdef IFreqDomComp < IEnergyComp & handle
         function [] = SetPTOInds(hcomp, val)
             % Set the index matrix of DoFxDoF where a value of 1 indicates the PTO DoF
             
-            if ndims(val) > 2
-                error('PTOInds must be a Ndof x 1 vector');
-            end
-            
-            [Nx, Ny] = size(val);
-            if Nx ~= hcomp.dof || Ny ~= 1
-                 error('PTOInds must be a Ndof x 1 vector');
-            end
-            
-            if (sum(val == 0) + sum(val == 1)) ~= (hcomp.dof)
-                error('The PTOInds matrix must be 1''s or 0''s');
-            end
+%             if ndims(val) > 2
+%                 error('PTOInds must be a Ndof x 1 vector');
+%             end
+%             
+%             [Nx, Ny] = size(val);
+%             if Nx ~= hcomp.dof || Ny ~= 1
+%                  error('PTOInds must be a Ndof x 1 vector');
+%             end
+%             
+%             if (sum(val == 0) + sum(val == 1)) ~= (hcomp.dof)
+%                 error('The PTOInds matrix must be 1''s or 0''s');
+%             end
             
             hcomp.ipto = val;
         end

@@ -12,7 +12,11 @@ classdef MColor
     end
     
     methods (Static)
-        function [cols] = Colors()
+        function [cols] = Colors(varargin)
+            ind = [];
+            if ~isempty(varargin)
+                ind = varargin{1};
+            end
             cols = cell(7,1);
             cols{1} = MColor.Blue;
             cols{2} = MColor.Red;
@@ -21,6 +25,11 @@ classdef MColor
             cols{5} = MColor.Green;
             cols{6} = MColor.LightBlue;
             cols{7} = MColor.Maroon;
+            
+            if ~isempty(ind)
+                 ind = mod(ind-1,7)+1;
+                 cols = cols{ind};
+            end
         end
     end
 end

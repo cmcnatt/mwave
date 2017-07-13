@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Contributors:
     C. McNatt
 %}
-classdef FreqDomComp < IFreqDomComp & CopyHandleBase
+classdef FreqDomComp < IFreqDomComp & CopyLoadHandleBase
     % Computes properties (motions, velocity, power) for a single or an 
     % array of floating bodies in the frequency domain
     
@@ -370,6 +370,18 @@ classdef FreqDomComp < IFreqDomComp & CopyHandleBase
         
         function [] = setAnyProp(obj, prop, val)
             obj.(prop) = val;
+        end
+    end
+    
+    methods (Static)
+        function [newObj] = loadobj(a)
+            if isstruct(a)
+                newObj = feval(class(mfilename('class')));
+
+                [currentUnset, loadedUnset] = CopyLoadHandleBase.trySetProps(newObj, a);
+            else
+                newObj = a;
+            end
         end
     end
 end
