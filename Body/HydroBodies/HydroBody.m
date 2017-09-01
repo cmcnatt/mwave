@@ -74,7 +74,7 @@ classdef HydroBody < FloatingBody
                 ftm = varargin{3};
                 radCs = varargin{4};
 
-                if (~isa(hydF, 'HydroForces'))
+                if (~isa(hydF, 'FreqDomForces'))
                     error('hydF must be a HydroForces object');
                 end
 

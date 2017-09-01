@@ -71,7 +71,7 @@ classdef HydroBodyComp < IHydroComp
                     end
                     iwavs = varargin{2};
                     useBodC = true;
-                elseif (isa(hydro, 'HydroForces'))                
+                elseif (isa(hydro, 'FreqDomForces'))                
                     if (isempty(varargin{2}))
                         error('Second input must be a FloatingBody');
                     elseif(~isa(varargin{2}, 'FloatingBody'));

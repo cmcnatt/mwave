@@ -3,8 +3,15 @@ function [f] = mfig(varargin)
 wid = 21.59;
 hei = 27.94;
 
-opts = checkOptions({'Landscape'}, varargin);
+
+opts = checkOptions({{'Landscape'}, {'margins'}}, varargin);
 landscape = opts(1);
+
+if opts(2)
+    mar = 2.54;
+    wid = wid - 2*mar;
+    hei = hei - 2*mar;
+end
 
 if ~isempty(varargin)
     if isnumeric(varargin{1})
