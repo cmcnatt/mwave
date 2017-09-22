@@ -256,14 +256,14 @@ classdef FreqDomComp < IFreqDomComp & CopyLoadHandleBase
                 M = hbcomp.fbs(1).Mlim(m);
                 for n = 1:hbcomp.nInc
                     As = dtm{m}*hbcomp.iwaves(n).IncAmps(M, hbcomp.fbs(1).XYpos, m);
-                    kfs(m, n) = KochinFunc('Coeffs', As.');
+                    kfs(m, n) = KochinFunc('Coefs', As.');
                 end
             end
             
             Ar = hbcomp.fbs(1).RadCoefs;
             for m = 1:hbcomp.nT
                 for n = 1:hbcomp.dof
-                    kfr(m, n) = KochinFunc('Coeffs', Ar{m,n});
+                    kfr(m, n) = KochinFunc('Coefs', Ar{m,n});
                 end
             end 
         end

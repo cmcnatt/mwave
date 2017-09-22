@@ -281,6 +281,22 @@ classdef PanelGeo < handle
             geoOut = PanelGeo(newPans);
         end
         
+        % Overloaded times operator
+        function [geoOut] = times(geoIn, val)
+            
+            geoOut = PanelGeo(geoIn);
+            
+            geoOut.Values = geoIn.Values.*val;
+        end
+        
+        % Overloaded mtimes operator
+        function [geoOut] = mtimes(geoIn, val)
+            
+            geoOut = PanelGeo(geoIn);
+            
+            geoOut.Values = geoIn.Values*val;
+        end
+        
         % Overloaded real operator
         function [geoOut] = real(geoIn)
             geoOut = PanelGeo(geoIn);
