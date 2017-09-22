@@ -39,9 +39,12 @@ if opts(4)
         linSty = linStyIn;
     end
 else
+%     linSty{1} = '-';
+%     linSty{2} = '--';
+%     linSty{3} = ':';
     linSty{1} = '-';
-    linSty{2} = '--';
-    linSty{3} = ':';
+    linSty{2} = '-';
+    linSty{3} = '-';
 end
 
 is2d = (length(loc) == 2);
