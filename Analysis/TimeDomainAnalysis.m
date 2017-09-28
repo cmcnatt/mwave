@@ -467,8 +467,7 @@ classdef TimeDomainAnalysis < handle
             [ptoKin] = tda.getValues('ptoKinematic', sigInds, dofs, varargin{:});
             [ptoDyn, time] = tda.getValues('ptoDynamic', sigInds, dofs, varargin{:});
             
-            Nsig = length(sigInds);
-            Ndof = length(dofs);
+            [Nsig, Ndof] = size(ptoKin);
             pow = cell(Nsig, Ndof);
             
             for m = 1:Nsig
