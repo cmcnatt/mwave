@@ -456,7 +456,7 @@ classdef IFreqDomComp < IEnergyComp & handle
             % Power response per wave amplitude squared in kW/m^2
             % or if option 'CW' is given, then it is the capture width
             
-            [opts, args] = checkOptions({{'CW', 1}}, varargin);
+            [opts, args] = checkOptions({{'CW', 1}, {'spectrum', 1}}, varargin);
             
             compCW = false;
             rho = [];
@@ -464,11 +464,25 @@ classdef IFreqDomComp < IEnergyComp & handle
                 compCW = true;
                 rho = args{1};
             end
+            
+            spectrum = [];
+            if opts(2)
+                spectrum = args{2};
+            end
 
             powFull = hcomp.Power(varargin);
             inds = hcomp.PTOInds;
             inds = (sum(inds) > 0)';
-            power = sum(powFull(:,:,inds), 3);
+            % TODO: only first direction
+            power = sum(powFull(:,1,inds), 3);
+            
+            if ~isempty(spectrum)
+                a_ = spectrum.Amplitudes;
+                if isrow(a_) && iscolumn(power)
+                    a_ = a_.';
+                end
+                power = a_.^2.*power;
+            end
             
             if ~compCW
                 power = power./10^3;

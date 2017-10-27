@@ -47,7 +47,7 @@ classdef ViscDampCoef < handle
         
         function [coef] = ViscDampCoef()
             
-            coef.rho = [];
+            coef.rho = 0;
             coef.cd = 0;
             coef.a = 0;
             coef.isRot = [];

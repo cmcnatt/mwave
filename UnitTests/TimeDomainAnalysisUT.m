@@ -106,7 +106,7 @@ classdef TimeDomainAnalysisUT < matlab.unittest.TestCase
                 end
             end
                        
-            tda = TimeDomainAnalysis;
+            tda = TimeDomainRAO;
             
             tda.SetWaves(wgPos, [], waveA, beta);
             

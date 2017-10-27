@@ -29,6 +29,6 @@ end
 f = figure;
 set(f,'PaperPositionMode','auto');  
 set(f, 'PaperPosition', [0 0 wid hei]);
-if landscape
-    f.PaperOrientation = 'landscape';
-end
+% if landscape
+%     f.PaperOrientation = 'landscape';
+% end

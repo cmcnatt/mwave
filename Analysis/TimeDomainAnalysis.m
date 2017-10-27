@@ -24,13 +24,13 @@ classdef TimeDomainAnalysis < handle
     
     properties (Access = protected)    
         nSig;
+        sigDes;
         motDof;
         ptoDof;
         motions;
         ptoKinematic;
         ptoDynamic;
         waveSigs;
-        waveAmps;
         fmotions;
         fptoKinematic;
         fptoDynamic;
@@ -49,15 +49,17 @@ classdef TimeDomainAnalysis < handle
         ptoTimeLims;
         waveTimeLims;
         wgPos;
-        waveBeta;
         meanPos;
+        h;
     end
     
     properties (Dependent)
         MotionDoF;
         PtoDoF;
+        SignalDescription;
         NSignals;
         MeanBodyPosition;
+        WaterDepth;
     end
     
     methods
@@ -77,11 +79,28 @@ classdef TimeDomainAnalysis < handle
             val = tda.nSig;
         end
         
+        function [] = set.SignalDescription(tda, val)
+            tda.sigDes = val;
+        end
+        function [val] = get.SignalDescription(tda)
+            val = tda.sigDes;
+        end
+        
         function [] = set.MeanBodyPosition(tda, val)
             tda.meanPos = val;
         end
         function [val] = get.MeanBodyPosition(tda)
             val = tda.meanPos;
+        end
+        
+        function [] = set.WaterDepth(tda, val)
+            if ~isscalar(val)
+                error('WaterDepth must be a scalar');            
+            end
+            tda.h = val;
+        end
+        function [val] = get.WaterDepth(tda)
+            val = tda.h;
         end
         
         function [] = SetMotions(tda, dofs, time, motions)
@@ -97,84 +116,33 @@ classdef TimeDomainAnalysis < handle
         end
                 
         function [] = SetWaves(tda, wgPos, time, waves, varargin)
-            [Nwg, ~] = size(wgPos);
             
-            isAmp = false;
-            if isempty(time)
-                isAmp = true;
-                if isempty(varargin)
-                    beta = 0;
-                else
-                    beta = varargin{1};
-                end
-            end
+            [waves, Nsig, Nwg] = tda.checkWaves(wgPos, time, waves, varargin{:});
             
-            if Nwg == 1 && ndims(waves) == 2
-                [Nsig, Nta] = size(waves);
-                wavesTemp = waves;
-                waves = zeros(Nsig, 1, Nta);
-                waves(:, 1, :) = wavesTemp;
-            elseif Nwg > 1 && ndims(waves) == 2
-               [NwgSig, Nta] = size(waves);
-               wavesTemp = waves;
-               waves = zeros(1, NwgSig, Nta);
-               waves(1, :, :) = wavesTemp; 
-            end
-            
-            [Nsig, NwgSig, Nta] = size(waves);
-            
-            err = 0;
-            if isempty(tda.nSig)
-                tda.nSig = Nsig;
-            elseif (tda.nSig ~= Nsig)
-                err = 1;
-            end
-            
-            if NwgSig ~= Nwg
-                err = 1;
-            end
-                        
-            if isAmp
-                if Nta ~= length(beta)
-                    err = 1;
-                end
-                if err
-                    error('waves must be of size Nsig x Nwg x Nbeta');
-                end
-            else
-                if length(time) ~= Nta
-                    err = 1;
-                end
-                if err
-                    error('waves must be of size Nsig x Nwg x Ntime');
-                end
-            end
-            
-            tda.wgPos = wgPos;
-            
-            if isAmp
-                tda.waveBeta = beta;
-                tda.waveAmps = cell(Nsig, Nwg);
-                for m = 1:Nsig
-                    for n = 1:Nwg
-                        tda.waveAmps{m, n} = squeeze(waves(m, n, :));
-                    end
-                end
-            else               
-                tda.waveTime = time;
-                tda.waveSigs = cell(Nsig, Nwg);
-                for m = 1:Nsig
-                    for n = 1:Nwg
-                        tda.waveSigs{m, n} = squeeze(waves(m, n, :));
-                    end
-                end
-            end
+            tda.setTimeWaves(wgPos, time, waves, Nsig, Nwg);
         end
         
         function [] = SetMotionTimeLimits(tda, sigInds, dofs, startTime, stopTime)
             if isempty(tda.motTimeLims)
                 tda.motTimeLims = cell(tda.nSig, tda.motDof);
             end
+            
+            if isempty(sigInds)
+                sigInds = 1:tda.nSig;
+            elseif ischar(sigInds)
+                if strcmp(sigInds, ':');
+                    sigInds = 1:tda.nSig;
+                end
+            end
+            
+            if isempty(dofs)
+                dofs = 1:tda.motDof;
+            elseif ischar(dofs)
+                if strcmp(dofs, ':');
+                    dofs = 1:tda.motDof;
+                end
+            end
+            
             for m = 1:length(sigInds)
                 for n = 1:length(dofs)
                     tda.motTimeLims{sigInds(m), dofs(n)} = [startTime stopTime];
@@ -187,6 +155,23 @@ classdef TimeDomainAnalysis < handle
             if isempty(tda.ptoTimeLims)
                 tda.ptoTimeLims = cell(tda.nSig, tda.ptoDof);
             end
+            
+            if isempty(sigInds)
+                sigInds = 1:tda.nSig;
+            elseif ischar(sigInds)
+                if strcmp(sigInds, ':');
+                    sigInds = 1:tda.nSig;
+                end
+            end
+            
+            if isempty(dofs)
+                dofs = 1:tda.ptoDof;
+            elseif ischar(dofs)
+                if strcmp(dofs, ':');
+                    dofs = 1:tda.ptoDof;
+                end
+            end
+            
             for m = 1:length(sigInds)
                 for n = 1:length(dofs)
                     tda.ptoTimeLims{sigInds(m), dofs(n)} = [startTime stopTime];
@@ -214,85 +199,38 @@ classdef TimeDomainAnalysis < handle
         end
         
         function [pow, time] = Power(tda, sigInds, dofs, varargin)
+            [opts] = checkOptions({{'mean'}}, varargin);
+            
             [pow, time] = tda.power(sigInds, dofs, varargin{:});
+            
+            if opts(1)
+                [M, N] = size(pow);
+                meanPow = zeros(M, N);
+                for m = 1:M
+                    for n = 1:N
+                        meanPow(m, n) = mean(pow{m, n});
+                    end
+                end
+                pow = meanPow;
+            end
         end
         
-        function [waves, timeFreq, wgPos, beta] = GetWaves(tda, sigInds, wgInds, varargin)
-            [opts, args] = checkOptions({{'filter'}, {'amps'}, {'spectra'}, {'fullTime'}}, varargin);
+        function [damping] = GetPtoDamping(tda, sigInds, dofs, varargin)
+            [ptoDyn] = tda.getValues('ptoDynamic', sigInds, dofs, varargin{:});
+            [ptoKin] = tda.getValues('ptoKinematic', sigInds, dofs, varargin{:});
             
-            if isempty(tda.wgPos)
-                waves = [];
-                timeFreq = [];
-                wgPos = [];
-                beta = [];
-                return;
-            end
+            [Nsig, Ndof] = size(ptoDyn);
+            damping = zeros(Nsig, Ndof);
             
-            filt = opts(1);
-            isAmps = opts(2);
-            spec = opts(3);
-            fullTime = opts(4);
-            
-            if ischar(sigInds)
-                if strcmp(sigInds, ':');
-                    sigInds = 1:tda.nSig;
-                end
-            end
-            
-            if ischar(wgInds)
-                if strcmp(wgInds, ':');
-                    [Nwg, ~] = size(tda.wgPos);
-                    wgInds = 1:Nwg;
-                end
-            end
-            
-            Nsig = length(sigInds);
-            Nwg = length(wgInds);
-                        
-            waves = cell(Nsig, Nwg);
-            beta = tda.waveBeta;
-            
-            if filt && isempty(tda.fwaveSigs)
-                tda.computeFilter;
-            end
-            
-            if isAmps && isempty(tda.waveAmps)
-                tda.computeWaveAmps;
-            end
-            
-            if spec && isempty(tda.specWaves)
-                tda.computeSpec;
-            end
-            
-            tlims = tda.waveTimeLims;
-            
-            if spec
-                timeFreq = tda.waveFreq;
-            else
-                timeFreq = tda.waveTime;
-                [iStart, iStop] = tda.tlimInds(tlims, timeFreq, fullTime);
-                timeFreq = timeFreq(iStart:iStop);
-            end
-                        
-            wgPos = zeros(length(wgInds), 2);
             for m = 1:Nsig
-                for n = 1:Nwg
-                    if isempty(tda.waveSigs) || isAmps
-                        waves{m, n} = tda.waveAmps{sigInds(m), wgInds(n)};
-                    else
-                        if filt
-                            sigmn = tda.fwaveSigs{sigInds(m), wgInds(n)};
-                            waves{m, n} = sigmn(iStart:iStop);
-                        elseif spec
-                            waves{m, n} = tda.swaveSigs{sigInds(m), wgInds(n)};
-                        else
-                            sigmn = tda.waveSigs{sigInds(m), wgInds(n)};
-                            waves{m, n} = sigmn(iStart:iStop);
-                        end
-                    end
-                    wgPos(n, :) = tda.wgPos(wgInds(n), :);
+                for n = 1:Ndof
+                    damping(m, n) = sum(ptoDyn{m,n}.*ptoKin{m,n})./sum(ptoKin{m,n}.^2);
                 end
             end
+        end
+        
+        function [waves, timeFreq, wgPos] = GetWaves(tda, sigInds, wgInds, varargin)
+            [waves, timeFreq, wgPos] = tda.getWaves(sigInds, wgInds, varargin{:});
         end
         
         function [startTime, stopTime] = GetMotionTimeLimits(tda, sigInd, dof)
@@ -382,11 +320,12 @@ classdef TimeDomainAnalysis < handle
         
         function [sigs, timeFreq] = getValues(tda, type, sigInds, dofs, varargin)
             
-            [opts, args] = checkOptions({{'filter'}, {'spectra'}, {'fullTime'}}, varargin);
+            [opts, args] = checkOptions({{'filter'}, {'spectra'}, {'fullTime'}, {'noMean'}}, varargin);
             
             filt = opts(1);
             spec = opts(2);
             fullTime = opts(3);
+            noMean = opts(4);
                         
             fstr = '';
             if filt
@@ -406,13 +345,17 @@ classdef TimeDomainAnalysis < handle
                     error('getValues type not recognized');
             end
             
-            if ischar(sigInds)
+            if isempty(sigInds)
+                sigInds = 1:tda.nSig;
+            elseif ischar(sigInds)
                 if strcmp(sigInds, ':');
                     sigInds = 1:tda.nSig;
                 end
             end
             
-            if ischar(dofs)
+            if isempty(dofs)
+                eval(['dofs = 1:tda.' sType 'Dof;'])
+            elseif ischar(dofs)
                 if strcmp(dofs, ':');
                     eval(['dofs = 1:tda.' sType 'Dof;'])
                 end
@@ -430,8 +373,8 @@ classdef TimeDomainAnalysis < handle
                 tda.computeFilter;
             end
             
-            if eval(['spec && isempty(tda.' fstr type ')'])
-                tda.computeSpec;
+            if spec
+                tda.computeSpec(varargin{:});
             end
             
             Nsig = length(sigInds);
@@ -463,16 +406,178 @@ classdef TimeDomainAnalysis < handle
             end
         end
         
-        function [pow, time] = power(tda, sigInds, dofs, varargin)
+        function [pow, timeFreq] = power(tda, sigInds, dofs, varargin)
+            [opts, args] = checkOptions({{'spectra'}, {'smooth', 1}}, varargin);
+            
+            spectra = opts(1);
+            smooth = opts(2);
+            windowDf = [];
+            if smooth
+                windowDf = args{2};
+                for n = 1:length(varargin)
+                    if strcmp(varargin{n}, 'smooth')
+                        varargin{n} = []; 
+                        varargin{n+1} = []; 
+                        break; 
+                    end
+                end
+            end
+
             [ptoKin] = tda.getValues('ptoKinematic', sigInds, dofs, varargin{:});
-            [ptoDyn, time] = tda.getValues('ptoDynamic', sigInds, dofs, varargin{:});
+            [ptoDyn, timeFreq] = tda.getValues('ptoDynamic', sigInds, dofs, varargin{:});
             
             [Nsig, Ndof] = size(ptoKin);
             pow = cell(Nsig, Ndof);
             
             for m = 1:Nsig
                 for n = 1:Ndof
-                    pow{m, n} = ptoKin{m, n}.*ptoDyn{m, n};
+                    if spectra
+                        spec = real(0.5*ptoKin{m, n}.*conj(ptoDyn{m, n}));
+                        if smooth
+                            spec = TimeDomainAnalysis.SmoothSpectrum(timeFreq{m,n}, spec, windowDf);
+                        end
+                        pow{m, n} = real(spec);
+                    else
+                        pow{m, n} = ptoKin{m, n}.*ptoDyn{m, n};
+                    end
+                end
+            end
+        end
+        
+        function [waves, timeFreq, wgPos] = getWaves(tda, sigInds, wgInds, varargin)
+            [opts, args] = checkOptions({{'filter'}, {'spectra'}, {'fullTime'}, {'mat'}}, varargin);
+            
+            if isempty(tda.wgPos)
+                waves = [];
+                timeFreq = [];
+                wgPos = [];
+                return;
+            end
+            
+            filt = opts(1);
+            spec = opts(2);
+            fullTime = opts(3);
+            mat = opts(4);
+            
+            [sigInds, wgInds, Nsig, Nwg] = tda.getWaveInds(sigInds, wgInds);
+                        
+            waves = cell(Nsig, Nwg);
+            
+            if filt && isempty(tda.fwaveSigs)
+                tda.computeFilter;
+            end
+                        
+            if spec && isempty(tda.specWaves)
+                tda.computeSpec(varargin{:});
+            end
+            
+            tlims = tda.waveTimeLims;
+            
+            if spec
+                timeFreq = tda.waveFreq;
+            else
+                timeFreq = tda.waveTime;
+                [iStart, iStop] = tda.tlimInds(tlims, timeFreq, fullTime);
+                timeFreq = timeFreq(iStart:iStop);
+            end
+                        
+            wgPos = zeros(length(wgInds), 2);
+            for m = 1:Nsig
+                for n = 1:Nwg
+                    if filt
+                        sigmn = tda.fwaveSigs{sigInds(m), wgInds(n)};
+                        waves{m, n} = sigmn(iStart:iStop);
+                    elseif spec
+                        waves{m, n} = tda.swaveSigs{sigInds(m), wgInds(n)};
+                    else
+                        sigmn = tda.waveSigs{sigInds(m), wgInds(n)};
+                        waves{m, n} = sigmn(iStart:iStop);
+                    end
+                    wgPos(n, :) = tda.wgPos(wgInds(n), :);
+                end
+            end
+            
+            if mat
+                Nt = length(waves{1,1});
+                wavesM = zeros(Nsig, Nwg, Nt);
+                for m = 1:Nsig
+                    for n = 1:Nwg
+                        wavesM(m,n,:) = waves{m,n};
+                    end
+                end
+                waves = wavesM;
+            end
+        end
+        
+        function [sigInds, wgInds, Nsig, Nwg] = getWaveInds(tda, sigInds, wgInds)
+            if isempty(sigInds)
+                sigInds = 1:tda.nSig;
+            elseif ischar(sigInds)
+                if strcmp(sigInds, ':');
+                    sigInds = 1:tda.nSig;
+                end
+            end
+            
+            [Nwg, ~] = size(tda.wgPos);
+            if isempty(wgInds)
+                wgInds = 1:Nwg;
+            elseif ischar(wgInds)
+                if strcmp(wgInds, ':');
+                    wgInds = 1:Nwg;
+                end
+            end
+            
+            Nsig = length(sigInds);
+            Nwg = length(wgInds);
+        end
+        
+        function [waves, Nsig, Nwg, Nta] = checkWaves(tda, wgPos, time, waves, varargin)
+            [Nwg, ~] = size(wgPos);
+                        
+            if Nwg == 1 && ndims(waves) == 2
+                [Nsig, Nta] = size(waves);
+                wavesTemp = waves;
+                waves = zeros(Nsig, 1, Nta);
+                waves(:, 1, :) = wavesTemp;
+            elseif Nwg > 1 && ndims(waves) == 2
+               [NwgSig, Nta] = size(waves);
+               wavesTemp = waves;
+               waves = zeros(1, NwgSig, Nta);
+               waves(1, :, :) = wavesTemp; 
+            end
+            
+            [Nsig, NwgSig, Nta] = size(waves);
+            
+            err = 0;
+            if isempty(tda.nSig)
+                tda.nSig = Nsig;
+            elseif (tda.nSig ~= Nsig)
+                err = 1;
+            end
+            
+            if NwgSig ~= Nwg
+                err = 1;
+            end
+                        
+            if ~isempty(time)
+                if length(time) ~= Nta
+                    err = 1;
+                end
+                if err
+                    error('waves must be of size Nsig x Nwg x Ntime');
+                end
+            end
+        end
+        
+        function [] = setTimeWaves(tda, wgPos, time, waves, Nsig, Nwg)
+            
+            tda.wgPos = wgPos;
+            
+            tda.waveTime = time;
+            tda.waveSigs = cell(Nsig, Nwg);
+            for m = 1:Nsig
+                for n = 1:Nwg
+                    tda.waveSigs{m, n} = squeeze(waves(m, n, :));
                 end
             end
         end
@@ -480,7 +585,15 @@ classdef TimeDomainAnalysis < handle
         function [] = computeFilter(tda)
         end
         
-        function [] = computeSpec(tda)
+        function [] = computeSpec(tda, varargin)
+            
+            [opts, args] = checkOptions({{'noMean'}, {'smooth', 1}}, varargin);
+            
+            noMean = opts(1);
+            windowDf = [];
+            if opts(2)
+                windowDf = args{2};
+            end
             
             if ~isempty(tda.motions)
                 tda.smotions = cell(tda.nSig, tda.motDof);
@@ -495,7 +608,10 @@ classdef TimeDomainAnalysis < handle
                         sigmn = tda.motions{m, n};
                         [iStart, iStop] = tda.tlimInds(tlims{m, n}, timemn, false);
                         
-                        [spec, freq] = TimeDomainAnalysis.FFT(timemn(iStart:iStop), sigmn(iStart:iStop));
+                        [spec, freq] = TimeDomainAnalysis.FFT(timemn(iStart:iStop), sigmn(iStart:iStop), noMean);
+                        if ~isempty(windowDf)
+                            spec = TimeDomainAnalysis.SmoothSpectrum(freq, spec, windowDf);
+                        end
                         tda.smotions{m, n} = spec;
                         tda.motFreq{m, n} = freq;
                     end
@@ -515,7 +631,10 @@ classdef TimeDomainAnalysis < handle
                         sigmn = tda.ptoKinematic{m, n};
                         [iStart, iStop] = tda.tlimInds(tlims{m,n}, timemn, false);
                         
-                        [spec, freq] = TimeDomainAnalysis.FFT(timemn(iStart:iStop), sigmn(iStart:iStop));
+                        [spec, freq] = TimeDomainAnalysis.FFT(timemn(iStart:iStop), sigmn(iStart:iStop), noMean);
+                        if ~isempty(windowDf)
+                            spec = TimeDomainAnalysis.SmoothSpectrum(freq, spec, windowDf);
+                        end
                         tda.sptoKinematic{m, n} = spec;
                         tda.ptoFreq{m, n} = freq;
                     end
@@ -535,7 +654,10 @@ classdef TimeDomainAnalysis < handle
                         sigmn = tda.ptoDynamic{m, n};
                         [iStart, iStop] = tda.tlimInds(tlims{m,n}, timemn, false);
                         
-                        [spec, freq] = TimeDomainAnalysis.FFT(timemn(iStart:iStop), sigmn(iStart:iStop));
+                        [spec, freq] = TimeDomainAnalysis.FFT(timemn(iStart:iStop), sigmn(iStart:iStop), noMean);
+                        if ~isempty(windowDf)
+                            spec = TimeDomainAnalysis.SmoothSpectrum(freq, spec, windowDf);
+                        end
                         tda.sptoDynamic{m, n} = spec;
                         tda.ptoFreq{m, n} = freq;
                     end
@@ -552,17 +674,17 @@ classdef TimeDomainAnalysis < handle
                         sigmn = tda.waveSigs{m, n};
                         [iStart, iStop] = tda.tlimInds(tda.waveTimeLims, timemn, false);
                         
-                        [spec, freq] = TimeDomainAnalysis.FFT(timemn(iStart:iStop), sigmn(iStart:iStop));
+                        [spec, freq] = TimeDomainAnalysis.FFT(timemn(iStart:iStop), sigmn(iStart:iStop), noMean);
+                        if ~isempty(windowDf)
+                            spec = TimeDomainAnalysis.SmoothSpectrum(freq, spec, windowDf);
+                        end
                         tda.swaveSigs{m, n} = spec;
                         tda.waveFreq{m, n} = freq;
                     end
                 end
             end
         end
-        
-        function [] = computeWaveAmps(tda)
-        end
-        
+                
         function [iStart, iStop] = tlimInds(tda, tlims, time, fullTime)
             if isempty(tlims) || fullTime
                 iStart = 1;
@@ -583,18 +705,54 @@ classdef TimeDomainAnalysis < handle
     end
     
     methods (Static)
-        function [spec, freq, offset] = FFT(time, signal)
+        function [spec, freq, offset] = FFT(time, signal, varargin)
+            noMean = false;
+            if ~isempty(varargin)
+                noMean = varargin{1};
+            end
+            
             N = length(signal);
 
             offset = mean(signal);
+            if noMean
+                signal = signal - offset;
+            end
 
             S = fft(signal)/N;
             spec = 2*S(1:floor(N/2)+1);
+            spec(1) = spec(1)/2;
             dt = time(2)-time(1);
             t0 = time(1);
             freq = ((0:floor(N/2))/dt/N).';
             % phase shift base on first time value
             spec = spec.*exp(1i*2*pi*freq*t0);
+        end
+        
+        function [specOut] = SmoothSpectrum(freq, spectrum, windowDf)
+            winN = indexOf(freq-freq(1), windowDf);
+            
+            if mod(winN,2) == 0
+                winN = winN + 1;
+            end
+            delN = (winN-1)/2;
+            
+            specOut = zeros(size(spectrum));
+            N = length(spectrum);
+            for n = 1:N
+                iStart = n - delN;
+                iStop = n + delN;
+                if iStart < 1
+                    iStart = 1;
+                    iStop = n + (n - iStart);
+                end
+                if iStop > N
+                    iStop = N;
+                    iStart = n - (n - iStart) + 1;
+                end
+                specSeg = spectrum(iStart:iStop);
+                specOut(n) = mean(abs(specSeg))*exp(1i*angle(spectrum(n)));
+            end
+                
         end
     end
 end
