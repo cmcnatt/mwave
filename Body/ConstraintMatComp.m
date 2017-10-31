@@ -35,18 +35,22 @@ classdef ConstraintMatComp
             %       of the composite body. If the optional 'Origin'
             %       argument is not provided, the default is is the body
             %       coordinates of body 1
+            %   'Planar': compute the constraint matrix for 3 DOF x 3 DOF
+            %   planar motions, where the DOF are surge, heave, and pitch
             %
             % Returns:
             %   P = the velocity transformation matrix 
             %       (not PT, i.e. the transpose) 
             
-            [opts, args] = checkOptions({{'Origin', 1}}, varargin);
+            [opts, args] = checkOptions({{'Origin', 1}, {'Planar'}}, varargin);
             
             if (opts(1))
                 org = args{1};
             else
                 org = bods(1,:);
             end
+            
+            planar = opts(2);
             
             Nbod = size(bods, 1);
             Nhin = size(hins, 1);
@@ -114,6 +118,11 @@ classdef ConstraintMatComp
             end
             
             P = PT.';
+            
+            if planar
+                [M, N] = size(P);
+                P = P(1:2:M, 1:2:N);
+            end
         end
     end
 end

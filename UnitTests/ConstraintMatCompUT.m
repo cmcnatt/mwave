@@ -612,6 +612,93 @@ classdef ConstraintMatCompUT < matlab.unittest.TestCase
                 end
             end
         end
+        
+        function test10(testCase)
+            % check the computation of the mass matrix of composite hinge
+            % body
+            
+            % origin at hinge
+            
+            %             _________
+            %    _______ |         |     
+            %   |   1   ||    2    |
+            %   |_______||         |
+            %            |_________|
+            %
+            
+            % reduce DOF to planar motions
+            % variation of test 8
+            
+            len1 = 6;
+            wid1 = 1;
+            hei1 = 2;
+            
+            len2 = 9;
+            wid2 = wid1;
+            hei2 = 4;
+            
+            M1 = ConstraintMatCompUT.massBlock(len1, wid1, hei1);
+            M2 = ConstraintMatCompUT.massBlock(len2, wid2, hei2);
+            
+            Mq = zeros(6,6);
+            for m = 1:3
+                ind = (m-1)*2+1;
+                Mq(m, 1:3) = M1(ind, [1 3 5]);
+                Mq(m+3, 4:6) = M2(ind, [1 3 5]);
+            end
+                        
+            cg1 = [-len1/2, 0, 0];
+            cg2 = [len2/2, 0, 0];
+            
+            cgs = [cg1; cg2];
+            hin = [0 0 0];
+            org = hin;
+            
+            P = ConstraintMatComp.HingedBodies(cgs, hin, 'Origin', org, 'Planar');
+            
+            Ms = P*Mq*P.';
+            
+            Mex = zeros(4, 4);
+            m1 = M1(1,1);
+            m2 = M2(1,1);
+            r1 = len1/2;
+            r2 = len2/2;
+            
+            % mass
+            m = m1 + m2;
+            Mex(1,1) = m;
+            Mex(2,2) = m;
+            % Pitch
+            Mex(3,3) = M1(5,5) + m1*r1^2 + M2(5,5) + m2*r2^2;
+            
+            % parallel axis theorem to get flex inertia (i.e. flex intertia
+            % is pitch inertia of second body about hinge
+            Mex(4,4) = M2(5,5) + m2*r2^2;
+            
+            % heave-pitch is the moment created in pitch due to a positive
+            % heave about origin (i.e. hinge)
+            cg0 = (m1*cgs(1,:) + m2*cgs(2,:))./m;
+            r0 = org - cg0;
+            Mex(2,3) = m*r0(1);
+            Mex(3,2) = Mex(2,3);
+                                    
+            % heave-flex is the moment created in flex due to a positve 
+            % motion in heave
+            Mex(2,4) = -m2*r2;
+            Mex(4,2) = Mex(2,4);
+            
+            % pitch-flex is the moment created in flex due to a postive
+            % pitch
+            Mex(3,4) = Mex(4,4);
+            Mex(4,3) = Mex(4,4);
+            
+            for m = 1:4
+                for n = 1:4
+                    testCase.verifyEqual(Ms(m,n), Mex(m,n), 'AbsTol', ...
+                        1e-12);
+                end
+            end
+        end
     end
     
     methods (Static, Access = private)
