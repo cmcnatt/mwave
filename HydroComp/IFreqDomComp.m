@@ -206,33 +206,24 @@ classdef IFreqDomComp < IEnergyComp & handle
                 
                 for n = 1:hcomp.nT
                     
-%                     a_ = squeeze(hcomp.a(n,:,:));
-%                     b_ = squeeze(hcomp.b(n,:,:));
-
-                    a_ = zeros(hcomp.dof);
-                    b_ = zeros(hcomp.dof);
+                    a_ = reshape(hcomp.a(n,:,:), [hcomp.dof, hcomp.dof]);
+                    b_ = reshape(hcomp.b(n,:,:), [hcomp.dof, hcomp.dof]);
                     
-                    for p = 1:hcomp.dof
-                        for q = 1:hcomp.dof
-                            a_(p,q) = hcomp.a(n,p,q);
-                            b_(p,q) = hcomp.b(n,p,q);
-                        end
-                    end
-                    
-                    if (dfreqPto)
-                        d_ = squeeze(ddpto(n,:,:));
+                    if (dfreqPto)                       
+                        d_ = reshape(ddpto(n,:,:), [hcomp.dof, hcomp.dof]);
                     else
                         d_ = ddpto;
                     end
                     
                     if (dfreqPar)
-                        d_ = d_ + squeeze(ddpar(n,:,:));
+                        dp = reshape(ddpar(n,:,:), [hcomp.dof, hcomp.dof]);
+                        d_ = d_ + dp;
                     else
                         d_ = d_ + ddpar;
                     end
                     
                     if (kfreq)
-                        k_ = squeeze(kk(n,:,:));
+                        k_ = reshape(kk(n,:,:), [hcomp.dof, hcomp.dof]);
                     else
                         k_ = kk;
                     end
@@ -277,7 +268,13 @@ classdef IFreqDomComp < IEnergyComp & handle
                             if (ndims(fex) == 2)
                                 motions(m_, :) = PT*mot1(m_, :);
                             else
-                                motions(m_, n, :) = PT*squeeze(mot1(m_, n, :));
+                                Nm = size(PT,2);
+                                mot1s = zeros(size(PT,2), 1);
+                                for o = 1:Nm
+                                    mot1s(o) = mot1(m_, n, o);
+                                end
+                                motions(m_, n, :) = PT*mot1s;
+                                %motions(m_, n, :) = PT*squeeze(mot1(m_, n, :));
                             end
                         end
                     end
@@ -524,9 +521,9 @@ classdef IFreqDomComp < IEnergyComp & handle
             end
         end
         
-        function [energy, energyMat] = AnnualEnergyProd(hcomp, waveClim, varargin)
+        function [energy, energyMat, powerMat, idptos] = AnnualEnergyProd(hcomp, waveClim, varargin)
             
-            [opts, args] = checkOptions({{'Sample', 1}, {'ratedPow', 1}}, varargin);
+            [opts, args] = checkOptions({{'Sample', 1}, {'ratedPow', 1}, {'dptos', 1}}, varargin);
             
             sampSize = 1;
             if opts(1)
@@ -539,8 +536,16 @@ classdef IFreqDomComp < IEnergyComp & handle
                 ratedPow = args{2};
                 perOccur = true;
             end
+            
+            dptos = [];
+            if opts(3)
+                dptos = args{3};
+                perOccur = true;
+            end
           
             hrsYr = 24*365;
+            
+            idptos = 1;
             
             if ~perOccur
                 avgSpec = waveClim.AverageSpectrum;
@@ -554,9 +559,11 @@ classdef IFreqDomComp < IEnergyComp & handle
                 occlim = 1/hrsYr;     % ignore sea states that occur less than an hour per year
                 plim = 1e3;             % ignore sea states below a 1 kW total
                 
-                Pow = PowerMatrix.CreatePowerMatrix(hcomp, [], [], ...
+                [powerMat, idptos] = PowerMatrix.CreatePowerMatrix(hcomp, [], [], ...
                     'waveClim', waveClim, 'minPow', plim, 'minOcc', occlim, ...
-                    'ratedPow', ratedPow);
+                    'makeObj', 'ratedPow', ratedPow, 'dptos', dptos);
+                
+                Pow = powerMat.Matrix;
                 
                 freqOccs = waveClim.FreqOccurance;
                 energyMat = hrsYr*freqOccs.*Pow; % kWh/yr

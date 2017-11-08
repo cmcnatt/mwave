@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Contributors:
     C. McNatt
 %}
-classdef ViscDampCoef < handle
+classdef ViscDampCoef < CopyLoadHandleBase
     % Defines the damping coefficient for a Morison type body-motion
     % viscous damping
     %
@@ -121,6 +121,12 @@ classdef ViscDampCoef < handle
         end
     end
     
+    methods (Access = protected)
+        function [] = setAnyProp(obj, prop, val)
+            obj.(prop) = val;
+        end
+    end
+    
     methods (Static)
         function [A] = ComputeAreaFromBox(x, y, z, centRot, varargin)
             % assumes the area used in the damping coefficient calculation
@@ -187,6 +193,16 @@ classdef ViscDampCoef < handle
                     end
                 end
                 A = coefs;
+            end
+        end
+        
+        function [newObj] = loadobj(a)
+            if isstruct(a)
+                newObj = feval(class(mfilename('class')));
+                
+                [currentUnset, loadedUnset] = CopyLoadHandleBase.trySetProps(newObj, a);
+            else
+                newObj = a;
             end
         end
     end

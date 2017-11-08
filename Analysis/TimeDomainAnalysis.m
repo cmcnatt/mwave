@@ -725,7 +725,7 @@ classdef TimeDomainAnalysis < handle
             t0 = time(1);
             freq = ((0:floor(N/2))/dt/N).';
             % phase shift base on first time value
-            spec = spec.*exp(1i*2*pi*freq*t0);
+            spec = spec.*exp(-1i*2*pi*freq*t0);
         end
         
         function [specOut] = SmoothSpectrum(freq, spectrum, windowDf)

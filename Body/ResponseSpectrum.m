@@ -85,7 +85,11 @@ classdef ResponseSpectrum < handle
             % Get the RMS response spectrum
             val = [];
             if ~isempty(rspec.spec) && ~isempty(rspec.rao)
-                res = abs(rspec.rao).^2.*rspec.spec.Spectrum;
+                spec = rspec.spec.Spectrum;
+                if isrow(spec) && iscolumn(rspec.rao)
+                    spec = spec.';
+                end
+                res = abs(rspec.rao).^2.*spec;
                 
                 [df, ddir] = rspec.spec.Deltas('Both');
                 [Ddir, Df] = meshgrid(ddir, df);
