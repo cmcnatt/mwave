@@ -34,7 +34,19 @@ if 1 == N
     return
 end
 
-
+% remove repeats
+Ni = length(xi);
+inoR = ones(Ni, 1);
+tol = 1e-16;
+for n = 2:1:Ni
+    if abs(xi(n) - xi(n-1)) < tol && abs(yi(n) < yi(n-1)) < tol
+        inoR(n) = 0;
+    end
+end
+   
+inoR = logical(inoR);
+xi = xi(inoR);
+yi = yi(inoR);
 
 dx = diff(xi);
 dy = diff(yi);
