@@ -256,6 +256,7 @@ classdef WaveClimate < handle
                     clim.specs(1).Frequencies, 'H', clim.h, 'Rho', clim.rho, 'T02');
             end
             climI.SetFreqOccurance(freqOcc2)
+            climI.Name = clim.Name;
         end
         
         function [climo] = plus(clim, clim2)
@@ -278,26 +279,62 @@ classdef WaveClimate < handle
         end
         
         function [] = PlotScatter(clim, varargin)
-            [opts, args] = checkOptions({{'skip', 1}}, varargin);
+            [opts, args] = checkOptions({{'skip', 1}, {'hslim', 1}, ...
+                {'percent'}, {'Tp'}, {'Te'}}, varargin);
             
             skip = 2;
             if opts(1)
                 skip = args{1};
             end
+            hslim = [];
+            if opts(2)
+                hslim = args{2};
+            end
+            percent = opts(3);
+            useTp = opts(4);
+            useTe = opts(5);
             
             Hs = clim.Hs('Intended');
-            T02 = clim.T02('Intended');
-            freqO = clim.FreqOccurance('hours');
+            T_ = clim.T02('Intended');
+            if useTp
+                T_ = T_./0.71;
+            elseif useTe
+                T_ = 1.206*T_;
+            end
+            
+            if percent
+                freqO = 100*clim.FreqOccurance;
+            else
+                freqO = clim.FreqOccurance('hours');
+            end
+            
+            iStopHs = length(Hs);
+            if ~isempty(hslim)
+                iStopHs = indexOf(Hs, hslim);
+            end
+            
+            Hs = Hs(1:iStopHs);
+            freqO = freqO(1:iStopHs, :);
             
             indsHs = 1:skip:length(Hs);
-            indsT = 1:skip:length(T02);
+            indsT = 1:skip:length(T_);
             
-            plotScatter(T02, Hs, freqO, 'xinds', indsT, 'yinds', indsHs);
+            plotScatter(T_, Hs, freqO, 'xinds', indsT, 'yinds', indsHs);
 
-            xlabel('T02 (s)');
+            if useTp
+                xlabel('Tp (s)');
+            elseif useTe
+                xlabel('Te (s)');
+            else
+                xlabel('T02 (s)');
+            end
             ylabel('Hs (m)');
             cb = colorbar;
-            ylabel(cb, 'hours/year');
+            if percent
+                ylabel(cb, '% of year');
+            else
+                ylabel(cb, 'hours/year');
+            end
         end
         
         function [AEP] = AnnualEnergyProduction(clim, Hsp, T02p, Pow)
@@ -371,6 +408,32 @@ classdef WaveClimate < handle
             else
                 wc = WaveClimate(specs_, freqOcc_, h_, rho_, 'Hs', Hs);
             end
+        end
+        
+        function [clim] = SumClimates(clims)
+            Hs = clims(1).Hs('Intended');
+            T02 = clims(1).T02('Intended');
+            freqOcc = clims(1).FreqOccurance;
+            
+            Nclim = length(clims);
+            
+            for n = 2:Nclim
+                Hsn = clims(n).Hs('Intended');
+                T02n = clims(n).T02('Intended');
+            
+                if (any(Hs ~= Hsn) || any (T02 ~= T02n))
+                    error('To add wave climates, the matrix size must be the same');
+                end
+            
+                freqOccn = clims(n).FreqOccurance;
+                freqOcc = freqOcc + freqOccn;
+            end
+            
+            freqOcc = freqOcc./Nclim;
+
+            clim = WaveClimate.MakeWaveClimate(class(clims(1).specs(1)), Hs, T02,...
+                clims(1).specs(1).Frequencies, 'Rho', clims(1).rho, 'T02');
+            clim.SetFreqOccurance(freqOcc)
         end
     end
      

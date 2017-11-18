@@ -124,5 +124,13 @@ classdef ConstraintMatComp
                 P = P(1:2:M, 1:2:N);
             end
         end
+        
+        function [P] = FixedBodies(bods, varargin)
+            Nb = size(bods,1);
+            Nhin = Nb-1;
+            P0 = ConstraintMatComp.HingedBodies(bods, zeros(Nhin,3), varargin{:});
+
+            P = P0(1:(end-Nhin),:);
+        end
     end
 end

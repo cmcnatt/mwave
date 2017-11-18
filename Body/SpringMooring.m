@@ -23,6 +23,7 @@ classdef SpringMooring < handle
     properties (Access = protected)
         loc;
         k;
+        ibody;
         body;
         angsHor;
         angsVer;
@@ -33,6 +34,7 @@ classdef SpringMooring < handle
         LineCount;
         SpringConst;
         BodyAttached;
+        IBodyAttached;
         AngsHor;
         AngsVer;
         MooringMatrix;
@@ -72,6 +74,13 @@ classdef SpringMooring < handle
         end
         function [val] = get.BodyAttached(moor)
             val = moor.body;
+        end
+        
+        function [] = set.IBodyAttached(moor, val)
+            moor.ibody = val;
+        end
+        function [val] = get.IBodyAttached(moor)
+            val = moor.ibody;
         end
         
         function [] = set.Location(moor, val)

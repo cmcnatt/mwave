@@ -523,7 +523,7 @@ classdef IFreqDomComp < IEnergyComp & handle
         
         function [energy, energyMat, powerMat, idptos] = AnnualEnergyProd(hcomp, waveClim, varargin)
             
-            [opts, args] = checkOptions({{'Sample', 1}, {'ratedPow', 1}, {'dptos', 1}}, varargin);
+            [opts, args] = checkOptions({{'Sample', 1}, {'ratedPow', 1}, {'dptos', 1}, {'minOcc', 1}}, varargin);
             
             sampSize = 1;
             if opts(1)
@@ -542,8 +542,11 @@ classdef IFreqDomComp < IEnergyComp & handle
                 dptos = args{3};
                 perOccur = true;
             end
-          
             hrsYr = 24*365;
+            occlim = 1/hrsYr;     % ignore sea states that occur less than an hour per year
+            if opts(4)
+                occlim = args{4};
+            end
             
             idptos = 1;
             
@@ -556,7 +559,6 @@ classdef IFreqDomComp < IEnergyComp & handle
                 energy = pow*hrsYr./10^3;
             
             else
-                occlim = 1/hrsYr;     % ignore sea states that occur less than an hour per year
                 plim = 1e3;             % ignore sea states below a 1 kW total
                 
                 [powerMat, idptos] = PowerMatrix.CreatePowerMatrix(hcomp, [], [], ...
@@ -575,9 +577,9 @@ classdef IFreqDomComp < IEnergyComp & handle
             energy = energy*ones(sampSize);
         end
         
-        function [pmat] = PowerMatrix(hcomp, Hs, T, varargin)
+        function [pmat, idptos] = PowerMatrix(hcomp, Hs, T, varargin)
             
-            pmat = PowerMatrix.CreatePowerMatrix(hcomp, Hs, T, 'makeObj', varargin{:});
+            [pmat, idptos] = PowerMatrix.CreatePowerMatrix(hcomp, Hs, T, 'makeObj', varargin{:});
         end
         
         function [frad] = Frad(hcomp, varargin)
