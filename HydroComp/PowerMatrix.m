@@ -175,15 +175,18 @@ classdef PowerMatrix < IEnergyComp
     
     methods (Static)
         
-        function [pmat, idptos] = CreatePowerMatrix(comp, Hs, T, varargin)
+        function [pmat, idptos, errs, Dptos, Dpars, tdas] = CreatePowerMatrix(comp, Hs, T, varargin)
             
             if ~isa(comp, 'IEnergyComp')
                 error('The comp must be of type IEnergyComp');
             end
             
+            isSpec = isa(comp, 'SpecDomComp');
+            isTime = isa(comp, 'TimeDomComp');
+            
             [opts, args] = checkOptions({{'waveClim', 1}, {'minPow', 1}, ...
                 {'minOcc', 1}, {'specType', 1}, {'makeObj'}, ...
-                {'ratedPow', 1}, {'dptos', 1}}, varargin);
+                {'ratedPow', 1}, {'dptos', 1}, {'HsLim', 1}}, varargin);
             
             type = 'bretschneider';
             if opts(4)
@@ -221,13 +224,35 @@ classdef PowerMatrix < IEnergyComp
             if opts(7)
                 dptos = args{7};
             end
+            hslim = [];
+            if opts(8)
+                hslim = args{8};
+            end
 
             [Mc, Nc] = waveClim.Size;
+            
+            Hs = waveClim.Hs('intended');
+            Te = Bretschneider.ConverterT(waveClim.T02('intended'), 't02', 'te');
+            if ~isempty(hslim)
+                Mc = indexOf(Hs, hslim);
+            end
+            
+            
             freqOccs = waveClim.FreqOccurance;
             Efs = waveClim.EnergyFlux;
 
             pmat = zeros(Mc, Nc);
             idptos = ones(Mc, Nc);
+            errs = zeros(Mc, Nc);
+            Dptos = cell(Mc, Nc);
+            Dpars = cell(Mc, Nc);
+            tdas = cell(Mc, Nc);
+            
+            if isSpec
+                Dpto0 = comp.FreqDomComp.Dpto;
+            else
+                Dpto0 = comp.Dpto;
+            end
 
             for m = 1:Mc
                 for n = 1:Nc
@@ -248,15 +273,59 @@ classdef PowerMatrix < IEnergyComp
                     % power in kW
                     if ~isempty(dptos)
                         powmn = zeros(length(dptos),1);
+                        errmn = zeros(length(dptos),1);
+                        tdamn = cell(length(dptos),1);
                         for o = 1:length(dptos)
                             comp.SetDpto(dptos{o});
-                            powmn(o) = comp.AveragePower(waveClim.WaveSpectra(m, n));
+                            
+                            tic
+                            if isSpec
+                                [powmn(o), errmn(o)] = comp.AveragePower(waveClim.WaveSpectra(m, n));
+                            elseif isTime
+                                [powmn(o), tdamn{o}] = comp.AveragePower(waveClim.WaveSpectra(m, n));
+                            else
+                                powmn(o) = comp.AveragePower(waveClim.WaveSpectra(m, n));
+                            end
+                            
+                            fprintf('\nm = %i/%i, n = %i/%i, o = %i/%i, Hs = %4.1f, Te = %4.1f, run time = %4.1f s\n', ...
+                                m, Mc, n, Nc, o, length(dptos), Hs(m), Te(n), toc); 
                         end
                         [pmat(m, n), ind] = max(powmn);
                         idptos(m, n) = ind;
+                        errs(m, n) = errmn(ind);
+                        tdas(m, n) = tdamn(ind);
+                        
+                        fprintf('\nm = %i/%i, n = %i/%i, Best Dpto Ind = %i\n', ...
+                                m, Mc, n, Nc, ind);
                     else
-                        pmat(m, n) = comp.AveragePower(waveClim.WaveSpectra(m, n));
+                        comp.SetDpto(Dpto0);
+                        tic
+                        if isSpec
+                            [pmat(m, n), errs(m, n)] = comp.AveragePower(waveClim.WaveSpectra(m, n));
+                        elseif isTime
+                            [pmat(m, n), tdas{m, n}] = comp.AveragePower(waveClim.WaveSpectra(m, n));
+                        else
+                            pmat(m, n) = comp.AveragePower(waveClim.WaveSpectra(m, n));
+                        end
+                        
+                        fprintf('\nm = %i/%i, n = %i/%i, Hs = %4.1f, Te = %4.1f, run time = %4.1f s\n', ...
+                                m, Mc, n, Nc, Hs(m), Te(n), toc); 
                     end
+                    
+                    if isSpec
+                        Dptos{m, n} = comp.FreqDomComp.Dpto;
+                        Dpars{m, n} = comp.FreqDomComp.Dpar;
+                    elseif isTime
+                        if ~isempty(dptos)
+                            Dptos{m, n} = dptos{ind};
+                        end
+                    else
+                        if ~isempty(dptos)
+                            Dptos{m, n} = dptos{ind};
+                            Dpars{m, n} = comp.Dpar;
+                        end
+                    end
+                    
                     if ~isempty(ratedPow)
                         pmat(m, n) = min([pmat(m, n) ratedPow]);
                     end

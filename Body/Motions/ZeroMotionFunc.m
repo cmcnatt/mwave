@@ -18,25 +18,34 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Contributors:
     C. McNatt
 %}
-function [] = Wamit_writeBpi(fileLoc, name, points)
-
-if isempty(points)
-    Np = 0;
-else
-    [Np, M] = size(points);
-    if 3 ~= M
-        error('points must be an Np x 3 matrix');
-    end
-end
+classdef ZeroMotionFunc < IMotionFunc
+    % Defines motions for modes of motion
     
-fileName = [fileLoc '\' name '.bpi'];
-fileID = fopen(fileName, 'wt');
-
-fprintf(fileID, ['Model ' name ', created: ' date '\n']);
-fprintf(fileID, '%i\n', Np);
-for n = 1:Np
-    fprintf(fileID, '\t%8.4f\t%8.4f\t%8.4f\n', points(n,1), points(n,2), points(n,3));
-end
-
-fclose(fileID);
+    properties (Dependent)
+        MotionIn;
+    end
+    
+    methods
+        function [zero] = ZeroMotionFunc(varargin)
+            zero.initCg(varargin{:});
+            zero.isym = 1;
+            zero.isGen = false;
+        end
+        
+        function [f] = Evaluate(zero, pos)
+            f = [0 0 0];
+        end
+        
+        function [div] = Divergence(zero, pos)
+            div = 0;
+        end
+        
+        function [gf] = GravityForce(zero, pos)
+            gf = 0;
+        end
+         
+        function [in] = get.MotionIn(zero)
+            in = [0 0 0];
+        end
+     end
 end

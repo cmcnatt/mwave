@@ -101,6 +101,10 @@ classdef SpringMooring < handle
             val = moor.k;
         end
         
+        function [val] = get.MooringMatrix(moor)
+            val = moor.body.K;
+        end
+        
         function [K] = SetMooringMatrix(moor)
             N = length(moor.angsHor);
             if 0 == N

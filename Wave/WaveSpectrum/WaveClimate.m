@@ -278,9 +278,9 @@ classdef WaveClimate < handle
             climo.SetFreqOccurance(freqOcco)
         end
         
-        function [] = PlotScatter(clim, varargin)
+        function [T0, Hs0] = PlotScatter(clim, varargin)
             [opts, args] = checkOptions({{'skip', 1}, {'hslim', 1}, ...
-                {'percent'}, {'Tp'}, {'Te'}}, varargin);
+                {'percent'}, {'Tp'}, {'Te'}, {'EfWeight'}}, varargin);
             
             skip = 2;
             if opts(1)
@@ -293,6 +293,7 @@ classdef WaveClimate < handle
             percent = opts(3);
             useTp = opts(4);
             useTe = opts(5);
+            efWeight = opts(6);
             
             Hs = clim.Hs('Intended');
             T_ = clim.T02('Intended');
@@ -304,8 +305,21 @@ classdef WaveClimate < handle
             
             if percent
                 freqO = 100*clim.FreqOccurance;
+                ylab = '% of year';
             else
                 freqO = clim.FreqOccurance('hours');
+                ylab = 'hours/year';
+            end
+            
+            if efWeight
+                Ef = cell2mat(clim.EnergyFlux('total'));
+                if percent
+                    freqO = Ef.*freqO./100./1000;
+                    ylab = 'Power weighted (kW*frac)';
+                else
+                    freqO = Ef.*freqO./1000;
+                    ylab = 'Power weighted (kWh)';
+                end
             end
             
             iStopHs = length(Hs);
@@ -315,6 +329,10 @@ classdef WaveClimate < handle
             
             Hs = Hs(1:iStopHs);
             freqO = freqO(1:iStopHs, :);
+            
+            [~, inds] = maxnd(freqO);
+            Hs0 = Hs(inds(1));
+            T0 = T_(inds(2));
             
             indsHs = 1:skip:length(Hs);
             indsT = 1:skip:length(T_);
@@ -330,11 +348,7 @@ classdef WaveClimate < handle
             end
             ylabel('Hs (m)');
             cb = colorbar;
-            if percent
-                ylabel(cb, '% of year');
-            else
-                ylabel(cb, 'hours/year');
-            end
+            ylabel(cb, ylab);
         end
         
         function [AEP] = AnnualEnergyProduction(clim, Hsp, T02p, Pow)

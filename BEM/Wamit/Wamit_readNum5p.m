@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Contributors:
     C. McNatt
 %}
-function [p_rad, p_diff, centers] = Wamit_readNum5p(folderpath, runname, bodynames, Nper, Nbeta, Ndof, rho, g, varargin)
+function [p_rad, p_diff, centers] = Wamit_readNum5p(folderpath, runname, bodynames, Nper, Nbeta, Ndof, rho, g, cgs, varargin)
 % Reads WAMIT .5p output file
 % Returns the radiation pressure (p_rad) and the diffraction pressure 
 % (p_diff) at the field points (points)
@@ -29,17 +29,19 @@ if (~isempty(varargin))
     useSing = varargin{1};
 end
 
-opts = checkOptions({'bpo'}, varargin);
+opts = checkOptions({{'bpo'} {'ihi'}}, varargin);
 readBpo = opts(1);
+ihi = opts(2);
 
 if readBpo
-    [centers, ~, Npoints, noConv] = Wamit_readBpo(folderpath, bodynames, false);
+    [centers, ~, Npoints, noConv] = Wamit_readBpo(folderpath, bodynames, false, cgs, ihi);
+    Np = sum(Npoints);
+    noConv = cell2mat(noConv.');
 else
     [centers, ~, ~, Npoints] = Wamit_readPnl(folderpath, bodynames, false);
+    Np = sum(Npoints);
+    noConv = zeros(Np, 1);
 end
-noConv = cell2mat(noConv.');
-
-Np = sum(Npoints);
 
 if (useSing)
     p_rad = single(zeros(Nper, Ndof, Np));

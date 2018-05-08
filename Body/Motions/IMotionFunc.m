@@ -49,7 +49,7 @@ classdef IMotionFunc < matlab.mixin.Heterogeneous & handle
         function [c] = get.Cg(motF)
             c = motF.cg;
         end
-        function [motF] = set.Cg(motF, c)
+        function [] = set.Cg(motF, c)
             [N, M] = size(c);
             
             if ((N ~= 1) || (M ~= 3))

@@ -20,7 +20,16 @@ Contributors:
 %}
 function [Iout] = parallelAxis(Iin, m, r)
 
+invect = false;
+if isvector(Iin)
+    invect = true;
+    Iin = diag(Iin);
+end
+
 R = skewMat(r);
 
 Iout = Iin - m*R^2;
+if invect
+    Iout = diag(Iout);
+end
 

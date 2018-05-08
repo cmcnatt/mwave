@@ -336,116 +336,13 @@ classdef IWaves < handle
 
             g = IWaves.G;
             
-            evan = false;
-            if (~isempty(varargin))
-                [opts, args] = checkOptions({{'Evanescent', 1}}, varargin);
-                evan = opts;
+            L_ = [];
+            [opts, args] = checkOptions({{'Evanescent', 1}}, varargin);
+            if opts(1)
                 L_ = args{1};
             end
             
-            if (isempty(omega) || isempty(h) || isempty(g))
-                error('Empty parameters in IWaves.SolveForK.');
-            end
-        
-            if (h <= 0)
-                error('The depth must be greater than 0');
-            elseif (h == Inf)
-                k = omega.^2/g;
-            else
-                tol = 1e-10;
-                k = omega.^2/g;
-                const = h.*k;
-
-                k0h = k.*h;
-                tanhk0h = tanh(k0h);
-                f0 = const - k0h.*tanhk0h;
-
-                i = 0;
-
-                while (any(f0 > tol))
-                    i = i+1;
-                    k0h = k.*h;
-                    tanhk0h = tanh(k0h);
-                    f0 = const - k0h.*tanhk0h;
-                    m = k0h.*tanhk0h.^2 - tanhk0h - k0h;
-                    kh = k0h - f0./m;
-                    k = kh./h;
-                end
-            end
-            
-            if (evan)
-                if (~isInt(L_))
-                    error('If evanescent modes are requested, the argument after ''Evanescent'' must be an integer, which is the reqeusted number of evanescent modes');
-                end
-                
-                kL = zeros(1,L_);
-                
-                if (~isinf(h))
-                    % Bisection method - always converges
-                    for n = 1:L_
-                        tol = 1e-7;
-                        const = omega.^2.*h/g;
-
-                        ul = n*pi;
-                        ll = n*pi - pi/2;
-
-                        f0 = 1;
-                        i = 0;
-
-                        while (abs(f0) > tol)
-                            i = i+1;
-                            kh = (ul + ll)/2;
-                            tankh = tan(kh);
-                            f0 = const + kh.*tankh;
-
-                            if (f0 < 0)
-                                ll = kh;
-                            else
-                                ul = kh;
-                            end
-
-                            if (i > 1e3)
-                                break;
-                            end
-                        end
-
-                        kL(n) = kh./h;
-                    end
-
-                    %{
-                    % Newton-Raphson method
-                    for n = 1:N
-                        tol = 1e-8;
-
-                        const = omega.^2.*h/g;
-
-                        k0h = pi*(n - 1/2 + 0.01/h);
-                        kn = k0h./h;
-                        tank0h = tan(k0h);
-                        f0 = const + k0h.*tank0h;
-
-                        i = 0;
-
-                        while (any(abs(f0) > tol))
-                            i = i+1;
-                            k0h = kn.*h;
-                            tank0h = tan(k0h);
-                            f0 = const + k0h.*tank0h;
-                            m = tank0h + k0h + k0h.*tank0h.^2;
-                            kh = k0h - f0./m;
-                            kn = kh./h;
-                        end
-
-                        kN(n) = kn;
-                    end
-                    %}
-                end
-                
-                k0 = k;
-                k = zeros(1, L_+1);
-                k(1) = k0;
-                k(2:end) = kL;
-            end
+            k = solveForK(omega, h, g, L_);
         end
         
         function [omega] = SolveForOmega(k, h)

@@ -25,17 +25,21 @@ classdef ResponseSpectrum < handle
         spec;
         nf;
         nd;
+        isPow;
     end
     
     properties (Dependent)
         WaveSpectrum;
         RAO;
+        IsPower;
         RMSResponse;
     end
     
     methods
         
         function [rspec] = ResponseSpectrum(varargin)
+            rspec.isPow = false;
+            
             if ~isempty(varargin)
                 rspec.setCheckSize(varargin{1});
                 rspec.rao = varargin{1};
@@ -45,6 +49,10 @@ classdef ResponseSpectrum < handle
                     end
                     rspec.setCheckSize(varargin{2}.Spectrum);
                     rspec.spec = varargin{2};
+                    if length(varargin) > 2
+                        opts = checkOptions({'power'}, varargin);
+                        rspec.isPow = opts(1);
+                    end
                 end
             end
         end
@@ -73,11 +81,24 @@ classdef ResponseSpectrum < handle
             rspec.rao = val;
         end
         
+        function [val] = get.IsPower(rspec)
+            % indicates whether the RAO is power (which is already squared)
+            val = rspec.isPow;
+        end
+        function [] = set.IsPower(rspec, val)
+            % indicates whether the RAO is power (which is already squared)
+            rspec.isPow = val;
+        end
+        
         function [val] = Response(rspec, varargin)
             % Get the response spectrum
             val = [];
             if ~isempty(rspec.spec) && ~isempty(rspec.rao)
-                val = abs(rspec.rao).^2.*rspec.spec.Spectrum(varargin{:});
+                if rspec.isPow
+                    val = abs(rspec.rao).*rspec.spec.Spectrum(varargin{:});
+                else
+                    val = abs(rspec.rao).^2.*rspec.spec.Spectrum(varargin{:});
+                end
             end
         end
         
@@ -85,11 +106,16 @@ classdef ResponseSpectrum < handle
             % Get the RMS response spectrum
             val = [];
             if ~isempty(rspec.spec) && ~isempty(rspec.rao)
-                spec = rspec.spec.Spectrum;
-                if isrow(spec) && iscolumn(rspec.rao)
-                    spec = spec.';
+                spec0 = rspec.spec.Spectrum;
+                if isrow(spec0) && iscolumn(rspec.rao)
+                    spec0 = spec0.';
                 end
-                res = abs(rspec.rao).^2.*spec;
+                
+                if rspec.isPow
+                    res = abs(rspec.rao).*spec0;
+                else
+                    res = abs(rspec.rao).^2.*spec0;
+                end
                 
                 [df, ddir] = rspec.spec.Deltas('Both');
                 [Ddir, Df] = meshgrid(ddir, df);
@@ -98,12 +124,25 @@ classdef ResponseSpectrum < handle
             end
         end
         
-        function [p] = ProbabilityOfExceeding(rspec, val)
+        function [p] = ProbabilityOfExceeding(rspec, val, isHeight)
             % compute the probability of exceeding a particular value
+            if nargin < 3
+                isHeight = false;
+            end
+            
             sigma = rspec.RMSResponse;
             p = [];
+            
             if ~isempty(sigma)
-                p = exp(-val^2/(2*sigma^2));
+                if isHeight
+                    % this is the probability of exceedence for a
+                    % Rayleigh distribution (e.g. wave heights)
+                    p = exp(-val^2/(2*sigma^2));
+                else
+                    % this is the probability of exceedence for a gaussian
+                    % distribution (e.g. wave elevation)
+                    p = 1 - erf(val./(sigma*sqrt(2)));
+                end
             end
         end
     end

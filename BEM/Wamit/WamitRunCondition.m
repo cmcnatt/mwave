@@ -30,12 +30,16 @@ classdef WamitRunCondition < IBemRunCondition
         fieldPoints;
         computeVelocity;
         computeBody;
+        fieldPointAsBodyDist;
+        bodyPansWithPress;
+        bodyPanInds;
         scratchPath;
         useridPath;
         ncpu;
         ramGB;
         maxItt;
         useDirect;
+        blockItCnt;
         useHaskind;
         computeFK;
     end
@@ -49,6 +53,9 @@ classdef WamitRunCondition < IBemRunCondition
         FloatingBodies;     % FloatingBodies (plural because of multiple bodies)
         FieldPoints;        % Arbitrary field points (Nx3 array)
         ComputeBodyPoints;  % Indicates whether pressure and velocity on the body surface will be computed
+        FieldPointAsBodyDistance;   % Use the field points .6 instead of body point .5 to compute body surface pressure. 
+        BodyPanelsWithPress;        % Indicates whether pressure is computed on the given body panel
+        BodyPanelIndices;   % Indices of the bodies that the field points refer to.
         ComputeVelocity;    % Indicates whether velocity should be computed at field points
         WamitPath;          % Path location of wamit.exe
         ScratchPath;        % Path location of wamit scratch folder
@@ -57,6 +64,7 @@ classdef WamitRunCondition < IBemRunCondition
         RAMGBmax;           % The max RAM to be used in the Wamit computation
         MaxItt;
         UseDirectSolver;
+        BlockIterativeSolverCount;
         UseHaskind;
         ComputeFK;
     end
@@ -67,6 +75,9 @@ classdef WamitRunCondition < IBemRunCondition
             run.rho = 1000;
             run.computeVelocity = false;
             run.computeBody = false;
+            run.fieldPointAsBodyDist = [];
+            run.bodyPansWithPress = [];
+            run.bodyPanInds = [];
             run.solveDiff = true;
             run.solveRad = true;
             run.exePath = 'C:\wamitv7';
@@ -76,6 +87,7 @@ classdef WamitRunCondition < IBemRunCondition
             run.ramGB = 2;
             run.maxItt = 35;
             run.useDirect = false;
+            run.blockItCnt = [];
             run.useHaskind = false;
             run.computeFK = false;
             run.geoFiles = [];
@@ -232,6 +244,30 @@ classdef WamitRunCondition < IBemRunCondition
             run.computeBody = val;
         end
         
+        function [val] = get.FieldPointAsBodyDistance(run)
+            % Use the field points .6 instead of body point .5 to compute
+            % body surface pressure. The distance is the offset from the
+            % body
+            val = run.fieldPointAsBodyDist;
+        end
+        function [] = set.FieldPointAsBodyDistance(run, val)
+             % Use the field points .6 instead of body point .5 to compute
+            % body surface pressure. The distance is the offset from the
+            % body
+            
+            run.fieldPointAsBodyDist = val;
+        end
+        
+        function [val] = get.BodyPanelsWithPress(run)
+            % Indicates on which body panels pressure is computed
+            val = run.bodyPansWithPress;
+        end
+        
+        function [val] = get.BodyPanelIndices(run)
+            % Indices of the bodies that the field points refer to
+            val = run.bodyPanInds;
+        end
+        
         function [cv] = get.ComputeVelocity(run)
             % Get whether or not velocity is evaluated at field points
             cv = run.computeVelocity;
@@ -326,6 +362,19 @@ classdef WamitRunCondition < IBemRunCondition
             run.useDirect = val;
         end
         
+        function [val] = get.BlockIterativeSolverCount(run)
+            % Set the block iterative solver count
+            val = run.blockItCnt;
+        end
+        function [] = set.BlockIterativeSolverCount(run, val)
+             % Get the block iterative solver count
+            if ~isInt(val) || val < 1              
+                error('BlockIterativeSolverCount must be a positive integer');
+            end
+            
+            run.blockItCnt = val;
+        end
+        
         function [val] = get.UseHaskind(run)
             % Use the Haskind relation to compute forces
             val = run.useHaskind;
@@ -403,20 +452,50 @@ classdef WamitRunCondition < IBemRunCondition
                 error('Designated run folder does not exist');
             end
                         
-            % .gdf
+            % .gdf and .bpi
             nbody = length(run.floatBods);
             run.geoFiles = cell(1, nbody);
+            Np = 0;
             for n = 1:nbody
                 if (isempty(run.floatBods(n).GeoFile))
                     geoFile = [run.runName num2str(n)];
                     run.writeGdf(run.floatBods(n), geoFile, run.floatBods(n).ISurfPan);
                     run.geoFiles{n} = geoFile;
-                    %run.floatBods(n).WriteGdf(run.folder, fileName);
                 else
                     run.geoFiles{n} = run.floatBods(n).GeoFile;
                 end
+                
+                if run.computeBody
+                    if ~isempty(run.floatBods(n).CompGeoFile)
+                        geo = Wamit_readGdf(run.folder, run.floatBods(n).CompGeoFile);
+                        geo.Translate(run.floatBods(n).Cg);
+
+                        if isempty(run.fieldPointAsBodyDist)
+                            Wamit_writeBpi(run.folder, run.geoFiles{n}, geo.Centroids);
+                        else
+                            dist = run.fieldPointAsBodyDist;
+                            if length(dist) > 1
+                                dist = dist(n);
+                            end
+                            Npn = geo.Count;
+                            points(Np+1:Np+Npn,:) = geo.OffsetCentroids(dist);
+                            panInds(Np+1:Np+Npn) = n;
+                            Np = Np + Npn;
+                        end
+                    end
+                end
             end
             
+            if Np > 0 
+                if ~isempty(run.fieldPoints)
+                    error('FieldPoints not empty. Cannot use field points to compute body surface points.');
+                else
+                    run.bodyPansWithPress = points(:,3) <= 0;
+                    run.bodyPanInds = panInds(run.bodyPansWithPress);
+                    run.fieldPoints = points(run.bodyPansWithPress,:);
+                end
+            end
+                        
             if (~noBat)
                 filename = [run.folder '\wam_run.bat'];
                 fileID = fopen(filename, 'wt');
@@ -606,9 +685,9 @@ classdef WamitRunCondition < IBemRunCondition
             if (~all([isempty(run.fieldArray) isempty(run.fieldPoints) isempty(run.cylArray)]))
                 fprintf(fileID, 'INUMOPT6 = 1 \n');
             end
-            if (run.computeBody)
+            if run.computeBody && isempty(run.fieldPointAsBodyDist);
                 fprintf(fileID, 'INUMOPT5 = 1 \n');
-                if run.floatBods(1).WamILowHi > 0
+                if (run.floatBods(1).WamILowHi > 0) || ~isempty(run.floatBods(1).CompGeoFile)
                     ipnlbpt = -4;
                 else
                     ipnlbpt = 0;
@@ -641,11 +720,15 @@ classdef WamitRunCondition < IBemRunCondition
                 for n = 1:Nbod
                     dipoles = run.floatBods(n).WamDipoles;
                     if ~isempty(dipoles)
-                        fprintf(fileID, 'NPDIPOLE(%i) =', n);
-                        for m = 1:length(dipoles)
-                            fprintf(fileID, ' %i', dipoles(m));
+                        if length(dipoles) == 2
+                            fprintf(fileID, 'NPDIPOLE(%i) = (%i-%i)\n', n, dipoles(1), dipoles(2));
+                        else
+                            fprintf(fileID, 'NPDIPOLE(%i) =', n);
+                            for m = 1:length(dipoles)
+                                fprintf(fileID, ' %i', dipoles(m));
+                            end
+                            fprintf(fileID, '\n');
                         end
-                        fprintf(fileID, '\n');
                     end
                 end
             else
@@ -663,6 +746,8 @@ classdef WamitRunCondition < IBemRunCondition
             if (run.useDirect)
                 % User input to use the direct solver
                 fprintf(fileID, 'ISOLVE = 1\n');
+            elseif ~isempty(run.blockItCnt)
+                fprintf(fileID, 'ISOLVE = %i\n', run.blockItCnt);
             else
                 if (run.floatBods(1).WamILowHi)
                     % Use direct solver for higher order panel method
@@ -701,7 +786,9 @@ classdef WamitRunCondition < IBemRunCondition
                 ifldp = 3;
                 ibp = 3;
             end
-            if (~run.computeBody)
+            if ~run.computeBody
+                ibp = 0;
+            elseif ~isempty(run.fieldPointAsBodyDist)
                 ibp = 0;
             end
             if (all([isempty(run.fieldArray) isempty(run.fieldPoints) isempty(run.cylArray)]))

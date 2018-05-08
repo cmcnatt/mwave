@@ -18,25 +18,52 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Contributors:
     C. McNatt
 %}
-function [centers, norms, Npoints, noConv] = Wamit_readBpo(folderpath, bodynames, combineBodies)
+function [centers, norms, Npoints, noConv] = Wamit_readBpo(folderpath, bodynames, combineBodies, cgs, ilowHi)
 % Reads WAMIT .bpo output file
 % Returns the point centers, and normals
+
+if nargin < 4
+    ilowHi = 1;
+end
 
 centers = cell(size(bodynames));
 norms = cell(size(bodynames));
 Npoints = zeros(size(bodynames));
 noConv = cell(size(bodynames));
 
+totPanCnt = 0;
 for n = 1:length(bodynames)
-    buffer = importdata([folderpath '\' bodynames{n} '.bpo'], ' ', 2);
+    name = [folderpath '\' bodynames{n} '.bpo'];
+    if exist(name, 'file')
+        buffer = importdata(name, ' ', 2);
 
-    raw = buffer.data;
+        raw = buffer.data;
 
-    centers{n} = raw(:, 8:10);
-    [Npoints(n), ~] = size(centers{n});
-    norms{n} = raw(:, 11:13);
-    it = raw(:,7);
-    noConv{n} = it > 16;
+        if ilowHi
+            centers{n} = raw(:, 8:10);
+            [Npoints(n), ~] = size(centers{n});
+            norms{n} = raw(:, 11:13);
+            it = raw(:,7);
+            noConv{n} = it > 16;
+        else
+            bodyGeo = Wamit_readGdf(folderpath, bodynames{n});
+            bodyGeo.Translate(cgs{n});
+            ipan = raw(:,2);
+            ipan = ipan - totPanCnt;
+            Npoints(n) = length(ipan);
+
+            centers{n} = bodyGeo.Centroids(ipan,:);
+            norms{n} = bodyGeo.Normals(ipan,:);
+            noConv{n} = zeros(Npoints(n), 1);
+        end
+    else
+        if ~ilowHi
+            bodyGeo = Wamit_readGdf(folderpath, bodynames{n});
+        end
+    end
+    if ~ilowHi
+        totPanCnt = totPanCnt + bodyGeo.Count;
+    end
 end
 
 if combineBodies

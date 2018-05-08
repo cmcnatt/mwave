@@ -133,6 +133,12 @@ classdef Panel < handle
             pan.value = val;
         end
         
+        function [cent] = OffsetCentroid(pan, dist)
+            cent = pan.Centroid;
+            norm = pan.Normal;
+            cent = cent + dist*norm;
+        end
+        
         function [] = Translate(pan, vector)
             if (length(vector) ~= 3)
                 error('Translational vector must be 3x1 or 1x3');

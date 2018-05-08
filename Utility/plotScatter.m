@@ -1,6 +1,16 @@
 function [] = plotScatter(x, y, mat, varargin)
 
 [opts, args] = checkOptions({{'xinds', 1}, {'yinds', 1}}, varargin);
+
+[M, N] = size(mat);
+
+if isempty(x)
+    x = 1:M;
+end
+
+if isempty(y)
+    y = 1:N;
+end
      
 xinds = 1:length(x);
 yinds = 1:length(y);
@@ -14,7 +24,7 @@ end
 
 yLab = cell(1,length(y));
 for n = 1:length(y)
-    yLab{n} = num2str(y(n), '%4.1f');
+    yLab{n} = num2str(y(n), '%4.2f');
 end
 
 xLab = cell(1,length(x));

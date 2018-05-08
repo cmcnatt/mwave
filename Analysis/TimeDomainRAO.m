@@ -173,10 +173,10 @@ classdef TimeDomainRAO < TimeDomainAnalysis
                         amps0 = tda.waveAmps{sigInds(m), wgInds(n)};
                         
                         % adjust phase to WEC position
-                        amps = zeros(size(amps0));
-                        for o = 1:length(beta)
-                            k = k0*[cos(beta(1)), sin(beta(1))];
-                            amps(o) = amps0(o)*exp(-1i*dot(k(n,:), r0));
+                        amps = zeros(1,length(betaInds));
+                        for o = 1:length(betaInds)
+                            k = k0(n)*[cos(beta(betaInds(o))), sin(beta(betaInds(o)))];
+                            amps(o) = amps0(o)*exp(-1i*dot(k, r0));
                         end
 
                         % energy flux
@@ -243,7 +243,8 @@ classdef TimeDomainRAO < TimeDomainAnalysis
     methods (Access = protected)
         function [sigs, timeFreq] = raoGetValues(tda, type, sigInds, dofs, varargin)
             
-            [opts, args] = checkOptions({{'rao', 1}, {'noNorm'}, {'normPhase'}, {'offset', 2}}, varargin);
+            [opts, args] = checkOptions({{'rao', 1}, {'noNorm'}, {'normPhase'}, ...
+                {'offset', 2}, {'mat'}, {'normPhaseSurge'}}, varargin);
             
             rao = opts(1);
             noNorm = opts(2);
@@ -256,6 +257,8 @@ classdef TimeDomainRAO < TimeDomainAnalysis
                     beginTime = args{4}{2};
                 end
             end
+            mat = opts(5);
+            normSur = opts(6);
             
             ai = tda.GetWaves(sigInds, 1, 'amps', 'betaInd', 1, 'mat');
             
@@ -275,6 +278,17 @@ classdef TimeDomainRAO < TimeDomainAnalysis
                 [Nf, Ndof] = size(specs);
                 sigs = cell(Ndof, Na);
                 timeFreq = tda.freqs;
+                
+                if normSur
+                    beta = tda.waveBeta(1);
+                    k0 = IWaves.SolveForK(2*pi*tda.freqs, tda.h);
+                    for m = 1:Nf
+                        k = k0(m)*[cos(beta), sin(beta)];
+                        xpos = specs{m,1}(1);
+                        r0 = [xpos, 0];
+                        ai(m) = ai(m)*exp(-1i*dot(k, r0));
+                    end
+                end
                 
                 if offset
                     Na = 1;
@@ -302,9 +316,22 @@ classdef TimeDomainRAO < TimeDomainAnalysis
                         end
                     end
                 end
+                
+                if mat
+                    sigsM = zeros(Ndof, Na, Nf);
+                    for m = 1:Ndof
+                        for n = 1:Na
+                            for o = 1:Nf
+                                sigsM(m, n, o) = sigs{m, n}(o);
+                            end
+                        end
+                    end
+                    sigs = squeeze(sigsM);
+                end
             else
                 [sigs, timeFreq] = tda.getValues(type, sigInds, dofs, varargin{:});
             end
+            
         end
         
         function [] = computeWaveAmps(tda)

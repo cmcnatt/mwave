@@ -18,25 +18,22 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Contributors:
     C. McNatt
 %}
-function [] = Wamit_writeBpi(fileLoc, name, points)
-
-if isempty(points)
-    Np = 0;
-else
-    [Np, M] = size(points);
-    if 3 ~= M
-        error('points must be an Np x 3 matrix');
-    end
-end
+classdef StlGeoUT <  matlab.unittest.TestCase
     
-fileName = [fileLoc '\' name '.bpi'];
-fileID = fopen(fileName, 'wt');
-
-fprintf(fileID, ['Model ' name ', created: ' date '\n']);
-fprintf(fileID, '%i\n', Np);
-for n = 1:Np
-    fprintf(fileID, '\t%8.4f\t%8.4f\t%8.4f\n', points(n,1), points(n,2), points(n,3));
-end
-
-fclose(fileID);
+    methods (Test)
+        function test1(testCase)
+            
+            filePath = [mwavePath '\UnitTests\files\'];
+            fwd = StlGeo;
+            fwd.Read([filePath 'forward.stl']);
+            
+            aft = StlGeo;
+            aft.Read([filePath 'aft.stl']);
+            
+            figure;
+            fwd.Plot;
+            %aft.Plot;
+            axis equal
+        end
+    end
 end

@@ -41,6 +41,17 @@ classdef IFreqDomComp < IEnergyComp & handle
         isComp;
         P;
         badInds;
+        a0;
+        b0;
+        c0;
+        m0;
+        dpto0;
+        dpar0;
+        k0;
+        fext0;
+        fpto0;
+        fex0;
+        ffk0;
     end
     
     properties (Dependent)
@@ -162,6 +173,10 @@ classdef IFreqDomComp < IEnergyComp & handle
             % Optional input includes 'Optimal' which returns the motions
             % required for optimal power absorption of the array
             
+            % The complex motion amplitudes of the bodies in the array.
+            % Optional input includes 'Optimal' which returns the motions
+            % required for optimal power absorption of the array
+            
             hcomp.computeIfNot();
             
             opts = checkOptions({{'Optimal'}, {'ConstOpt', 1}, {'OrgCoor'}}, varargin);
@@ -169,7 +184,7 @@ classdef IFreqDomComp < IEnergyComp & handle
             optm = (opts(1) || opts(2));
             
             orgCoor = opts(3);
-            
+
             omega = 2*pi./hcomp.t;
             
             fex = hcomp.Fex;
@@ -195,9 +210,10 @@ classdef IFreqDomComp < IEnergyComp & handle
             if (ndims(hcomp.k) == 3)
                 kfreq = true;
             end
-            
+                        
             if (~optm)
                 motions = zeros(size(fex));
+         
                 m_ = hcomp.m;
                 ddpto = hcomp.dpto;
                 ddpar = hcomp.dpar;
@@ -229,11 +245,12 @@ classdef IFreqDomComp < IEnergyComp & handle
                     end
 
                     lhs = -omega(n)^2.*(m_ + a_) + 1i*omega(n)*(d_ + b_) + k_ + c_;
-
+                    
                     if (ndims(fex) == 2)
                         f = fex(n, :).';
+                        xi = lhs\f;
                         if (~hcomp.badInds(n))
-                            motions(n, :) = lhs\f;
+                            motions(n, :) = xi;
                         else
                             motions(n, :) = NaN;
                         end
@@ -243,11 +260,12 @@ classdef IFreqDomComp < IEnergyComp & handle
                             for p = 1:hcomp.dof
                                 f(p) = fex(n, j, p);
                             end
-                            %f = squeeze(fex(n, j, :));
+                            xi = lhs\f;
+                            
                             if (~hcomp.badInds(n))
-                                motions(n, j, :) = lhs\f;
+                                motions(n, j, :) = xi;
                             else
-                                motions(n, :) = NaN;
+                                motions(n, j, :) = NaN;
                             end
                         end
                     end
@@ -262,19 +280,20 @@ classdef IFreqDomComp < IEnergyComp & handle
                     else
                         motions = zeros(hcomp.nT, hcomp.nInc, Ndim);
                     end
-                    
+                                        
                     for m_ = 1:hcomp.nT
                         for n = 1:hcomp.nInc
                             if (ndims(fex) == 2)
-                                motions(m_, :) = PT*mot1(m_, :);
+                                xu = PT*mot1(m_, :);
+                                motions(m_, :) = xu;
                             else
                                 Nm = size(PT,2);
                                 mot1s = zeros(size(PT,2), 1);
                                 for o = 1:Nm
                                     mot1s(o) = mot1(m_, n, o);
                                 end
-                                motions(m_, n, :) = PT*mot1s;
-                                %motions(m_, n, :) = PT*squeeze(mot1(m_, n, :));
+                                xu = PT*mot1s;
+                                motions(m_, n, :) = xu;
                             end
                         end
                     end
@@ -378,6 +397,186 @@ classdef IFreqDomComp < IEnergyComp & handle
                         end
                     end
                 end                
+            end
+        end
+        
+        function [force] = GetOrgForce(hcomp, name)
+            
+            if strcmpi('a', name) || strcmpi('a0', name)
+                force = hcomp.a0;
+            elseif strcmpi('b', name) || strcmpi('b0', name)
+                force = hcomp.b0;
+            elseif strcmpi('c', name) || strcmpi('c0', name)
+                force = hcomp.c0;
+            elseif strcmpi('dpto', name) || strcmpi('dpto0', name)
+                force = hcomp.dpto0;
+            elseif strcmpi('dpar', name) || strcmpi('dpar0', name)
+                force = hcomp.dpar0;
+            elseif strcmpi('k', name) || strcmpi('k0', name)
+                force = hcomp.k0;
+            elseif strcmpi('fext', name) || strcmpi('fext0', name)
+                force = hcomp.fext0;
+            elseif strcmpi('fpto', name) || strcmpi('fpto0', name)
+                force = hcomp.fpto0;
+            elseif strcmpi('fex', name) || strcmpi('fex0', name)
+                force = hcomp.fex0;
+            elseif strcmpi('ffk', name) || strcmpi('ffk0', name)
+                force = hcomp.ffk0;
+            else
+                error('Original force name not found');
+            end
+        end
+        
+        function [forces] = ForceConstraint(hcomp, vararign)
+            omega = 2*pi./hcomp.t;
+            
+            fex = hcomp.fex0;
+            if ~isempty(hcomp.fext0)
+                fex = fex + hcomp.fext0;
+            end
+            
+            if ~isempty(hcomp.fpto0)
+                fex = fex + hcomp.fpto0;
+            end
+            
+            dfreqPto = false;
+            if ~isempty(hcomp.dpto0)
+                if ndims(hcomp.dpto0) == 3
+                    dfreqPto = true;
+                end
+            end
+            
+            dfreqPar = false;
+            if ~isempty(hcomp.dpar0)
+                if ndims(hcomp.dpar0) == 3
+                    dfreqPar = true;
+                end
+            end
+            
+            kfreq = false;
+            if ~isempty(hcomp.k0)
+                if (ndims(hcomp.k0) == 3)
+                    kfreq = true;
+                end
+            end
+            
+            m_ = hcomp.m0;
+            ddpto = hcomp.dpto0;
+            ddpar = hcomp.dpar0;
+            kk = hcomp.k0;
+            c_ = hcomp.c0;
+            
+            [dof0, ~] = size(m_);
+            
+            motions = hcomp.Motions('OrgCoor');
+            
+            forces = zeros(size(motions));
+
+            for n = 1:hcomp.nT
+
+                a_ = reshape(hcomp.a0(n,:,:), [dof0, dof0]);
+                b_ = reshape(hcomp.b0(n,:,:), [dof0, dof0]);
+
+                if ~isempty(ddpto)
+                    if (dfreqPto)                       
+                        d_ = reshape(ddpto(n,:,:), [dof0, dof0]);
+                    else
+                        d_ = ddpto;
+                    end
+                else
+                    d_ = zeros(dof0, dof0);
+                end
+
+                if ~isempty(ddpar)
+                    if (dfreqPar)
+                        dp = reshape(ddpar(n,:,:), [dof0, dof0]);
+                        d_ = d_ + dp;
+                    else
+                        d_ = d_ + ddpar;
+                    end
+                end
+
+                if ~isempty(kk)
+                    if (kfreq)
+                        k_ = reshape(kk(n,:,:), [dof0, dof0]);
+                    else
+                        k_ = kk;
+                    end
+                else
+                    k_ = zeros(dof0, dof0);
+                end
+
+                lhs = -omega(n)^2.*(m_ + a_) + 1i*omega(n)*(d_ + b_) + k_ + c_;
+
+                if (ndims(fex) == 2)
+                    f = fex(n, :).';
+                    xi = motions(n, :);
+                    
+                    forces(n, :) = (f - lhs*xi);
+                else
+                    for j = 1:hcomp.nInc
+                        f = zeros(dof0,1);
+                        for p = 1:dof0
+                            f(p) = fex(n, j, p);
+                        end
+                        xi = squeeze(motions(n, j, :));
+
+                        forces(n, j, :) = (f - lhs*xi);
+                    end
+                end
+            end
+        end
+        
+        function [forces] = ForceMooring(hcomp, varargin)
+            [opts] = checkOptions({'OrgCoor'}, varargin);
+            
+            orgCoor = opts(1);
+            
+            motions = hcomp.Motions(varargin{:});
+            forces = zeros(size(motions));
+            
+            if ndims(motions) == 2
+                [~, dof0] = size(motions);
+            else
+                [~, ~, dof0] = size(motions);
+            end
+            
+            if orgCoor
+                kk = hcomp.k0;
+            else
+                kk = hcomp.k;
+            end
+            
+            kfreq = false;
+            if ~isempty(hcomp.k0)
+                if (ndims(hcomp.k0) == 3)
+                    kfreq = true;
+                end
+            end
+            
+            for n = 1:hcomp.nT
+
+                if ~isempty(kk)
+                    if (kfreq)
+                        k_ = reshape(kk(n,:,:), [dof0, dof0]);
+                    else
+                        k_ = kk;
+                    end
+                else
+                    k_ = zeros(dof0, dof0);
+                end
+
+                if (ndims(motions) == 2)
+                    xi = motions(n, :);
+                    
+                    forces(n, :) = -k_*xi;
+                else
+                    for j = 1:hcomp.nInc
+                        xi = squeeze(motions(n, j, :));
+
+                        forces(n, j, :) = -k_*xi;
+                    end
+                end
             end
         end
         
@@ -581,8 +780,8 @@ classdef IFreqDomComp < IEnergyComp & handle
             
             [pmat, idptos] = PowerMatrix.CreatePowerMatrix(hcomp, Hs, T, 'makeObj', varargin{:});
         end
-        
-        function [frad] = Frad(hcomp, varargin)
+                
+        function [frad] = ForceRadiation(hcomp, varargin)
             
             opts = checkOptions({{'Optimal'}, {'ConstOpt', 1}, {'OrgCoor'}}, varargin);
             
@@ -638,40 +837,62 @@ classdef IFreqDomComp < IEnergyComp & handle
             end
         end
         
-        function [] = SetM(hcomp, m_)
+        function [] = SetM(hcomp, m, m0)
             % Set the Mass value, currently does not change the
             % values of the floating bodies
             
-            hcomp.checkMatSize(m_);
+            hcomp.checkMatSize(m);
 
-            hcomp.m = m_;
+            hcomp.m = m;
+            
+            if nargin > 2
+                hcomp.m0 = m0;
+            end
         end
         
-        function [] = SetDpto(hcomp, d_)
+        function [] = SetDpto(hcomp, d, d0)
             % Set the PTO damping values, currently does not change the
             % values of the floating bodies
             
-            hcomp.checkMatSize(d_);
+            hcomp.checkMatSize(d);
 
-            hcomp.dpto = d_;
+            hcomp.dpto = d;
+            
+            if nargin > 2
+                hcomp.dpto0 = d0;
+            end
         end
         
-        function [] = SetDpar(hcomp, d_)
+        function [] = SetDpar(hcomp, d, d0)
             % Set the parasitic damping values, currently does not change the
             % values of the floating bodies
+                        
+            if nargin > 2
+                hcomp.dpar0 = d0;
+                if isempty(d)
+                    d = hcomp.P*d0*hcomp.P.';
+                end
+            end
             
-            hcomp.checkMatSize(d_);
+            hcomp.checkMatSize(d);
             
-            hcomp.dpar = d_;
+            hcomp.dpar = d;
         end
         
-        function [] = SetK(hcomp, k_)
+        function [] = SetK(hcomp, k, k0)
             % Set the mechanical stiffness values, currently does not change the
             % values of the floating bodies
             
-            hcomp.checkMatSize(k_);
+            if nargin > 2
+                hcomp.k0 = k0;
+                if isempty(k)
+                    k = hcomp.P*k0*hcomp.P.';
+                end
+            end
             
-            hcomp.k = k_;
+            hcomp.checkMatSize(k);
+            
+            hcomp.k = k;
         end
         
         function [] = SetPTOInds(hcomp, val)
@@ -693,25 +914,33 @@ classdef IFreqDomComp < IEnergyComp & handle
             hcomp.ipto = val;
         end
         
-        function [] = SetFext(hcomp, val)
+        function [] = SetFext(hcomp, fext, fext0)
             % External excitation forces that do not contribute to PTO power absorption
             % e.g Morison excitation force
-            if ~isempty(val)
-                if ~all(size(hcomp.Fex) == size(val))
+            if ~isempty(fext)
+                if ~all(size(hcomp.Fex) == size(fext))
                     error('Fext must be the same size as Fex');
                 end
             end
-            hcomp.fext = val;
+            hcomp.fext = fext;
+            
+            if nargin > 2
+                hcomp.fext0 = fext0;
+            end
         end
         
-        function [] = SetFpto(hcomp, val)
+        function [] = SetFpto(hcomp, fpto, fpto0)
             % External excitation forces that contribute to PTO power absorption
-            if ~isempty(val)
-                if ~all(size(hcomp.Fex) == size(val))
+            if ~isempty(fpto)
+                if ~all(size(hcomp.Fex) == size(fpto))
                     error('Fpto must be the same size as Fex');
                 end
             end
-            hcomp.fpto = val;
+            hcomp.fpto = fpto;
+            
+            if nargin > 2
+                hcomp.fpto0 = fpto0;
+            end
         end
     end
     
@@ -742,6 +971,11 @@ classdef IFreqDomComp < IEnergyComp & handle
             
             [m_, dpto_, dpar_, k_, c_] = IFreqDomComp.resizeMDK(bods);
 
+            hcomp.m0 = m_;
+            hcomp.dpto0 = dpto_;
+            hcomp.dpar0 = dpar_;
+            hcomp.k0 = k_;
+            hcomp.c0 = c_;
             if (const)
                 m_ = P*m_*P.';
                 dpto_ = P*dpto_*P.';

@@ -18,9 +18,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Contributors:
     C. McNatt
 %}
-classdef ModesOfMotion
+classdef ModesOfMotion < handle
     
     properties (Access = private)
+        cg;
         vector;
         genMotFuncs;
     end
@@ -36,6 +37,7 @@ classdef ModesOfMotion
         HasGen;
         NGen;
         Motions;        % Cell array of strings of active modes
+        Cg;
         DoF;            % Number of degrees of freedom
         Vector;         % Vector of active modes
         MotionFuncs;    
@@ -47,6 +49,7 @@ classdef ModesOfMotion
         function [modes] = ModesOfMotion(mods)
             % Constructor
             if (nargin == 0)
+                modes.cg = [0 0 0];
                 modes.vector = [1 1 1 1 1 1];
                 modes.genMotFuncs = [];
             else
@@ -71,6 +74,13 @@ classdef ModesOfMotion
                     modes.vector(n) = mods(n);
                 end
             end
+        end
+        
+        function [val] = get.Cg(modes)
+            val = modes.cg;
+        end
+        function [] = set.Cg(modes, val)
+            modes.cg = val;
         end
         
         function [su] = get.Surge(modes)
@@ -239,6 +249,7 @@ classdef ModesOfMotion
                         case 6
                             mfuncs(mind) = YawFunc;
                     end
+                    mfuncs(mind).Cg = modes.cg;
                     mind = mind + 1;
                 end
             end

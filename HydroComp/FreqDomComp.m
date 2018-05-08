@@ -36,6 +36,7 @@ classdef FreqDomComp < IFreqDomComp & CopyLoadHandleBase
         Fex;
         Ffk;
         DeviceCount;
+        BodyInds;
     end
     
     methods
@@ -105,6 +106,8 @@ classdef FreqDomComp < IFreqDomComp & CopyLoadHandleBase
                     hbcomp.setIncWaves(iwavs);
                     fex_ = hydro.Fex;
                     ffk_ = hydro.Ffk;
+                    hbcomp.fex0 = fex_;
+                    hbcomp.ffk0 = ffk_;
                     if (const)
                         [M, N] =  size(P);
                         [Nt, Nb, ~] = size(fex_);
@@ -144,6 +147,7 @@ classdef FreqDomComp < IFreqDomComp & CopyLoadHandleBase
 
                 if (~useBodC)
                     c = hydro.C;
+                    hbcomp.c0 = c;
                     if (const)
                         c = P*c*P.';
                     end
@@ -152,6 +156,8 @@ classdef FreqDomComp < IFreqDomComp & CopyLoadHandleBase
                 
                 a_ = hydro.A;
                 b_ = hydro.B;
+                hbcomp.a0 = a_;
+                hbcomp.b0 = b_;
                 
                 if checkNegB
                     hbcomp.checkBadVals(b_);
@@ -169,8 +175,6 @@ classdef FreqDomComp < IFreqDomComp & CopyLoadHandleBase
                                 bm(p,q) = b_(m,p,q);
                             end
                         end
-%                         ac(m,:,:) = P*squeeze(a_(m,:,:))*P.';
-%                         bc(m,:,:) = P*squeeze(b_(m,:,:))*P.';
                         ac(m,:,:) = P*am*P.';
                         bc(m,:,:) = P*bm*P.';
                     end
@@ -239,6 +243,17 @@ classdef FreqDomComp < IFreqDomComp & CopyLoadHandleBase
                 error('The DeviceCount must be an integer');
             end
             hbcomp.devCount = val;
+        end
+        
+        function [val] = get.BodyInds(hbcomp)
+            % Vector of the indices of the body dof
+            val = zeros(hbcomp.dof, 1);
+            dofc = 0;
+            for n = 1:length(hbcomp.bodies)
+                dofn = hbcomp.bodies(n).Modes.DoF;
+                val(dofc+1:dofc+dofn) = n;
+                dofc = dofc + dofn;
+            end
         end
         
         function [kfs, kfr] = KochinFuncs(hbcomp)
@@ -343,6 +358,106 @@ classdef FreqDomComp < IFreqDomComp & CopyLoadHandleBase
             
             wf = FBWaveField(iwavefields, swavefields, rwavefields);
             wf.BodyMotions = hbcomp.Motions;
+        end
+        
+        function [] = WriteFreqDomMotions(hcomp, folder, name, time, A, bodyInd, posVelAcc)
+            if nargin < 4
+                time = 0;
+            end
+            
+            if nargin < 5
+                A = 1;
+            end
+            
+            if nargin < 6
+                bodyInd = [];
+            end
+            
+            if nargin < 7
+                posVelAcc = [0 0 1];
+            end
+            
+            T0 = hcomp.t;
+            if length(T0) > 1
+                error('Mutiple periods not yet supported');
+            end
+            
+            omega = 2*pi./T0;
+            
+            bods = hcomp.fbs;
+            Nbod = length(bods);
+            ibod = ones(Nbod, 1);
+            
+            if ~isempty(bodyInd)
+                ibod = zeros(Nbod, 1);
+                ibod(bodyInd) = 1;
+            end
+            
+            mot = hcomp.Motions('OrgCoor');
+            vel = 1i*omega*mot;
+            acc = 1i*omega*vel;
+            mots = {mot, vel, acc};
+            
+            param = {'position', 'velocity', 'acceleration'};
+            dofNames = {'surge', 'sway', 'heave', 'roll', 'pitch', 'yaw'};
+            units = {{'m', 'm', 'm', 'rad', 'rad', 'rad'}; ...
+                {'m/s', 'm/s', 'm/s', 'rad/s', 'rad/s', 'rad/s'};
+                {'m/s^2', 'm/s^2', 'm/s^2', 'rad/s^2', 'rad/s^2', 'rad/s^2'};};
+
+            
+            for n = 1:length(time)
+                
+                phase = wrapTo2Pi(time(n)/T0*2*pi);
+                At = A*exp(1i*phase);
+                    
+                tstr = num2str(time(n), '%4.2f');
+                tstr(tstr == '.') = '-';
+
+                fileName = [folder '\' name '_t' tstr '.csv'];
+                fid = fopen(fileName, 'w+');
+
+                fprintf(fid, 'parameter,dof,units,');
+                for n = 1:Nbod
+                    if ibod(n)
+                        fprintf(fid, 'body %i,', n);
+                    end
+                end
+                fprintf(fid, '\n');
+
+                fprintf(fid, 'name,,,');
+                for n = 1:Nbod
+                    if ibod(n)
+                        fprintf(fid, '%s,', bods(n).Handle);
+                    end
+                end
+                fprintf(fid, '\n');
+
+                for imot = 1:length(posVelAcc)
+
+                    if posVelAcc(imot)
+                        thisMot = mots{imot};
+
+                        idof = 1;
+                        for m = 1:6
+                            fprintf(fid, '%s,%s,%s,', param{imot}, dofNames{m}, units{imot}{m});
+                            for n = 1:Nbod
+                                vect = bods(n).Modes.Vector;
+                                if vect(m)
+                                    if ibod(n)
+                                        fprintf(fid, '%6.4f,', real(At*thisMot(1,1,idof)));
+                                    else
+                                        fprintf(fid, '-,');
+                                    end
+                                    idof = idof + 1;
+                                end
+                            end
+                            fprintf(fid, '\n');
+                        end
+                    end
+                end
+            
+                fclose(fid);
+            end
         end
     end
       

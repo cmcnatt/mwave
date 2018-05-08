@@ -226,23 +226,18 @@ classdef WaveSpectrum <handle
         
         % Amplitudes
         function [a] = Amplitudes(spec, varargin)
-            narg = length(varargin);
+            [opts, args] = checkOptions({{'Nondir'}, {'WithEnergy'}, ...
+                {'RandPhase'}, {'RandSeed', 1}}, varargin);
             
-            nondir = 0;
-            withEnergy = 0;
-            randPhase = 0;
-            
-            for n = 1:narg
-                switch (varargin{n})
-                    case 'Nondir'
-                        nondir = 1;
-                    case 'WithEnergy'
-                        withEnergy = 1;
-                    case 'RandPhase'
-                        randPhase = 1;
-                end
+            nondir = opts(1);
+            withEnergy = opts(2);
+            randPhase = opts(3);
+            seed = [];
+            if opts(4)
+                randPhase = true;
+                seed = args{4};
             end
-                                   
+                              
             if (nondir || ~spec.isdir)
                 Spec = spec.Spectrum('Nondir');
                 df = spec.Deltas('Frequency');
@@ -269,6 +264,9 @@ classdef WaveSpectrum <handle
             end
             
             if (randPhase)
+                if ~isempty(seed)
+                    rng(seed);
+                end
                 a = a.*exp(1i*2*pi*rand(size(a)));
             end
         end
@@ -328,6 +326,18 @@ classdef WaveSpectrum <handle
                     Ef = ef;
                 end
             end
+        end
+        
+        function [H, T] = EnergyWave(spec, rho, h)
+            Ef = spec.EnergyFlux(rho, h, 'Total');
+            if ~isa(spec, 'Bretschneider')
+                error('EnergyWave computation not set up for non-Bretschnider wave');
+            end
+            T = Bretschneider.ConverterT(spec.PeakPeriod, 'Tp', 'Te');
+            wav = PlaneWaves(1, T, 0, h);
+
+            a = sqrt(2*Ef/(rho*IWaves.G*wav.Cg));
+            H = 2*a;
         end
         
         function [] = Redistribute(spec, type, vals, varargin)

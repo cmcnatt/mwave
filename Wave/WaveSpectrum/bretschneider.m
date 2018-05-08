@@ -71,6 +71,31 @@ classdef Bretschneider < WaveSpectrum
 
                 E = coef./(f.^5).*exp(-5/4*(fp./f).^4);
         end
+        
+        function [To] = ConverterT(Ti, typeIn, typeOut)
+            
+            % convert to T02
+            if strcmpi(typeIn, 'T02')
+                T02 = Ti;
+            elseif strcmpi(typeIn, 'Te')
+                T02 = 1/1.206*Ti;
+            elseif strcmpi(typeIn, 'Tp')
+                T02 = 0.71*Ti;
+            else
+                error('typeIn not recognized');
+            end
+            
+            % convert T02 to typeOut
+            if strcmpi(typeOut, 'T02')
+                To = T02;
+            elseif strcmpi(typeOut, 'Te')
+                To = 1.206*T02;
+            elseif strcmpi(typeOut, 'Tp')
+                To = 1/0.71*T02;
+            else
+                error('typeOut not recognized');
+            end
+        end
     end
     
 end

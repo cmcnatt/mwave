@@ -25,40 +25,44 @@ classdef FroudeScale < handle
             
             if strcmpi(type, 'linear')
                 scl = scale;
+            elseif strcmpi(type, 'area')
+                scl = scale.^2;
+            elseif strcmpi(type, 'volume')
+                scl = scale.^3;
             elseif strcmpi(type, 'angle')
                 scl = 1;
             elseif strcmpi(type, 'time')
                 scl = sqrt(scale);
             elseif strcmpi(type, 'frequency')
-                scl = 1/sqrt(scale);
+                scl = 1./sqrt(scale);
             elseif strcmpi(type, 'vel')
                 scl = sqrt(scale);
             elseif strcmpi(type, 'angvel')
-                scl = 1/sqrt(scale);
+                scl = 1./sqrt(scale);
             elseif strcmpi(type, 'accel')
                 scl = 1;
             elseif strcmpi(type, 'angaccel')
-                scl = 1/sqrt(scale);
+                scl = 1./sqrt(scale);
             elseif strcmpi(type, 'mass')
-                scl = scale^3;
+                scl = scale.^3;
             elseif strcmpi(type, 'inertia')
-                scl = scale^5;
+                scl = scale.^5;
             elseif strcmpi(type, 'stifflin')
-                scl = scale^2;
+                scl = scale.^2;
             elseif strcmpi(type, 'stiffrot')
-                scl = scale^4;
+                scl = scale.^4;
             elseif strcmpi(type, 'damplin')
-                scl = scale^2.5;
+                scl = scale.^2.5;
             elseif strcmpi(type, 'damprot')
-                scl = scale^4.5;
+                scl = scale.^4.5;
             elseif strcmpi(type, 'force')
-                scl = scale^3;
+                scl = scale.^3;
             elseif strcmpi(type, 'torque')
-                scl = scale^4;
+                scl = scale.^4;
             elseif strcmpi(type, 'power')
-                scl = scale^3.5;
+                scl = scale.^3.5;
             elseif strcmpi(type, 'energy')
-                scl = scale^3;
+                scl = scale.^4;
             else
                 error('scale type not found');
             end

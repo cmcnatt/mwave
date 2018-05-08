@@ -194,7 +194,7 @@ classdef FBWaveField < IWaveField & handle
             end
             wf.motions = mot;
         end
-        
+                
         % DoF
         function [df] = get.DoF(wf)
             df = wf.dof;
@@ -345,8 +345,41 @@ classdef FBWaveField < IWaveField & handle
                 type = 'Total';
             end
             
-            thiswf = wf.getWF(type);
-            p = thiswf.Pressure;
+            if strcmpi(type, 'Hydrostatic')
+                if wf.isarray
+                    p = {zeros(size(wf.x))};
+                else
+                    z = wf.points(:,3);
+                    z(z > 0) = 0;
+                    p = {-wf.rho*wf.g*z};
+                end
+            elseif strcmpi(type, 'MotionHydrostatic')
+                if isempty(wf.motionFuncs)
+                    error('WaveField.MotionFuncs empty. Cannot compute MotionHydrostatic');
+                end
+                
+                [M, N, dof] = size(wf.motions);
+                p = cell(M, N);
+                funcs = wf.motionFuncs;
+                [Np, ~] = size(wf.points);
+                for m = 1:M
+                    for n = 1:N
+                        pmn = zeros(Np, 1);
+                        for o = 1:Np
+                            if wf.points(o,3) <= 0
+                                for q = 1:dof
+                                    del = wf.motions(m, n, q)*funcs(q).Evaluate(wf.points(o,:));
+                                    pmn(o) = pmn(o) + -wf.rho*wf.g*del(3);  
+                                end
+                            end
+                        end
+                        p{m, n} = pmn;
+                    end
+                end
+            else
+                thiswf = wf.getWF(type);
+                p = thiswf.Pressure;
+            end
         end
         
         function [vel] = velocity(wf, type)

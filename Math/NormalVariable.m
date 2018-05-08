@@ -1,6 +1,7 @@
 classdef NormalVariable < IRandomVariable
     
     properties (SetAccess = protected, GetAccess = protected)
+        lims;
         mean;
         std;
     end
@@ -8,16 +9,26 @@ classdef NormalVariable < IRandomVariable
     properties (Dependent)
        Mean;
        Std;
+       Limits;
     end
     
     methods    
         
-        function [rnum] = NormalVariable(varargin)
-            rnum.mean = 0;
-            rnum.std = 1;
-            if ~isempty(varargin)
-                rnum.mean = varargin{1};
-                rnum.std = varargin{2};
+        function [rnum] = NormalVariable(mean, std, lims)
+            if nargin < 1
+                rnum.mean = 0;
+            else
+                rnum.mean = mean;
+            end
+            if nargin < 2
+                rnum.std = 1;
+            else
+                rnum.std = std;
+            end
+            if nargin < 3
+                rnum.lims = [-Inf, Inf];
+            else
+                rnum.lims = lims;
             end
         end
         
@@ -45,6 +56,18 @@ classdef NormalVariable < IRandomVariable
             rnum.std = val;
         end
         
+        function [val] = get.Limits(rnum)
+            % limits on the distribution
+            val = rnum.lims;
+        end
+        function [] = set.Limits(rnum, val)
+            % limits on the distribution
+            if length(val) ~= 2
+                error('The limits must be a vector of a lower and upper limit');
+            end
+            rnum.lims = val;
+        end
+        
         function [val] = Sample(rnum, varargin)
             % get a sample random number
             a = 1;
@@ -53,6 +76,9 @@ classdef NormalVariable < IRandomVariable
             end
             
             val = rnum.std*randn(a) + rnum.mean;
+            
+            val(val < rnum.lims(1)) = rnum.lims(1);
+            val(val > rnum.lims(2)) = rnum.lims(2);
         end
     end
 end

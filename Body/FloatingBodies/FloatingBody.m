@@ -24,12 +24,14 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
     properties (Access = protected)
         handle;
         geoFile;
+        compGeoFile;
         panelGeo;
         cg;
         cb;
         wetVol;
         totVol;
         surfArea;
+        massBall;
         m;
         dpto;
         dpar;
@@ -55,7 +57,8 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
 
     properties (Dependent)
         Handle;         % Descriptive name of floating body
-        GeoFile;        % Name of .cfg geometry file (do not include ".cfg")
+        GeoFile;        % Name of .gdf geometry file (do not include ".gdf")
+        CompGeoFile;    % Name of .gdf geometry file associated with the computation of pessures and velocities on the body surface
         PanelGeo;       % The actual panel geometry  
         Cg;             % Center of Gravity in body coordinates
         CgGlobal;       % Center of Gravity in Global coordinates
@@ -63,6 +66,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
         WetVolume;      % Submerged volume
         TotalVolume;    % Total volume
         SurfArea;       % Total surface area
+        MassBallast;    % Estimated mass of the ballast required for a given submergence
         M;              % Mass matrix
         Dpto;           % PTO Damping matrix
         Dpar;           % Parasitic damping matrix 
@@ -95,6 +99,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
             if (nargin == 0)
                 fb.handle = 'newFB';
                 fb.geoFile = [];
+                fb.compGeoFile = [];
                 fb.panelGeo = [];
                 fb.cg = zeros(1, 3);
                 fb.cb = zeros(1, 3);
@@ -118,9 +123,14 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
                 fb.surfAboveZ0 = false;
                 fb.writeFileMeth = [];
                 fb.writeParams = [];
+                fb.massBall = [];
+                fb.wetVol = [];
+                fb.totVol = [];
+                fb.surfArea = [];
             elseif (isa(varargin{1},'FloatingBody'))
                 fbin = varargin{1};
                 fb.geoFile = fbin.geoFile;
+                fb.compGeoFile = fbin.compGeoFile;
                 fb.panelGeo = fbin.panelGeo;
                 fb.cg = fbin.cg;
                 fb.cb = fbin.cb;
@@ -145,6 +155,10 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
                 fb.surfAboveZ0 = fbin.surfAboveZ0;
                 fb.writeFileMeth = fbin.writeFileMeth;
                 fb.writeParams = fbin.writeParams;
+                fb.massBall = fbin.massBall;
+                fb.wetVol = fbin.wetVol;
+                fb.totVol = fbin.totVol;
+                fb.surfArea = fbin.surfArea;
             else
                 error('Input not allowed');
             end
@@ -187,6 +201,26 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
             end
         end
         
+        function [fn] = get.CompGeoFile(fb)
+            % Get the name of geometry file associated with the compuation of pointns on the floating body
+            fn = fb.compGeoFile;
+        end
+        function [] = set.CompGeoFile(fb, fn)
+            % Get the name of geometry file associated with the compuation of pointns on the floating body
+            if (ischar(fn))
+                fb.compGeoFile = fn;
+                lfn = length(fn);
+                if(lfn > 4)
+                    ending = fn((lfn-3):lfn);
+                    if (ending == '.gdf')
+                        error('The GeoFile should not include .gdf');
+                    end
+                end
+            else
+                error('The GeoFile must be a string');
+            end
+        end
+        
         function [pg] = get.PanelGeo(fb)
             % Get the geometry (PanelGeo) object associated with this floating body
             pg = fb.panelGeo;
@@ -208,6 +242,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
             fb.checkSizeNx1(cg,3);        
             fb.onModifyCg(cg);
             fb.cg = cg;
+            fb.setCgOnModes;
         end
         
         function [cgg] = get.CgGlobal(fb)
@@ -257,6 +292,16 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
             % Set the total surface area of the floating body
             fb.checkSizeNx1(val, 1);        
             fb.surfArea = val;
+        end
+        
+        function [val] = get.MassBallast(fb)
+            % Get the estimated mass of the ballast required for a given submergence
+            val = fb.massBall;
+        end
+        function [] = set.MassBallast(fb, val)
+            % Set the estimated mass of the ballast required for a given submergence
+            fb.checkSizeNx1(val, 1);        
+            fb.massBall = val;
         end
         
         function [m_] = get.M(fb)
@@ -444,6 +489,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
                     k_(1:n, 1:n) = fb.k;
                     fb.k = k_;
                 end
+                fb.setCgOnModes;
             else
                 error('The Modes must be of type ModesOfMotion');
             end
@@ -525,7 +571,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
             end
             fb.surfAboveZ0 = val;
         end
-        
+                
         function [wfm] = get.WriteFileMeth(fb)
             % Additional methods to support the writing of a geometry file
             wfm = fb.writeFileMeth;
@@ -534,6 +580,81 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
         function [wpar] = get.WriteParams(fb)
             % Additional methods to support the writing of a geometry file
             wpar = fb.writeParams;
+        end
+    end
+    
+    methods (Static)
+        function [] = WriteBodyMetaData(folder, name, bodies, deltaCg, addParam)
+            
+            if nargin < 4
+                deltaCg = [0 0 0];
+            end
+            if nargin < 5
+                addParam = [];
+            end
+            
+            fileName = [folder '\' name '.csv'];
+            Nbod = length(bodies);
+            
+            fid = fopen(fileName, 'w+');
+            fprintf(fid, 'parameter,units,');
+            for n = 1:Nbod
+                fprintf(fid, 'body %i,', n);
+            end
+            fprintf(fid, '\n');
+            
+            fprintf(fid, 'name,,');
+            for n = 1:Nbod
+                fprintf(fid, '%s,', bodies(n).Handle);
+            end
+            fprintf(fid, '\n');
+            
+            fprintf(fid, 'mass,kg,');
+            for n = 1:Nbod
+                fprintf(fid, '%6.2f,', bodies(n).M(1,1));
+            end
+            fprintf(fid, '\n');
+            
+            names = {'Ixx', 'Iyy', 'Izz', 'Ixy', 'Ixz', 'Iyz'};
+            ind1 = [4, 5, 6, 4, 4, 5];
+            ind2 = [4, 5, 6, 5, 6, 6];
+            
+            for m = 1:6
+                fprintf(fid, '%s,kg*m2,', names{m});
+                for n = 1:Nbod
+                    fprintf(fid, '%6.2f,', bodies(n).M(ind1(m), ind2(m)));
+                end
+                fprintf(fid, '\n');
+            end
+            
+            names = {'Cg-x', 'Cg-y', 'Cg-z'};
+            
+            for m = 1:3
+                fprintf(fid, '%s,m,', names{m});
+                for n = 1:Nbod
+                    fprintf(fid, '%6.2f,', bodies(n).Cg(m) + deltaCg(m));
+                end
+                fprintf(fid, '\n');
+            end
+            
+            if ~isempty(addParam)
+                for m = 1:length(addParam)
+                    N = length(addParam(m).names);
+                    for n = 1:N
+                        fprintf(fid, '%s,%s,', addParam(m).names{n}, addParam(m).units{n});
+                        for o = 1:Nbod
+                            val = addParam(m).values(n, o);
+                            if addParam(m).incDelta(n)
+                                val = val + deltaCg(n);
+                            end
+                            fprintf(fid, '%6.2f,', val);
+                        end
+                        fprintf(fid, '\n');
+                    end
+                end
+            end
+            
+            fclose(fid);
         end
     end
    
@@ -572,6 +693,12 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
         
         function [] = onModifyCg(fb, cg)
             % do nothing in the superclass
+        end
+        
+        function [] = setCgOnModes(fb)
+            if ~isempty(fb.modes)
+                fb.modes.Cg = fb.cg;
+            end
         end
         
         function [] = onModifyPos(fb, v)

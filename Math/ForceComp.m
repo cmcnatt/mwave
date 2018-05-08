@@ -18,25 +18,31 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Contributors:
     C. McNatt
 %}
-function [] = Wamit_writeBpi(fileLoc, name, points)
-
-if isempty(points)
-    Np = 0;
-else
-    [Np, M] = size(points);
-    if 3 ~= M
-        error('points must be an Np x 3 matrix');
-    end
-end
+classdef ForceComp
     
-fileName = [fileLoc '\' name '.bpi'];
-fileID = fopen(fileName, 'wt');
-
-fprintf(fileID, ['Model ' name ', created: ' date '\n']);
-fprintf(fileID, '%i\n', Np);
-for n = 1:Np
-    fprintf(fileID, '\t%8.4f\t%8.4f\t%8.4f\n', points(n,1), points(n,2), points(n,3));
-end
-
-fclose(fileID);
+    methods (Static)
+        function [Fout] = ForceP2O(Fin, point, origin)
+            if nargin < 3
+                origin = [0; 0; 0];
+            end
+            if isrow(origin)
+                origin = origin';
+            end
+            if isrow(Fin)
+                Fin = Fin.';
+            end
+            if length(Fin) == 3
+                Fin = [Fin; zeros(3,1)];
+            end
+            if isrow(point)
+                point = point.';
+            end
+            f = Fin(1:3);
+            r = point - origin;
+            
+            Fout = zeros(6, 1);
+            Fout(1:3) = f;
+            Fout(4:6) = Fin(4:6) + cross(r, f);
+        end
+    end
 end

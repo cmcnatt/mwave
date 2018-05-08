@@ -181,6 +181,15 @@ classdef PanelGeo < handle
             end
         end
         
+        function [cents] = OffsetCentroids(geo, dist)
+            cnt = geo.Count;
+            cents = zeros(cnt, 3);
+            
+            for n = 1:cnt
+                cents(n, :) = geo.panels(n).OffsetCentroid(dist);
+            end
+        end
+        
         function [] = Rotate(geo, ax, angle, varargin)
             N = length(geo.panels);
             rotMat = createRotationMatrix(ax, angle);
@@ -188,7 +197,7 @@ classdef PanelGeo < handle
                 geo.panels(n).Rotate('RotMat', rotMat, varargin{:});
             end
         end
-        
+                
         function [geo1, geo2] = Split(geo, planePnt, planeNorm)
             pt = planePnt;
             nrm = planeNorm;
