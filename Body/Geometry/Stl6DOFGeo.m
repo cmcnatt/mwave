@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Contributors:
     C. McNatt
 %}
-classdef StlGeo < handle
+classdef Stl6DOFGeo < IStlGeo
     
     properties (Access = private)
         verts;
@@ -27,6 +27,7 @@ classdef StlGeo < handle
         areas;
         cents;
         cg;
+        cr;
         pos;
         orient;
     end
@@ -37,7 +38,9 @@ classdef StlGeo < handle
         Normals;
         Areas;
         Centers;
+        DOF;
         Cg;
+        CenterRot;
         Position;
         Orientation;
         RotationMatrix;
@@ -45,7 +48,7 @@ classdef StlGeo < handle
     
     methods
         
-        function [stl] = StlGeo(fileName)
+        function [stl] = Stl6DOFGeo(fileName)
             if nargin < 1
                 fileName = [];
             end
@@ -82,6 +85,13 @@ classdef StlGeo < handle
             val = stl.cg;
         end
         
+        function [] = set.CenterRot(stl, val)
+            stl.cr = val;
+        end
+        function [val] = get.CenterRot(stl)
+            val = stl.cr;
+        end
+        
         function [] = set.Position(stl, val)
             stl.pos = val;
         end
@@ -96,7 +106,21 @@ classdef StlGeo < handle
             val = stl.orient;
         end
         
+        function [val] = get.DOF(stl)
+            val = 6;
+        end
+        
+        function [] = SetSetting(stl, val)
+            if length(val) ~= stl.DOF
+                error('The value of the setting must be equal to the DOF');
+            end
+            
+            stl.pos = val(1:3);
+            stl.orient = val(4:6);
+        end
+        
         function [val] = get.RotationMatrix(stl)
+            % yaw, pitch, roll rotation matrix
             a = stl.orient;
             if isempty(a)
                 val = [];
@@ -110,18 +134,47 @@ classdef StlGeo < handle
                 Rz = [cos(a(3)) -sin(a(3)) 0;
                     sin(a(3)) cos(a(3)) 0;
                     0 0 1];
-                val = Rx*Ry*Rz;
+                val = Rz*Ry*Rx;
             end
         end
         
-        function [] = Read(stl, fileName) 
-            [stl.verts, stl.faces, stl.norms] = importStl(fileName);
-            stl.checkStl();
-            stl.triArea();
-            stl.triCenter();
+        function [] = SetStl(stl, verts, faces, cg)
+            if nargin < 4
+                cg = [0 0 0];
+            end
+            
+            [Nv, ~] = size(verts);
+            cgV = ones(Nv, 1)*cg;
+            
+            stl.verts = verts - cgV;
+            stl.faces = faces;
+            stl.norms = IStlGeo.triNorm(stl.faces, stl.verts);
+            stl.checkNorms(stl.norms);
+            stl.areas = IStlGeo.triArea(stl.faces, stl.verts);
+            stl.cents = IStlGeo.triCenter(stl.faces, stl.verts);
         end
         
-        function [verts, cents, norms] = PointsAtPosOrient(stl)
+        function [] = Read(stl, fileName, cgFile)
+            if nargin < 3
+                cgFile = [];
+            end
+            if isempty(cgFile)
+                cgFile = [0 0 0];
+            end
+            [v, f, n] = importStl(fileName);
+            
+            [Nv, ~] = size(v);
+            cgV = ones(Nv, 1)*cgFile;
+            
+            stl.verts = v - cgV;
+            stl.faces = f;
+            stl.norms = n;
+            IStlGeo.checkNorms(stl.norms);
+            stl.areas = IStlGeo.triArea(stl.faces, stl.verts);
+            stl.cents = IStlGeo.triCenter(stl.faces, stl.verts);
+        end
+        
+        function [verts, cents, norms] = PointsAtSetting(stl)
             verts = stl.verts;
             cents = stl.cents;
             norms = stl.norms;
@@ -134,17 +187,25 @@ classdef StlGeo < handle
                 cg0 = [0 0 0];
             end
             
+            cr0 = stl.cr;
+            if isempty(cr0);
+                cr0 = [0 0 0];
+            end
+            
             cgV = ones(Nv, 1)*cg0;
             cgC = ones(Nc, 1)*cg0;
-            
-            verts = verts - cgV;
-            cents = cents - cgC;
-            
+            crV = ones(Nv, 1)*cr0;
+            crC = ones(Nc, 1)*cr0;
+                        
             if ~isempty(stl.orient)
+                verts = verts + cgV - crV;
+                cents = cents + cgC - crC;
                 R = stl.RotationMatrix;
                 verts = (R*verts')';
                 cents = (R*cents')';
                 norms = (R*norms')';
+                verts = verts - cgV + crV;
+                cents = cents - cgC + crC;
             end
             
             if ~isempty(stl.pos)
@@ -154,86 +215,6 @@ classdef StlGeo < handle
             
             verts = verts + cgV;
             cents = cents + cgC;
-        end
-                
-        function [] = plot(stl, varargin)
-            stl.plotFuncs(false, varargin{:});
-        end
-        
-        function [] = surf(stl, varargin)
-            stl.plotFuncs(true, varargin{:});
-        end
-    end
-    
-    methods (Access = private)
-        function [] = plotFuncs(stl, isSurf, varargin)
-            [opts, args] = checkOptions({{'norm'}, {'color', 1}, {'origin'}}, varargin);
-            showNorm = opts(1);
-            color = [];
-            if opts(2)
-                color = args{2};
-            end
-            atOrg = opts(3);
-           
-            tri = stl.faces;
-            
-            if atOrg
-                p = stl.verts;
-                c = stl.cents;
-                n = stl.norms;
-            else
-                [p, n, c] = stl.PointsAtPosOrient;
-            end
-            
-            hold on 
-            
-            plotOpts = {};
-            if ~isempty(color)
-                if isSurf
-                    plotOpts = {'FaceColor', color};
-                else
-                    plotOpts = {'EdgeColor', color};
-                end
-            end
-            
-            if isSurf
-                trisurf(tri, p(:,1), p(:,2), p(:,3), plotOpts{:});
-            else
-                trimesh(tri, p(:,1), p(:,2), p(:,3), plotOpts{:});
-            end
-            
-            if showNorm
-                quiver3(c(:,1), c(:,2), c(:,3), n(:,1), n(:,2), n(:,3))
-            end
-        end
-                
-        function [] = triArea(stl)
-            % Function to calculate the area of a triangle
-            v1 = stl.verts(stl.faces(:,3),:)-stl.verts(stl.faces(:,1),:);
-            v2 = stl.verts(stl.faces(:,2),:)-stl.verts(stl.faces(:,1),:);
-            av_tmp =  1/2.*(cross(v1,v2));
-            area_mag = sqrt(av_tmp(:,1).^2 + av_tmp(:,2).^2 + av_tmp(:,3).^2);
-            stl.areas = area_mag;
-        end
-
-        function [] = checkStl(stl)
-            % Function to check STL file
-            tnorm = stl.norms;
-            norm_mag = sqrt(tnorm(:,1).^2 + tnorm(:,2).^2 + tnorm(:,3).^2);
-            check = sum(norm_mag)/length(norm_mag);
-            if check > 1.01 || check < 0.99
-                error(['length of normal vectors in stl is not equal to one.'])
-            end
-        end
-
-        function [] = triCenter(stl)
-            %Function to caculate the center coordinate of a triangle
-            points = stl.verts;
-            c = zeros(length(stl.faces),3);
-            c(:,1) = (points(stl.faces(:,1),1)+points(stl.faces(:,2),1)+points(stl.faces(:,3),1))./3;
-            c(:,2) = (points(stl.faces(:,1),2)+points(stl.faces(:,2),2)+points(stl.faces(:,3),2))./3;
-            c(:,3) = (points(stl.faces(:,1),3)+points(stl.faces(:,2),3)+points(stl.faces(:,3),3))./3;
-            stl.cents = c;
         end
     end
 end

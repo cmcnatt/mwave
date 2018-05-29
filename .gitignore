@@ -10,6 +10,9 @@ wam_hb1_1_out.mat
 *.6vy
 *.6vz
 
+# Video files
+*.avi
+
 # Nemoh output files
 
 # Ignore the contents of the Example BEM folders

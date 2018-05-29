@@ -244,6 +244,35 @@ classdef PanelGeo < handle
             geo2 = PanelGeo(pansPos);
         end
         
+        function [stl] = MakeStl(geo, cg)
+            if nargin < 2
+                cg = [0 0 0];
+            end
+            N = geo.Count;
+            verts0 = zeros(4*N, 3);
+            faces0 = zeros(2*N, 3);
+            
+            for m = 1:N
+                im = (m-1)*4+1;
+                verts0(im:im+3,:) = geo.panels(m).Vertices;
+                ifa = (m-1)*2+1;
+                faces0(ifa,:) = [im, im+1, im+2];
+                faces0(ifa+1,:) = [im+2, im+3, im];
+            end
+            [verts, ~, ic] = unique(verts0, 'rows');
+            
+            faces = zeros(2*N, 3);
+            for m = 1:2*N
+                for n = 1:3
+                    faces(m, n) = ic(faces0(m, n));
+                end
+            end
+                       
+            stl = Stl6DOFGeo;
+            
+            stl.SetStl(verts, faces, cg);
+        end
+        
         function [] = WriteBpi(geo, fileLoc, name)
             fileName = [fileLoc '\' name '.bpi'];
             fileID = fopen(fileName, 'wt');
