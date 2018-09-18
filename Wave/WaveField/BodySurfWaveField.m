@@ -365,13 +365,16 @@ classdef BodySurfWaveField < FBWaveField
         end
         
         function [forceHs0, forceHsM, forceHd, forceHs0e, forceHsMe, forceHde] ...
-                = CheckPressureForce(wf, mass, dofSur, dofHea, dofPit, hydroForces, type, iT)
+                = CheckPressureForce(wf, mass, dofSur, dofHea, dofPit, hydroForces, type, iT, correctHs)
             
             if nargin < 7
                 type = 'Total';
             end
             if nargin < 8
                 iT = 1;
+            end
+            if nargin < 9
+                correctHs = false;
             end
             
             xi = wf.BodyMotions;
@@ -381,7 +384,7 @@ classdef BodySurfWaveField < FBWaveField
             pressHd = [];
             pressTot = [];
             
-            if strcmpi(type, 'Hydrostatic') || strcmpi(type, 'Total')
+            if strcmpi(type, 'Hydrostatic') || strcmpi(type, 'Total') %|| correctHs
                 press = wf.Pressure('Hydrostatic');
                 pressHs0 = press{1};
             end
@@ -392,6 +395,8 @@ classdef BodySurfWaveField < FBWaveField
             end
             
             if strcmpi(type, 'Dynamic') || strcmpi(type, 'Total')
+                % 'Total' as an input to the Pressure method means the sum
+                % of the radiated and diffracted pressure
                 press = wf.Pressure('Total');
                 pressHd = press{iT};
             end
@@ -439,6 +444,11 @@ classdef BodySurfWaveField < FBWaveField
             forceHs0e = zeros(size(forceHs0));
             forceHs0e(dofHea) = -mass*g;
             
+            if correctHs
+                %mass = -forceHs0(dofHea)./g;
+                forceHs0 = forceHs0e;
+            end
+            
             forceHsMe = zeros(size(forceHsM));
             forceHsMe(dofSur) = g*mass.*xi(dofPit);
             forceHsMe = forceHsMe + hydroForces.C*xi;
@@ -469,10 +479,12 @@ classdef BodySurfWaveField < FBWaveField
             
             for n = 1:length(force)
                 if ~isa(funcs(n), 'ZeroMotionFunc')
-                    fprintf('\nBody: %i,\t%s\nForce \t\t\t= %4.2e,\nForce Expected \t= %4.2e\nError \t\t\t= %4.1f\n\n',...
-                        mInds(n), class(funcs(n)), abs(force(n)), abs(forceExp(n)), err(n))
+                    fprintf('\nBody: %i,\t%s\nForce \t\t\t= %4.2e*exp(%0.0fi),\nForce Expected \t= %4.2e*exp(%0.0fi)\nError \t\t\t= %4.1f\n\n',...
+                        mInds(n), class(funcs(n)), abs(force(n)), 180/pi*angle(force(n)), abs(forceExp(n)), 180/pi*angle(forceExp(n)), err(n))
                 end
             end
+            
+            fprintf('\nCOMPLETE~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n');
         end
     end
     

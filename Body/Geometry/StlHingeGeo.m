@@ -72,12 +72,18 @@ classdef StlHingeGeo < IStlGeo
             end
         end
                 
-        function [] = ReadForward(stl, fileName)
-            stl.fwd.Read(fileName);
+        function [] = ReadForward(stl, fileName, cgFile)
+            if nargin < 3
+                cgFile = [];
+            end
+            stl.fwd.Read(fileName, cgFile);
         end
         
-        function [] = ReadAft(stl, fileName)
-            stl.aft.Read(fileName);
+        function [] = ReadAft(stl, fileName, cgFile)
+            if nargin < 3
+                cgFile = [];
+            end
+            stl.aft.Read(fileName, cgFile);
         end
         
         function [val] = get.Vertices(stl)

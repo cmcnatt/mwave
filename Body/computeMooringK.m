@@ -1,6 +1,24 @@
 function [K] = computeMooringK(cg, pos, ks, anghs, angvs)
 
-nlin = length(ks);
+nlin = max([length(ks), length(anghs), length(angvs)]);
+
+if length(ks) == 1
+    ks = ks*ones(1, nlin);
+elseif length(ks) ~= nlin
+    error('ks must be a scalar or a vector of length of the number of lines');
+end
+
+if length(anghs) == 1
+    anghs = anghs*ones(1, nlin);
+elseif length(anghs) ~= nlin
+    error('anghs must be a scalar or a vector of length of the number of lines');
+end
+
+if length(angvs) == 1
+    angvs = angvs*ones(1, nlin);
+elseif length(angvs) ~= nlin
+    error('angvs must be a scalar or a vector of length of the number of lines');
+end
 
 npnt = size(pos,1);
 
@@ -34,8 +52,8 @@ for n = 1:nlin
     Ir(1:3,1:3) = eye(3);
     Ir(1:3,4:6) = -rx;
 
-    for n = 1:3
-        Ir(n,:) = k0(n)*Ir(n,:);
+    for m = 1:3
+        Ir(m,:) = k0(m)*Ir(m,:);
     end
 
     Kn = Il*Ir;

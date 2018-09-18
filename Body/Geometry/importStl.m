@@ -25,6 +25,8 @@ function varargout = importStl(filename, mode, eol)
 %                   eol = 1 : Linux/Mac end of line characters '/n'
 %                   eol = 2 : Windows end of line characters '/r/n'
 
+coder.extrinsic('textscan');
+
 if nargin<3
     eol=2;%default value
 end

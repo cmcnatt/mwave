@@ -130,6 +130,28 @@ classdef StlGeoUT <  matlab.unittest.TestCase
             axis equal
             
         end
+        
+        function test6(testCase)
+            fwd = StlGeoUT.getStl6DOFs();
+            
+            filePath = [mwavePath '\UnitTests\files\'];
+            fileNew = [filePath 'forwardN.stl'];
+            fwd.Write(fileNew);
+            
+            fwdN = Stl6DOFGeo;
+            fwdN.Read(fileNew);
+            
+            figure;
+            subplot(2,1,1);
+            plot(fwd);
+            set(gca, 'view', [-16 3]);
+            axis equal
+            
+            subplot(2,1,2);
+            plot(fwdN);
+            set(gca, 'view', [-16 3]);
+            axis equal
+        end
     end
     
     methods (Static)

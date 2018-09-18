@@ -35,6 +35,46 @@ classdef IStlGeo < handle
     end
     
     methods
+        function [] = Write(stl, fileName, cg)
+            if nargin < 3
+                cg = [0 0 0];
+            end
+            fid = fopen(fileName, 'wt');
+            
+%             solid OBJECT
+%               facet normal -0 -0 1
+%                 outer loop
+%                   vertex -27.592727661132813 6.5 4
+%                   vertex -27.592727661132813 7.5 4
+%                   vertex -28.569999694824219 7.5 4
+%                 endloop
+%               endfacet
+%             endsolid OBJECT
+
+            format = ' %21.10f';
+            faces = stl.Faces;
+            norms = stl.Normals;
+            verts = stl.Vertices;
+            
+            [Nv, ~] = size(verts);
+            verts = verts - ones(Nv, 1)*cg;
+            
+            [N, ~] = size(faces);
+            fprintf(fid, 'solid OBJECT\n');
+            for m = 1:N
+                fprintf(fid, ['\tfacet normal ' format ' ' format ' ' format '\n'], norms(m, 1), norms(m, 2), norms(m, 3));
+                fprintf(fid, '\t\touter loop\n');
+                for n = 1:3
+                    iv = faces(m, n);
+                    fprintf(fid, ['\t\t\tvertex ' format ' ' format ' ' format '\n'], verts(iv, 1), verts(iv, 2), verts(iv, 3));
+                end
+                fprintf(fid, '\t\tendloop\n');
+                fprintf(fid, '\tendfacet\n');
+            end
+            fprintf(fid, 'endsolid OBJECT\n');
+            fclose(fid);
+        end
+        
         function [] = plot(stl, varargin)
             stl.plotFuncs(false, varargin{:});
         end
@@ -61,7 +101,7 @@ classdef IStlGeo < handle
                 c = stl.Centers;
                 n = stl.Normals;
             else
-                [p, n, c] = stl.PointsAtSetting;
+                [p, c, n] = stl.PointsAtSetting;
             end
             
             if ~iscell(tri)
@@ -121,7 +161,7 @@ classdef IStlGeo < handle
             % Function to check STL file
             normMag = sqrt(norms(:,1).^2 + norms(:,2).^2 + norms(:,3).^2);
             
-            check = (sum(abs(normMag - 1) < 1e-10) + sum(normMag == 0))/length(normMag);
+            check = (sum(abs(normMag - 1) < 1e-4) + sum(normMag == 0))/length(normMag);
             if check > 1.01 || check < 0.99
                 error(['length of normal vectors in stl is not equal to one.'])
             end
@@ -129,7 +169,8 @@ classdef IStlGeo < handle
 
         function [cents] = triCenter(faces, verts)
             %Function to caculate the center coordinate of a triangle
-            cents = zeros(length(faces),3);
+            [N, ~] = size(faces);
+            cents = zeros(N,3);
             cents(:,1) = (verts(faces(:,1),1) + verts(faces(:,2),1) + verts(faces(:,3),1))./3;
             cents(:,2) = (verts(faces(:,1),2) + verts(faces(:,2),2) + verts(faces(:,3),2))./3;
             cents(:,3) = (verts(faces(:,1),3) + verts(faces(:,2),3) + verts(faces(:,3),3))./3;

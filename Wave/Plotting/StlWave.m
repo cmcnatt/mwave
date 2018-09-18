@@ -34,6 +34,7 @@ classdef StlWave < IStlGeo
         x;
         y;
         time;
+        ramp;
     end
     
     properties (Dependent)
@@ -50,6 +51,7 @@ classdef StlWave < IStlGeo
         X;
         Y;
         Time;
+        Ramp;
     end
     
     methods
@@ -172,6 +174,13 @@ classdef StlWave < IStlGeo
             val = stl.time;
         end
         
+        function [] = set.Ramp(stl, val)
+            stl.ramp = val;
+        end
+        function [val] = get.Ramp(stl)
+            val = stl.ramp;
+        end
+        
         function [verts, cents, norms] = PointsAtSetting(stl)
             
             if isempty(stl.verts) || isempty(stl.cents) || isempty(stl.cents)
@@ -180,6 +189,23 @@ classdef StlWave < IStlGeo
             verts = stl.verts;
             cents = stl.cents;
             norms = stl.norms;
+        end
+        
+        function [maxz, minz] = ComputeMaxMin(stl, time)
+            maxz = -inf;
+            minz = inf;
+            
+            for n = 1:length(time)
+                stl.Time = time(n);
+                verts = stl.PointsAtSetting;
+                z = verts(:,3);
+                if max(z) > maxz
+                    maxz = max(z);
+                end
+                if min(z) < minz
+                    minz = min(z);
+                end
+            end
         end
     end
         
@@ -225,9 +251,14 @@ classdef StlWave < IStlGeo
                 
                 N = length(stl.a);
                 etat = zeros(length(stl.x), length(stl.y));
+                if isempty(stl.ramp)
+                    ram = 1;
+                else
+                    ram = stl.ramp;
+                end
                 for n = 1:N
                     etan = reshape(stl.eta(:,:,n), [length(stl.x) length(stl.y)]);
-                    etat = etat + real(etan*exp(1i*stl.omega(n)*stl.time));
+                    etat = etat + ram*real(etan*exp(1i*stl.omega(n)*stl.time));
                 end
 
                 [X_, Y_] = meshgrid(stl.x, stl.y);

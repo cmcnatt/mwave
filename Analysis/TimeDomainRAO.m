@@ -63,12 +63,16 @@ classdef TimeDomainRAO < TimeDomainAnalysis
         end
         
         function [pow, timeFreq] = Power(tda, sigInds, dofs, varargin)
-            [opts, args] = checkOptions({{'rao'}, {'noNorm'}, {'CW', 1}, {'mat'}}, varargin);
+            [opts, args] = checkOptions({{'rao'}, {'noNorm'}, {'CW', 1}, {'mat'}, {'mean'}}, varargin);
             
             rao = opts(1);
             noNorm = opts(2);
             compCW = opts(3);
             mat = opts(4);
+            if opts(5)
+                rao = true;
+                noNorm = true;
+            end
             
             ai = tda.GetWaves(sigInds, 1, 'amps', 'mat');
             if isempty(ai)
@@ -211,15 +215,17 @@ classdef TimeDomainRAO < TimeDomainAnalysis
                 isAmp = true;
             end
             
-            [waves, Nsig, Nwg, Nta] = tda.checkWaves(wgPos, time, waves, varargin{:});
-            
             if isAmp
                 if isempty(varargin)
                     beta = 0;
                 else
                     beta = varargin{1};
                 end
-                
+            end
+            
+            [waves, Nsig, Nwg, Nta] = tda.checkWaves(wgPos, time, waves);
+            
+            if isAmp
                 if Nta ~= length(beta)
                     error('waves must be of size Nsig x Nwg x Nbeta');
                 end
@@ -234,7 +240,7 @@ classdef TimeDomainRAO < TimeDomainAnalysis
                     end
                 end
             else
-                tda.setTimeWaves(wgPos, time, waves, Nsig, Nwg);
+                tda.setTimeWaves(wgPos, time, waves, Nsig, Nwg, waveRamp);
             end
         end
     
@@ -260,6 +266,22 @@ classdef TimeDomainRAO < TimeDomainAnalysis
             mat = opts(5);
             normSur = opts(6);
             
+            if isempty(sigInds)
+                sigInds = 1:tda.nSig;
+            elseif ischar(sigInds)
+                if strcmp(sigInds, ':');
+                    sigInds = 1:tda.nSig;
+                end
+            end
+            
+            if isempty(dofs)
+                dofs = 1:tda.motDof;
+            elseif ischar(dofs)
+                if strcmp(dofs, ':');
+                    dofs = 1:tda.motDof;
+                end
+            end
+            
             ai = tda.GetWaves(sigInds, 1, 'amps', 'betaInd', 1, 'mat');
             
             if isempty(ai)
@@ -275,6 +297,11 @@ classdef TimeDomainRAO < TimeDomainAnalysis
             if rao
                 [specs, freq] = tda.getValues(type, sigInds, dofs, 'spectra');
                 Na = args{1};
+                if ~isfloat(Na)
+                    Na = 1;
+                elseif Na < 1
+                    Na = 1;
+                end
                 [Nf, Ndof] = size(specs);
                 sigs = cell(Ndof, Na);
                 timeFreq = tda.freqs;

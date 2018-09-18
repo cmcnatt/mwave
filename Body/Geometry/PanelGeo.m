@@ -244,20 +244,35 @@ classdef PanelGeo < handle
             geo2 = PanelGeo(pansPos);
         end
         
-        function [stl] = MakeStl(geo, cg)
+        function [stl] = MakeStl(geo, cg, noInt)
             if nargin < 2
                 cg = [0 0 0];
             end
-            N = geo.Count;
+            if nargin < 3
+                noInt = true;
+            end
+            N0 = geo.Count;
+            if noInt
+                inclPan = ~geo.IsInteriors;
+                N = N0 - sum(geo.IsInteriors);
+            else
+                inclPan = ones(N, 1);
+                N = N0;
+            end
             verts0 = zeros(4*N, 3);
             faces0 = zeros(2*N, 3);
             
-            for m = 1:N
-                im = (m-1)*4+1;
-                verts0(im:im+3,:) = geo.panels(m).Vertices;
-                ifa = (m-1)*2+1;
-                faces0(ifa,:) = [im, im+1, im+2];
-                faces0(ifa+1,:) = [im+2, im+3, im];
+            im = 1;
+            ifa = 1;
+            for m = 1:N0
+                if inclPan(m)
+                    verts0(im:im+3,:) = geo.panels(m).Vertices;
+                    faces0(ifa,:) = [im, im+1, im+2];
+                    faces0(ifa+1,:) = [im+2, im+3, im];
+
+                    im = im + 4;
+                    ifa = ifa + 2;
+                end
             end
             [verts, ~, ic] = unique(verts0, 'rows');
             

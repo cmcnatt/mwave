@@ -26,6 +26,9 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
         geoFile;
         compGeoFile;
         panelGeo;
+        stlGeoFile;
+        stlGeoFileCg;
+        stlGeo;
         cg;
         cb;
         wetVol;
@@ -60,6 +63,9 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
         GeoFile;        % Name of .gdf geometry file (do not include ".gdf")
         CompGeoFile;    % Name of .gdf geometry file associated with the computation of pessures and velocities on the body surface
         PanelGeo;       % The actual panel geometry  
+        StlGeoFile;     % Name and file location of .stl file of geomety
+        StlGeoFileCg;   % The CG of the Stl geometry file
+        StlGeo;         % The actualy stl geometry object
         Cg;             % Center of Gravity in body coordinates
         CgGlobal;       % Center of Gravity in Global coordinates
         Cb;             % Center of Buoyancy in body coordinates
@@ -101,6 +107,9 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
                 fb.geoFile = [];
                 fb.compGeoFile = [];
                 fb.panelGeo = [];
+                fb.stlGeoFile = [];
+                fb.stlGeoFileCg = [0 0 0];
+                fb.stlGeo = [];
                 fb.cg = zeros(1, 3);
                 fb.cb = zeros(1, 3);
                 fb.m = zeros(6, 6);
@@ -132,6 +141,9 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
                 fb.geoFile = fbin.geoFile;
                 fb.compGeoFile = fbin.compGeoFile;
                 fb.panelGeo = fbin.panelGeo;
+                fb.stlGeoFile = fbin.stlGeoFile;
+                fb.stlGeoFileCg = fbin.stlGeoFileCg;
+                fb.stlGeo = fbin.stlGeo;
                 fb.cg = fbin.cg;
                 fb.cb = fbin.cb;
                 fb.m = fbin.m;
@@ -220,7 +232,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
                 error('The GeoFile must be a string');
             end
         end
-        
+                
         function [pg] = get.PanelGeo(fb)
             % Get the geometry (PanelGeo) object associated with this floating body
             pg = fb.panelGeo;
@@ -231,6 +243,49 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
                 error('Input must be a PanelGeo');
             end
             fb.panelGeo = panGeo;
+        end
+        
+        function [fn] = get.StlGeoFile(fb)
+            % Name and file location of .stl file of geomety
+            fn = fb.stlGeoFile;
+        end
+        function [] = set.StlGeoFile(fb, val)
+            % Name and file location of .stl file of geomety
+            if (ischar(val))
+                fb.stlGeoFile = val;
+            else
+                error('The StlGeoFile must be a string');
+            end
+        end
+        
+        function [fn] = get.StlGeoFileCg(fb)
+            % The CG of the Stl Geometry file
+            fn = fb.stlGeoFileCg;
+        end
+        function [] = set.StlGeoFileCg(fb, val)
+            % The CG of the Stl Geometry file
+            fb.stlGeoFileCg = val;
+        end
+        
+        function [val] = get.StlGeo(fb)
+            % The actualy stl geometry object
+            if isempty(fb.stlGeo)
+                if ~isempty(fb.stlGeoFile)
+                    stl = Stl6DOFGeo;
+                    stl.Read(fb.stlGeoFile, fb.stlGeoFileCg);
+                    stl.Cg = fb.cg;
+                    fb.stlGeo = stl;
+                end
+            end
+
+            val = fb.stlGeo;
+        end
+        function [] = set.StlGeo(fb, val)
+            % The actualy stl geometry object
+            if (~isa(val, 'Stl6DOFGeo'))
+                error('Input must be a Stl6DOFGeo');
+            end
+            fb.stlGeo = val;
         end
         
         function [C_g] = get.Cg(fb)

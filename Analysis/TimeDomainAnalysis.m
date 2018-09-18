@@ -31,6 +31,7 @@ classdef TimeDomainAnalysis < handle
         ptoKinematic;
         ptoDynamic;
         waveSigs;
+        waveRamp;
         fmotions;
         fptoKinematic;
         fptoDynamic;
@@ -42,12 +43,14 @@ classdef TimeDomainAnalysis < handle
         motTime;
         ptoTime;
         waveTime;
+        waveRampTime;
         motFreq;
         ptoFreq;
         waveFreq;
         motTimeLims;
         ptoTimeLims;
         waveTimeLims;
+        waveRampTimeLims;
         wgPos;
         meanPos;
         h;
@@ -115,11 +118,21 @@ classdef TimeDomainAnalysis < handle
             tda.setValues('ptoDynamic', dofs, time, ptoKin);
         end
                 
-        function [] = SetWaves(tda, wgPos, time, waves, varargin)
+        function [] = SetWaves(tda, wgPos, time, waves)
             
-            [waves, Nsig, Nwg] = tda.checkWaves(wgPos, time, waves, varargin{:});
+            [waves, Nsig, Nwg] = tda.checkWaves(wgPos, time, waves);
             
             tda.setTimeWaves(wgPos, time, waves, Nsig, Nwg);
+        end
+        
+        function [] = SetWaveRamp(tda, time, waveRamp)
+            
+            if length(time) ~= length(waveRamp)
+                error('The length of the time signal must be the same as the length of the ramp signal');
+            end
+            
+            tda.waveRampTime = time;
+            tda.waveRamp = waveRamp;
         end
         
         function [] = SetMotionTimeLimits(tda, sigInds, dofs, startTime, stopTime)
@@ -186,6 +199,10 @@ classdef TimeDomainAnalysis < handle
             tda.swaveSigs = [];
         end
         
+        function [] = SetWaveRampTimeLimits(tda, startTime, stopTime)
+            tda.waveRampTimeLims = [startTime stopTime];
+        end
+        
         function [mots, timeFreq] = GetMotions(tda, sigInds, dofs, varargin)
             [mots, timeFreq] = tda.getValues('motions', sigInds, dofs, varargin{:});
         end
@@ -199,19 +216,27 @@ classdef TimeDomainAnalysis < handle
         end
         
         function [pow, time] = Power(tda, sigInds, dofs, varargin)
-            [opts] = checkOptions({{'mean'}}, varargin);
+            [opts] = checkOptions({{'mean'}, {'max'}}, varargin);
+            
+            compMean = opts(1);
+            compMax = opts(2);
             
             [pow, time] = tda.power(sigInds, dofs, varargin{:});
             
-            if opts(1)
+            if compMean || compMax
                 [M, N] = size(pow);
-                meanPow = zeros(M, N);
+                valPow = zeros(M, N);
                 for m = 1:M
                     for n = 1:N
-                        meanPow(m, n) = mean(pow{m, n});
+                        if compMean
+                            valPow(m, n) = mean(pow{m, n});
+                        elseif compMax
+                            valPow(m, n) = max(pow{m, n});
+                        end
                     end
                 end
-                pow = meanPow;
+                pow = valPow;
+                
             end
         end
         
@@ -229,8 +254,20 @@ classdef TimeDomainAnalysis < handle
             end
         end
         
-        function [waves, timeFreq, wgPos] = GetWaves(tda, sigInds, wgInds, varargin)
-            [waves, timeFreq, wgPos] = tda.getWaves(sigInds, wgInds, varargin{:});
+        function [waves, timeFreq, wgPos, waveRamp] = GetWaves(tda, sigInds, wgInds, varargin)
+            [waves, timeFreq, wgPos, waveRamp] = tda.getWaves(sigInds, wgInds, varargin{:});
+        end
+        
+        function [waveRamp, time] = GetWaveRamp(tda, varargin)
+            
+            opts = checkOptions({{'fullTime'}}, varargin);
+            fullTime = opts(1);
+            
+            time = tda.waveRampTime;
+            tlims = tda.waveRampTimeLims;
+            [iStart, iStop] = tda.tlimInds(tlims, time, fullTime);
+            time = time(iStart:iStop);
+            waveRamp = tda.waveRamp(iStart:iStop);
         end
         
         function [startTime, stopTime] = GetMotionTimeLimits(tda, sigInd, dof)
@@ -246,6 +283,11 @@ classdef TimeDomainAnalysis < handle
         function [startTime, stopTime] = GetWaveTimeLimits(tda)
             startTime = tda.waveTimeLims(1);
             stopTime = tda.waveTimeLims(2);
+        end
+        
+        function [startTime, stopTime] = GetWaveRampTimeLimits(tda)
+            startTime = tda.waveRampTimeLims(1);
+            stopTime = tda.waveRampTimeLims(2);
         end
     end
     
@@ -320,12 +362,13 @@ classdef TimeDomainAnalysis < handle
         
         function [sigs, timeFreq] = getValues(tda, type, sigInds, dofs, varargin)
             
-            [opts, args] = checkOptions({{'filter'}, {'spectra'}, {'fullTime'}, {'noMean'}}, varargin);
+            [opts, args] = checkOptions({{'filter'}, {'spectra'}, {'fullTime'}, {'noMean'}, {'max'}}, varargin);
             
             filt = opts(1);
             spec = opts(2);
             fullTime = opts(3);
             noMean = opts(4);
+            compMax = opts(5);
                         
             fstr = '';
             if filt
@@ -400,7 +443,12 @@ classdef TimeDomainAnalysis < handle
                         [iStart, iStop] = tda.tlimInds(tlims{m, n}, timemn, fullTime);
                         
                         timeFreq{m, n} = timemn(iStart:iStop);
-                        sigs{m, n} = sigmn(iStart:iStop);
+                        
+                        if compMax
+                            sigs{m, n} = max(sigmn(iStart:iStop));
+                        else
+                            sigs{m, n} = sigmn(iStart:iStop);
+                        end
                     end  
                 end
             end
@@ -453,7 +501,7 @@ classdef TimeDomainAnalysis < handle
                 wgPos = [];
                 return;
             end
-            
+                        
             filt = opts(1);
             spec = opts(2);
             fullTime = opts(3);
@@ -472,7 +520,7 @@ classdef TimeDomainAnalysis < handle
             end
             
             tlims = tda.waveTimeLims;
-            
+
             if spec
                 timeFreq = tda.waveFreq;
             else
@@ -496,7 +544,7 @@ classdef TimeDomainAnalysis < handle
                     wgPos(n, :) = tda.wgPos(wgInds(n), :);
                 end
             end
-            
+                        
             if mat
                 Nt = length(waves{1,1});
                 wavesM = zeros(Nsig, Nwg, Nt);
@@ -531,7 +579,7 @@ classdef TimeDomainAnalysis < handle
             Nwg = length(wgInds);
         end
         
-        function [waves, Nsig, Nwg, Nta] = checkWaves(tda, wgPos, time, waves, varargin)
+        function [waves, Nsig, Nwg, Nta] = checkWaves(tda, wgPos, time, waves)
             [Nwg, ~] = size(wgPos);
                         
             if Nwg == 1 && ndims(waves) == 2
@@ -723,7 +771,7 @@ classdef TimeDomainAnalysis < handle
             spec(1) = spec(1)/2;
             dt = time(2)-time(1);
             t0 = time(1);
-            freq = ((0:floor(N/2))/dt/N).';
+            freq = ((0:floor(N/2))./dt./N).';
             % phase shift base on first time value
             spec = spec.*exp(-1i*2*pi*freq*t0);
         end
@@ -751,8 +799,46 @@ classdef TimeDomainAnalysis < handle
                 end
                 specSeg = spectrum(iStart:iStop);
                 specOut(n) = mean(abs(specSeg))*exp(1i*angle(spectrum(n)));
+            end 
+        end
+        
+        function [Ai, Ar] = IncidentReflectedWaves(time, signals, wgPos, h, f)
+            if nargin < 5
+                f = [];
             end
+            
+            x = wgPos(:,1);
+            N = length(x);
+            Nt = length(time);
+            Nf = floor(Nt/2)+1;
+            
+            specs = complex(zeros(Nf, N), zeros(Nf, N));
+            
+            for n = 1:N
+                [specs(:,n), freqs] = TimeDomainAnalysis.FFT(time, signals(:,n));
+            end
+            
+            if isempty(f)
+                [~, ind] = max(abs(specs(:,1)));
+                f = freqs(ind);
+            end
+            
+            indf = indexOf(freqs, f);
+            k = solveForK(2*pi*f, h);
+            
+            % This is from: Suryanto (2016) - Estimation of the incident and reflected waves in wave experiments
+            as = specs(indf,:);
+                    
+            D = sum(exp(2*1i*k*x))*sum(exp(-2*1i*k*x)) - N*N;
+            Ai = sum(as.'.*exp(-1i*k*x)).*sum(exp(2*1i*k*x)) - N*sum(as.'.*exp(1i*k*x));
+            Ar = sum(as.'.*exp(1i*k*x)).*sum(exp(-2*1i*k*x)) - N*sum(as.'.*exp(-1i*k*x));
+            
+            % take complex conjugate because Suryanto uses exp(-i*w*t)
+            Ai = conj(Ai);
+            Ar = conj(Ar);
                 
+            Ai = Ai./D;
+            Ar = Ar./D;
         end
     end
 end

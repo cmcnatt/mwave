@@ -651,6 +651,7 @@ classdef WamitRunCondition < IBemRunCondition
         end
         
         function [] = writeCfg(run)
+            Nbod = length(run.floatBods);
             filename = [run.folder '\' run.runName '.cfg'];
             fileID = fopen(filename, 'wt');
 
@@ -679,8 +680,14 @@ classdef WamitRunCondition < IBemRunCondition
                 fprintf(fileID, 'ILOWGDF = 0\n');
             end
             if run.floatBods(1).SurfAboveZ0
-                fprintf(fileID, 'ITRIMWL = 1\n');
-                fprintf(fileID, 'XTRIM = 0.0 0.0 0.0\n');
+                fprintf(fileID, 'ITRIMWL = %i\n', Nbod);
+                if Nbod > 1
+                    for n = 1:Nbod
+                        fprintf(fileID, 'XTRIM(%i) = 0.0 0.0 0.0\n', n);
+                    end
+                else
+                    fprintf(fileID, 'XTRIM = 0.0 0.0 0.0\n');
+                end
             end
             if (~all([isempty(run.fieldArray) isempty(run.fieldPoints) isempty(run.cylArray)]))
                 fprintf(fileID, 'INUMOPT6 = 1 \n');
@@ -695,8 +702,7 @@ classdef WamitRunCondition < IBemRunCondition
                 fprintf(fileID, 'IPNLBPT = %i \n', ipnlbpt);
             end
             % Generalized modes
-            Nbod = length(run.floatBods);
-            if (Nbod > 1)
+            if Nbod > 1
                 for n = 1:Nbod
                     fprintf(fileID, 'NEWMDS(%i) = %i\n', n, run.floatBods(n).Ngen);
                     fprintf(fileID, 'IGENMDS(%i) = %i\n', n, run.floatBods(n).WamIGenMds);
@@ -705,17 +711,6 @@ classdef WamitRunCondition < IBemRunCondition
                 fprintf(fileID, 'NEWMDS = %i\n', run.floatBods(1).Ngen);
                 fprintf(fileID, 'IGENMDS = %i\n', run.floatBods(1).WamIGenMds);
             end
-            % Dipole patches
-            % NPDIPOLE(2)=(5-8)
-            % first body
-%             dipoles = run.floatBods(1).WamDipoles;
-%             if ~isempty(dipoles)
-%                 fprintf(fileID, 'NPDIPOLE = ');
-%                 for m = 1:length(dipoles)
-%                     fprintf(fileID, ' %i', dipoles(m));
-%                 end
-%                 fprintf(fileID, '\n');
-%             end
             if Nbod > 1
                 for n = 1:Nbod
                     dipoles = run.floatBods(n).WamDipoles;
@@ -767,6 +762,7 @@ classdef WamitRunCondition < IBemRunCondition
             fprintf(fileID, 'MONITR = 0\n');
             fprintf(fileID, 'NOOUT = 1  1  1  1  0  0  0  0  0\n');
             fprintf(fileID, 'NUMHDR = 1\n');
+            fprintf(fileID, 'IPLTDAT = 1\n');
             fprintf(fileID, 'NUMNAM = 0\n');
             fprintf(fileID, 'SCRATCH_PATH = %s\n', run.scratchPath);
 
