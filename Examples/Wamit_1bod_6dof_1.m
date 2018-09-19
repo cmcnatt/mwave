@@ -67,8 +67,13 @@ M(5,5) = Iyy;
 M(6,6) = Izz;
 
 cyl = FloatingBody();           % Create a 'FloatingBody' object
-cyl.GeoFile = 'wam_1b_6dof_1';  % Point the body to the geometry file (it 
-                                % is a .gdf file, but don't include .gdf)
+geoFile = 'wam_1b_6dof_1';
+copyfile([mwavePath '\Examples\BemRuns\geometry\' geoFile '.gdf'], ...
+    [folder '\' geoFile '.gdf']);
+cyl.GeoFile = geoFile;  % Point the body to the geometry file (it 
+                        % is a .gdf file, but don't include .gdf)
+                                
+
 cyl.Handle = 'Cylinder';        % Set its name. This is more relavent with 
                                 % multiple bodies
 cyl.M = M;                      % Set the mass matrix
@@ -91,16 +96,17 @@ wam_run.H = Inf;        % set the water depth (in m) - can be a positive
 
 wam_run.FloatingBodies = cyl;       % Now set the floating body we just 
                                     % created as the body used in Wamit run
-wam_run.WriteRun;                   % this writes all the necessary Wamit 
-                                    % input files
                                     
-%% Run Wamit
-
 % The following are default values, but just to show that they can be set
 wam_run.ExePath = 'N:\wamitv7';           % This points to the location 
                                             % of the Wamit.exe
 wam_run.ScratchPath = 'N:\wamitv7\scratch'; % Wamit needs a scratch folder
 wam_run.UseridPath = 'N:\wamitv7';          % Location of UserId (license)
+
+wam_run.WriteRun;                   % this writes all the necessary Wamit 
+                                    % input files
+                                    
+%% Run Wamit
 
 wam_run.Run;                           % Runs Wamit on the run that   
                                             % just created. Ties up Matlab
