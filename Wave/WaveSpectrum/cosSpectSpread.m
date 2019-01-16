@@ -25,22 +25,20 @@ function [g] = cosSpectSpread(s, thetac, theta)
 % theta - input directions (rad)
 %  The intregral of the spreading function is 1.
 
-if (s <= 0)
-    error('pow must be greater than 0');
-elseif (mod(s, 2) ~= 0)
-    error('pow must be an even number');
-end
+% if (s <= 0)
+%     error('pow must be greater than 0');
+% end
 
 if (abs(thetac) > pi)
     error('thetac must be between -pi and pi');
 end
+A1 = gamma(s+1)/(gamma(s+1/2)*2*sqrt(pi));
+g = abs(cos(1/2*(theta - thetac))).^(2*s);
 
-A2 = gamma(s+1)/(gamma(s+1/2)*2*sqrt(pi));
-g = A2*cos(1/2*(theta - thetac)).^(2*s);
+if isnan(A1) || isinf(A1)
+    A1 = 1./trapz(theta, g);
+end
 
-delTh = computeDelta(theta);
-gArea = sum(g.*delTh);
-
-g = g./gArea;
+g = A1*g;
 
 
