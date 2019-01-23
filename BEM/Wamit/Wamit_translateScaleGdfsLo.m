@@ -18,10 +18,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Contributors:
     C. McNatt
 %}
-function [] = Wamit_translateGdfs(sourceFolder, gdfIn, destFolder, delta, gdfOut)
+function [] = Wamit_translateScaleGdfsLo(sourceFolder, gdfIn, destFolder, delta, gdfOut, scale)
 
 if nargin < 5
     gdfOut = gdfIn;
+end
+
+if nargin < 6
+    scale = 1;
 end
 
 if ~iscell(gdfIn)
@@ -81,7 +85,7 @@ for m = 1:Ngdf
 
     i = 1;
     for n = 1:length(verts{m})
-        fprintf(fid, '\t%9.5f', verts{m}(n) + delta(i));
+        fprintf(fid, '\t%9.5f', scale*verts{m}(n) + delta(i));
         i = i + 1;
         if i > 3
             i = 1;
