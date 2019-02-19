@@ -174,7 +174,7 @@ classdef WamitResult < IBemResult
             % Gravity, depth and density
             fid = fopen([result.folder '\' result.runName '.out']);
             if (fid == -1)
-                error('No WAMIT results for this run!');
+                warning('No WAMIT results for this run!');
             end
             while(~feof(fid))
                 line = fgetl(fid);
