@@ -18,10 +18,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Contributors:
     C. McNatt
 %}
+
+
+%%
+% Add method to compute power for specific Hs Tp
+%%
 classdef PowerMatrix < IEnergyComp
     % Defines a power matrix for a WEC
     
     properties (Access = private)    
+        f;
         mat;
         h;
         rho;
@@ -33,6 +39,7 @@ classdef PowerMatrix < IEnergyComp
     end
     
     properties (Dependent)
+        %F;
         Matrix;
         Hs;
         T02;
@@ -46,6 +53,7 @@ classdef PowerMatrix < IEnergyComp
     methods
         
         function [pmat] = PowerMatrix(mat, Hs, T02, T, H, Rho, specType)
+            pmat.f = [];
             pmat.mat = mat;
             pmat.hs = Hs;
             pmat.t02 = T02;
@@ -101,6 +109,38 @@ classdef PowerMatrix < IEnergyComp
         function [val] = get.SpecType(pmat)
             % the type of wave spectrum used to compute the power matrix
             val = pmat.specType;
+        end
+        
+%         function [val] = get.F(pmat)
+%             % gridded interpolant of power matrix
+%             val = pmat.f;
+%         end
+        
+%         function [F] = LookUpTab(pmat)          
+%             F = griddedInterpolant(pmat.hs, pmat.t, pmat.Matrix,'spline');
+%         end     
+        
+        function [p] = PowerAt(pmat, Hs, T, varargin)
+            
+            [opts, args] = checkOptions({{'T02'}, {'Tp'}, {'Te'}}, varargin);
+            isT02 = opts(1);
+            isTp = opts(2);
+            isTe = opts(3);
+            
+            if isempty(pmat.f)
+                pmat.f =  griddedInterpolant(pmat.hs, pmat.t02, pmat.Matrix, 'spline');
+            end
+            
+            Ti = T;
+            if isT02
+                Ti = T;
+            elseif isTp
+                Ti = Bretschneider.ConvertT(T, 'Tp', 'T02');
+            elseif isTe
+                Ti = Bretschneider.ConvertT(T, 'Te', 'T02');
+            end
+            
+            p = pmat.f(Hs, Ti);
         end
         
         function [val] = PowerRAO(pmat)
