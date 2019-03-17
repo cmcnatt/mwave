@@ -305,6 +305,27 @@ classdef PanelGeo < handle
             
             fclose(fileID);
         end
+        
+        function [mesh, x, y, z] = QuadMesh(geo)
+            N = geo.Count;
+            mesh = zeros(4*N, 3);
+            x = zeros(4*N, 1);
+            y = zeros(4*N, 1);
+            z = zeros(4*N, 1);
+            
+            pans = geo.Panels;
+            
+            ind = 1;
+            for m = 1:N
+                verts = pans(m).Vertices;
+                for n = 1:4
+                    mesh(ind, :) = [ind, ind, ind];
+                    x(ind) = verts(n, 1);
+                    y(ind) = verts(n, 2);
+                    z(ind) = verts(n, 3);
+                end
+            end
+        end
                 
         function [] = plot(geo, varargin)
             geo.plotFuncs(@plot, varargin{:});
@@ -389,32 +410,35 @@ classdef PanelGeo < handle
             xsy = false;
             ysy = false;
             
-            if (showSym)
-                xsy = geo.xsym;
-                ysy = geo.ysym;
-            end
+            [mesh, x, y, z] = geo.QuadMesh;
+            quadmesh(mesh, x, y, z);
             
-            if (~xsy && ~ysy)
-                for n = 1:N
-                    func(geo.panels(n), varargin{:});
-                    hold on;
-                end
-            elseif (xsy && ~ysy)
-                for n = 1:N
-                    func(geo.panels(n), 'xsym', varargin{:});
-                    hold on;
-                end
-            elseif (~xsy && ysy)
-                for n = 1:N
-                    func(geo.panels(n), 'ysym', varargin{:});
-                    hold on;
-                end
-            elseif (xsy && ysy)
-                for n = 1:N
-                    func(geo.panels(n), 'xsym', 'ysym', varargin{:});
-                    hold on;
-                end
-            end
+%             if (showSym)
+%                 xsy = geo.xsym;
+%                 ysy = geo.ysym;
+%             end
+%             
+%             if (~xsy && ~ysy)
+%                 for n = 1:N
+%                     func(geo.panels(n), varargin{:});
+%                     hold on;
+%                 end
+%             elseif (xsy && ~ysy)
+%                 for n = 1:N
+%                     func(geo.panels(n), 'xsym', varargin{:});
+%                     hold on;
+%                 end
+%             elseif (~xsy && ysy)
+%                 for n = 1:N
+%                     func(geo.panels(n), 'ysym', varargin{:});
+%                     hold on;
+%                 end
+%             elseif (xsy && ysy)
+%                 for n = 1:N
+%                     func(geo.panels(n), 'xsym', 'ysym', varargin{:});
+%                     hold on;
+%                 end
+%             end
         end
     end
 end
