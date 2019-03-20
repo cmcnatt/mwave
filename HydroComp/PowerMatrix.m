@@ -49,10 +49,17 @@ classdef PowerMatrix < IEnergyComp
             pmat.mat = mat;
             pmat.hs = Hs;
             pmat.t02 = T02;
-            pmat.t = T;
-            pmat.h = H;
-            pmat.rho = Rho;
-            pmat.specType = specType;
+            if nargin > 3
+                pmat.t = T;
+                pmat.h = H;
+                pmat.rho = Rho;
+                pmat.specType = specType;
+            else
+                pmat.t = [];
+                pmat.h = [];
+                pmat.rho = [];
+                pmat.specType = [];
+            end
             pmat.devCount = 1;
         end
         

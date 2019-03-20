@@ -22,6 +22,7 @@ classdef Panel < handle
     
     properties (Access = private)
         vertices;
+        setNorm;
         normal;
         area;
         centroid;
@@ -51,6 +52,7 @@ classdef Panel < handle
                     pan.vertices = verts;
                 end
                 pan.normal = [];
+                pan.setNorm = false;
                 pan.area = [];
                 pan.centroid = [];
                 pan.value = [];
@@ -70,6 +72,10 @@ classdef Panel < handle
             end
             
             norm = pan.normal;
+        end
+        function [] = set.Normal(pan, val)
+            pan.setNorm = true;
+            pan.normal = val;
         end
         
         function [ar] = get.Area(pan)
@@ -466,7 +472,9 @@ classdef Panel < handle
             
             [norm, ar, cent] = Panel.Properties(pan.vertices);
 
-            pan.normal = norm;
+            if ~pan.setNorm
+                pan.normal = norm;
+            end
             pan.area = ar;
             
             pan.centroid = cent;

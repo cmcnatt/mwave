@@ -50,6 +50,7 @@ classdef PanelGeo < handle
                     
                     for n = 1:nPan
                         newPans(n) = Panel(pans.Panels(n).Vertices);
+                        newPans(n).Normal = pans.Panels(n).Normal;
                         newPans(n).Value = pans.Panels(n).Value;
                         newPans(n).IsWet = pans.Panels(n).IsWet;
                         newPans(n).IsInterior = pans.Panels(n).IsInterior;
@@ -60,7 +61,16 @@ classdef PanelGeo < handle
                     geo.xsym = pans.Xsymmetry;
                     geo.ysym = pans.Ysymmetry;
                 else
-                    geo.panels = pans;
+                    N = length(pans);
+                    for n = 1:N
+                        newPans(n) = Panel(pans(n).Vertices);
+                        newPans(n).Normal = pans(n).Normal;
+                        newPans(n).Value = pans(n).Value;
+                        newPans(n).IsWet = pans(n).IsWet;
+                        newPans(n).IsInterior = pans(n).IsInterior;
+                        newPans(n).IsBody = pans(n).IsBody;
+                    end
+                    geo.panels = newPans;
 
                     geo.xsym = false;
                     geo.ysym = false;
@@ -256,7 +266,7 @@ classdef PanelGeo < handle
                 inclPan = ~geo.IsInteriors;
                 N = N0 - sum(geo.IsInteriors);
             else
-                inclPan = ones(N, 1);
+                inclPan = ones(N0, 1);
                 N = N0;
             end
             verts0 = zeros(4*N, 3);
@@ -306,33 +316,103 @@ classdef PanelGeo < handle
             fclose(fileID);
         end
         
-        function [mesh, x, y, z] = QuadMesh(geo)
-            N = geo.Count;
-            mesh = zeros(4*N, 3);
-            x = zeros(4*N, 1);
-            y = zeros(4*N, 1);
-            z = zeros(4*N, 1);
+        function [] = WriteGdf(geo, fileLoc, name, center, includeInt)
+            if nargin < 4
+                center = [];
+                includeInt = true;
+            end
             
-            pans = geo.Panels;
+            % make a copy
+            geo0 = PanelGeo(geo);
+            if ~isempty(center)
+                geo0.Translate(-center); %translate to rotate about center of rotation.
+            end
             
-            ind = 1;
+            filename = [fileLoc '\' name '.gdf'];
+            fid = fopen(filename, 'wt');
+            
+            ulen = 1;
+            g = 9.806650;
+            
+            Nwet = sum(geo0.IsWets);
+            Nint = sum(geo0.IsInteriors);
+            if (includeInt)
+                count = Nwet;
+            else
+                count = Nwet - Nint;
+            end
+            
+            fprintf(fid, ['Model ' name ', created: ' date '\n']);
+            fprintf(fid, '%8.4f %8.4f\n', ulen, g);
+            fprintf(fid, '%i %i \n', geo0.Xsymmetry, geo0.Ysymmetry);
+            fprintf(fid, '%i\n', count);
+            
+            pans = geo0.Panels;
+            
+            for n = 1:geo0.Count
+                pan = pans(n);
+                
+                panOk = true;
+                if (~pan.IsWet)
+                    panOk = false;
+                end
+                if (pan.IsInterior && ~includeInt)
+                    panOk = false;
+                end
+                
+                if (panOk)
+                    verts = pan.Vertices;
+                    for m = 1:4
+                        fprintf(fid, '\t%8.4f\t%8.4f\t%8.4f\n', verts(m,1), verts(m,2), verts(m,3));
+                    end
+                end
+            end
+            
+            fclose(fid);
+        end
+        
+        function [faces, verts] = QuadMesh(geo, noInt)
+            if nargin < 2
+                noInt = true;
+            end
+            N0 = geo.Count;
+            if noInt
+                inclPan = ~geo.IsInteriors;
+                N = N0 - sum(geo.IsInteriors);
+            else
+                inclPan = ones(N0, 1);
+                N = N0;
+            end
+            verts0 = zeros(4*N, 3);
+            faces0 = zeros(N, 4);
+            
+            im = 1;
+            ifa = 1;
+            for m = 1:N0
+                if inclPan(m)
+                    verts0(im:im+3,:) = geo.panels(m).Vertices;
+                    faces0(ifa,:) = [im, im+1, im+2, im+3];
+
+                    im = im + 4;
+                    ifa = ifa + 1;
+                end
+            end
+            [verts, ~, ic] = unique(verts0, 'rows');
+            
+            faces = zeros(N, 4);
             for m = 1:N
-                verts = pans(m).Vertices;
                 for n = 1:4
-                    mesh(ind, :) = [ind, ind, ind];
-                    x(ind) = verts(n, 1);
-                    y(ind) = verts(n, 2);
-                    z(ind) = verts(n, 3);
+                    faces(m, n) = ic(faces0(m, n));
                 end
             end
         end
                 
         function [] = plot(geo, varargin)
-            geo.plotFuncs(@plot, varargin{:});
+            geo.plotFuncs('plot', varargin{:});
         end
         
         function [] = surf(geo, varargin)
-            geo.plotFuncs(@surf, varargin{:});
+            geo.plotFuncs('surf', varargin{:});
         end
         
         % Overloaded plus operator
@@ -402,17 +482,52 @@ classdef PanelGeo < handle
     
     methods (Access = private)
         function [] = plotFuncs(geo, func, varargin)
-            N = geo.Count;
-            
+
             opts = checkOptions({{'ShowSym'}, {'ShowNorm'}, {'OnlyWet'}}, varargin);
             showSym = opts(1);
+            showNorm = opts(2);
+            onlyWet = opts(3);
             
             xsy = false;
             ysy = false;
             
-            [mesh, x, y, z] = geo.QuadMesh;
-            quadmesh(mesh, x, y, z);
+            [mesh, verts] = geo.QuadMesh(~onlyWet);
             
+            vals = geo.Values;
+            
+            if strcmp(func, 'plot')
+                colV = MColor.Blue;
+                patch('faces', mesh, 'vertices', verts,'facevertexcdata',colV,...
+                    'facecolor','none','edgecolor',colV,...
+                    'facelighting', 'none', 'edgelighting', 'flat',...
+                    'parent',gca);
+            elseif strcmp(func, 'surf')
+                colV = MColor.Black;
+                if isnan(vals(1))
+                    cents = geo.Centroids;
+                    colF = cents(:,3);
+                else
+                    colF = vals;
+                end
+                patch('faces', mesh, 'vertices', verts,...
+                    'facecolor','flat', 'facevertexcdata',colF,...
+                    'cdata',colF,'edgecolor',colV,...
+                    'facelighting', 'none', 'edgelighting', 'flat',...
+                    'parent',gca);
+            end
+            
+            if (showNorm)
+                hold on;
+                cent = geo.Centroids;
+                norm = geo.Normals;
+                area = geo.Areas;
+                quiver3(cent(:,1), cent(:,2), cent(:,3), norm(:,1), norm(:,2), norm(:,3));
+            end
+            
+            
+            %quadmesh(mesh, verts(:,1), verts(:,2), verts(:,3), colV, 'color', colF);
+            
+            % Old very slow methdo
 %             if (showSym)
 %                 xsy = geo.xsym;
 %                 ysy = geo.ysym;
