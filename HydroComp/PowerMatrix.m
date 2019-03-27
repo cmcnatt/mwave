@@ -137,15 +137,30 @@ classdef PowerMatrix < IEnergyComp
             energy = sum(sum(Pow))./1e3;
         end
         
-        function [pow] = AveragePower(pmat, spectrum, varargin)
+        function [pow] = AveragePower(pmat, varargin)
             % For bretschneider, T02 = 0.71*Tp (T02 =
             % sqrt(m2/m0)*Tp) Ref: Holthuijsen, Waves in
             % Oceanic and Coastal Waters
-            hss = spectrum.SigWaveHeight;
-            t02s = spectrum.PeakPeriod/0.71;
+            
+            if nargin == 1
+                spectrum = varargin{1};
+                hss = spectrum.SigWaveHeight;
+                ti = spectrum.PeakPeriod/0.71;
+                ttype = 'T02';
+            elseif nargin == 2
+                hss = varargin{1};
+                ti = varargin{2};
+                ttype = 'T02';
+            elseif nargin == 3
+                hss = varargin{1};
+                ti = varargin{2};
+                ttype = varargin{3};
+            end
+            
+            pow = pmat.PowerAt(pmat, hss, ti, ttype);
                 
-            pmatI = pmat.InterpolateTo(hss, t02s);
-            pow = pmatI.Mat;
+%             pmatI = pmat.InterpolateTo(hss, t02s);
+%             pow = pmatI.Mat;
         end
                 
         function [pmatI] = InterpolateTo(pmat, Hs, T)

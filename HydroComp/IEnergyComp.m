@@ -29,7 +29,7 @@ classdef IEnergyComp < handle
     methods (Abstract)
         PowerRAO(energy, varargin);
         AnnualEnergyProd(energy, waveClim, varargin);
-        AveragePower(energy, spectrum, varargin);
+        AveragePower(energy, varargin);
         PowerMatrix(energy, Hs, T, varargin);
     end
 end
