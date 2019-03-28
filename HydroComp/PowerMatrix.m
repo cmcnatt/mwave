@@ -21,7 +21,8 @@ Contributors:
 classdef PowerMatrix < IEnergyComp
     % Defines a power matrix for a WEC
     
-    properties (Access = private)    
+    properties (Access = private)
+        f;
         mat;
         h;
         rho;
@@ -46,6 +47,7 @@ classdef PowerMatrix < IEnergyComp
     methods
         
         function [pmat] = PowerMatrix(mat, Hs, T02, T, H, Rho, specType)
+            pmat.f =[];
             pmat.mat = mat;
             pmat.hs = Hs;
             pmat.t02 = T02;
@@ -110,6 +112,29 @@ classdef PowerMatrix < IEnergyComp
             val = pmat.specType;
         end
         
+        function [p] = PowerAt(pmat, Hs, T, varargin)
+            
+            [opts, args] = checkOptions({{'T02'}, {'Tp'}, {'Te'}}, varargin);
+            isT02 = opts(1);
+            isTp = opts(2);
+            isTe = opts(3);
+            
+            if isempty(pmat.f)
+                pmat.f =  griddedInterpolant({pmat.hs, pmat.t02}, pmat.Matrix, 'linear');
+            end
+            
+            Ti = T;
+            if isT02
+                Ti = T;
+            elseif isTp
+                Ti = Bretschneider.ConvertT(T, 'Tp', 'T02');
+            elseif isTe
+                Ti = Bretschneider.ConvertT(T, 'Te', 'T02');
+            end
+            
+            p = pmat.f(Hs, Ti);
+        end
+        
         function [val] = PowerRAO(pmat)
             warning('PowerRAO not defined for PowerMatrix');
             val = [];
@@ -145,8 +170,8 @@ classdef PowerMatrix < IEnergyComp
             if nargin == 1
                 spectrum = varargin{1};
                 hss = spectrum.SigWaveHeight;
-                ti = spectrum.PeakPeriod/0.71;
-                ttype = 'T02';
+                ti = spectrum.PeakPeriod;
+                ttype = 'Tp';
             elseif nargin == 2
                 hss = varargin{1};
                 ti = varargin{2};
