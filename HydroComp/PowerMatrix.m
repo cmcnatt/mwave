@@ -167,22 +167,22 @@ classdef PowerMatrix < IEnergyComp
             % sqrt(m2/m0)*Tp) Ref: Holthuijsen, Waves in
             % Oceanic and Coastal Waters
             
-            if nargin == 1
+            if nargin == 2
                 spectrum = varargin{1};
                 hss = spectrum.SigWaveHeight;
                 ti = spectrum.PeakPeriod;
                 ttype = 'Tp';
-            elseif nargin == 2
+            elseif nargin == 3
                 hss = varargin{1};
                 ti = varargin{2};
                 ttype = 'T02';
-            elseif nargin == 3
+            elseif nargin == 4
                 hss = varargin{1};
                 ti = varargin{2};
                 ttype = varargin{3};
             end
             
-            pow = pmat.PowerAt(pmat, hss, ti, ttype);
+            pow = pmat.PowerAt(hss, ti, ttype);
                 
 %             pmatI = pmat.InterpolateTo(hss, t02s);
 %             pow = pmatI.Mat;
