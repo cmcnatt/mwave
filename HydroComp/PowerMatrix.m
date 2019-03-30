@@ -301,7 +301,7 @@ classdef PowerMatrix < IEnergyComp
                 Dpto0 = comp.Dpto;
             end
 
-            for m = 1:Mc
+            parfor m = 1:Mc
                 for n = 1:Nc
                     if ~isempty(occlim)
                         if (freqOccs(m, n) <= occlim)
