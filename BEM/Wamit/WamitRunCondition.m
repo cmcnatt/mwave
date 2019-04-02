@@ -729,11 +729,15 @@ classdef WamitRunCondition < IBemRunCondition
             else
                 dipoles = run.floatBods.WamDipoles;
                 if ~isempty(dipoles)
-                    fprintf(fileID, 'NPDIPOLE =');
-                    for m = 1:length(dipoles)
-                        fprintf(fileID, ' %i', dipoles(m));
+                    if length(dipoles) == 2
+                        fprintf(fileID, 'NPDIPOLE = (%i-%i)\n', dipoles(1), dipoles(2));
+                    else
+                        fprintf(fileID, 'NPDIPOLE =');
+                        for m = 1:length(dipoles)
+                            fprintf(fileID, ' %i', dipoles(m));
+                        end
+                        fprintf(fileID, '\n');
                     end
-                    fprintf(fileID, '\n');
                 end
             end
             fprintf(fileID, 'IPOTEN = 1\n');

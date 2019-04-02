@@ -40,6 +40,8 @@ classdef ForceComp
             f = Fin(1:3);
             r = point - origin;
             
+            rskew = skewMat(r);
+            
             Fout = zeros(6, 1);
             Fout(1:3) = f;
             Fout(4:6) = Fin(4:6) + cross(r, f);

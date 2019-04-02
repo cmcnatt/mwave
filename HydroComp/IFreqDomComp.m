@@ -427,7 +427,7 @@ classdef IFreqDomComp < IEnergyComp & handle
             end
         end
         
-        function [forces] = ForceConstraint(hcomp, vararign)
+        function [forces] = ForceConstraint(hcomp, varargin)
             omega = 2*pi./hcomp.t;
             
             fex = hcomp.fex0;
