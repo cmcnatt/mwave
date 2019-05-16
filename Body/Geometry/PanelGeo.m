@@ -61,6 +61,7 @@ classdef PanelGeo < handle
                     geo.xsym = pans.Xsymmetry;
                     geo.ysym = pans.Ysymmetry;
                 else
+                    length(pans)
                     N = length(pans);
                     for n = 1:N
                         newPans(n) = Panel(pans(n).Vertices);

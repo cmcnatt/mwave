@@ -57,8 +57,12 @@ for n = 1:Npan
     
     num = textscan(fid, '%f', Nb*3);
     
-    verts{n} = reshape(num{1},3,Nb)';
+    verts{n} = reshape(num{1},3,Nb)';    
+
+    %pans(n) = Panel(verts{n});
 end
+
+%panGeo = PanelGeo(pans);
 
 fclose(fid);
 
