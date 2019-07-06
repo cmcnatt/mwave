@@ -145,6 +145,12 @@ classdef ResponseSpectrum < handle
                 end
             end
         end
+        
+        function [val] = ValueOfExceedenceProbability(rspec, p)
+            f = @(x) rspec.ProbabilityOfExceeding(x) - p;
+            
+            val = fzero(f, 0);
+        end
     end
     
     methods (Access = private)
