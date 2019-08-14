@@ -669,8 +669,10 @@ classdef IFreqDomComp < IEnergyComp & handle
             powFull = hcomp.Power(varargin);
             inds = hcomp.PTOInds;
             inds = (sum(inds) > 0)';
-            % TODO: only first direction
-            power = sum(powFull(:,1,inds), 3);
+            % Assumes center value is 0 deg direction
+            [Nw, Nd, ~] = size(powFull);
+            ib = (Nd - 1)/2 + 1;
+            power = sum(powFull(:,:,inds), 3);
             
             if ~isempty(spectrum)
                 a_ = spectrum.Amplitudes;
