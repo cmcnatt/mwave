@@ -9,6 +9,8 @@ classdef MColor
         Maroon = [0.6350 0.0780 0.1840];
         Black = [0 0 0];
         White = [1 1 1];
+        MoceanPurple = [88 44 131]./255;
+        MoceanOrange = [250 70 22]./255;
     end
     
     methods (Static)
