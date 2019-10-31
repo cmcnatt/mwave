@@ -778,6 +778,131 @@ classdef ConstraintMatCompUT < matlab.unittest.TestCase
                 end
             end
         end
+        
+        function test12(testCase)
+            % Relative Heave
+            % two bodies
+            % global cg at body 1
+            cgs = [-1, 0, 2; 3, 0, -4];
+            
+            P = ConstraintMatComp.RelativeHeave(cgs);
+            
+            % composite body moves by x = 1, y = 2, z = 3
+            % and rolls 1, pitches 2, yaws 3, and relative heaves 4
+            s = [1 2 3 1 2 3 4]';
+            
+            qex = zeros(12, 1);
+            % Body 1
+            % origin is at cg 1
+            % position and angles of body 1 should be the same
+            qex(1) = 1;
+            qex(2) = 2;
+            qex(3) = 3;
+            qex(4) = 1;
+            qex(5) = 2;
+            qex(6) = 3;
+            
+            % Body 2
+            % angles are all same
+            % x = 1 + [-4-2]*2 - 0*3 = -11
+            % y = 2 - [-4-2]*1 + [3 - -1]*3 = 20
+            % z = 3 + [0]*1 - [3 - -1]*2 + 4 = -1
+            
+            qex(7) = -11;
+            qex(8) = 20;
+            qex(9) = -1;
+            qex(10) = 1;
+            qex(11) = 2;
+            qex(12) = 3;
+            
+            q = P.'*s;
+
+            for m = 1:12
+                testCase.verifyEqual(q(m), qex(m), 'AbsTol', 1e-12);
+            end
+        end
+        
+        function test13(testCase)
+            % Relative heave - mass matrix
+            % check the computation of the mass matrix of composite body
+            
+            % origin at global cg, including dz in the hinge
+            
+            %    _______  _________
+            %   |       ||         |     
+            %   |   1   ||    2    |
+            %   |_______||         |
+            %            |_________|
+            %
+            
+            len1 = 6;
+            wid1 = 1;
+            hei1 = 2;
+            
+            len2 = 9;
+            wid2 = wid1;
+            hei2 = 4;
+            
+            M1 = ConstraintMatCompUT.massBlock(len1, wid1, hei1);
+            M2 = ConstraintMatCompUT.massBlock(len2, wid2, hei2);
+            
+            Mq = zeros(12,12);
+            Mq(1:6, 1:6) = M1;
+            Mq(7:12, 7:12) = M2;
+                        
+            cg1 = [-len1/2, 0, 2];
+            cg2 = [len2/2, 0, 0];
+            
+            cgs = [cg1; cg2];
+            
+            m1 = M1(1,1);
+            m2 = M2(1,1);
+            m = m1 + m2;
+                        
+            cg0 = (m1*cgs(1,:) + m2*cgs(2,:))./m;
+            
+            org = cg0;
+            
+            P = ConstraintMatComp.RelativeHeave([cg1; cg2], 'Origin', org);
+            
+            Ms = P*Mq*P.';
+            
+            Mex = zeros(6, 6);
+            
+            % mass
+            Mex(1,1) = m;
+            Mex(2,2) = m;
+            Mex(3,3) = m;
+            
+            r1 = cg1 - cg0;
+            r2 = cg2 - cg0;
+            
+            % Roll
+            Mex(4,4) = M1(4,4) + M2(4,4) + m1*r1(3)^2 + m2*r2(3)^2;
+            
+            % Pitch
+            Mex(5,5) = M1(5,5) + m1*sum(r1.^2) + M2(5,5) + m2*sum(r2.^2);
+            % Yaw
+            Mex(6,6) = M1(6,6) + m1*r1(1)^2 + M2(6,6) + m2*r2(1)^2;
+            
+            % There is also a roll-yaw coupling, because of the difference
+            % in the z-pos of the CGs of each body, which creates new
+            % roll and yaw pricipal axes.
+            Mex(4,6) = Ms(4,6);
+            Mex(6,4) = Mex(4,6);
+            Mex(7,7) = m2;
+            Mex(3,7) = m2;
+            Mex(7,3) = m2;
+            Mex(5,7) = -r2(1)*m2;
+            Mex(7,5) = -r2(1)*m2;
+
+            for m = 1:7
+                for n = 1:7
+                    testCase.verifyEqual(Ms(m,n), Mex(m,n), 'AbsTol', ...
+                        1e-12);
+                end
+            end
+        end
     end
     
     methods (Static, Access = private)

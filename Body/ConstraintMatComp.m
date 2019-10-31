@@ -132,5 +132,71 @@ classdef ConstraintMatComp
 
             P = P0(1:(end-Nhin),:);
         end
+        
+        function [P] = RelativeHeave(bods, varargin)
+            % Inputs:
+            %   bods = 2 x 3 matrix of {x, y, z} body coordinates (location
+            %       of the body in global coordinates), where N = 2 is the 
+            %       number of bodies
+            %
+            % Optional Inputs:
+            %   'Origin', org = org is a 1 x 3 vector indicating the origin
+            %       of the composite body. If the optional 'Origin'
+            %       argument is not provided, the default is is the body
+            %       coordinates of body 1
+            %   'Planar': compute the constraint matrix for 3 DOF x 3 DOF
+            %   planar motions, where the DOF are surge, heave, and pitch
+            %
+            % Returns:
+            %   P = the velocity transformation matrix 
+            %       (not PT, i.e. the transpose) 
+            
+            [opts, args] = checkOptions({{'Origin', 1}, {'Planar'}}, varargin);
+            
+            if (opts(1))
+                org = args{1};
+            else
+                org = bods(1,:);
+            end
+            
+            planar = opts(2);
+            
+            % sO is vector from origin to body 1
+            sO = bods(1,:) - org;
+            
+            % s12 is vector from body 1 to body 2
+            s12 = bods(2,:) - bods(1,:);
+                        
+            % body 1 has same angles as origin
+            % body 1 CG is origin + rotation of relative body vector (sO)
+            PT1 = zeros(6, 7);
+            PT1(1:6, 1:6) = eye(6);
+            PT1(1:3, 4:6) = -skewMat(sO);
+                                    
+            % body 2 has same angles as origin
+            % body 2 CG =
+            %   origin 
+            %   + rotation of relative body vector (sO + s12)
+            %   + relative heave vector [0, 0, zh]'
+            PT2 = zeros(6, 7);
+            PT2(1:6, 1:6) = eye(6);
+            PT2(1:3, 4:6) = -skewMat(sO + s12);
+            PT2(3, 7) = 1;
+            
+            % Note that the vectors in the skewMat (sO, and sO + s12) have
+            % a negative sign because: R*s = s - skewMat(s)*alpha, where 
+            % R is linear the rotation matrix
+            % s on the rhs is not part of P bc it is fixed, and alpha is
+            % the vector of rotation angles
+            
+            PT = [PT1; PT2];
+            
+            P = PT.';
+            
+            if planar
+                [M, N] = size(P);
+                P = P(1:2:M, 1:2:N);
+            end
+        end
     end
 end
