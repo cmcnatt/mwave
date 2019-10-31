@@ -22,12 +22,15 @@ classdef WaveClimate < handle
     
     properties (Access = private)        
         specs;
-        freqOcc;
         h;
         rho;
         name;
         hs;
         t02;
+    end
+    
+    properties (Access = public)
+        freqOcc;
     end
     
     properties (Dependent)
@@ -240,7 +243,7 @@ classdef WaveClimate < handle
             ef = spec.EnergyFlux(wc.rho, wc.h, 'total');
         end
         
-        function [climI] = InterpolateTo(clim, Hs, T)
+        function [climI] = InterpolateTo(clim, Hs, T) % Interpolates clim into new Hs and T bins
             [t0M, hsM] = meshgrid(clim.t02, clim.hs);
             [TM, HsM] = meshgrid(T, Hs);
             freqOcc2 = interp2(t0M, hsM, clim.freqOcc, TM, HsM);

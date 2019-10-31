@@ -75,7 +75,7 @@ for m = 1:dof;
         
         for o = 4:Nt;
             %cw = cos(omega*t(o));
-            % Chebyshev recursive metheod for computing cosine
+            % Chebyshev recursive method for computing cosine
             cw = 2*cw0.*cw1 - cw2;
             K(o,m,n) = (2/pi)*trapz(omega, ra_B.*cw);
             cw2 = cw1;
