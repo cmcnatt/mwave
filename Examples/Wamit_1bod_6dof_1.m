@@ -31,7 +31,7 @@ run_name = 'wam_1b_6dof_1';
 % This is the folder where all the Wamit input and output files go (You 
 % need to make this folder!). It is good practise to name the folder the 
 % same as the run name.
-folder = [mwavePath '\Examples\BemRuns\' run_name];  
+folder = [mwavePath 'Examples\BemRuns\' run_name];  
                                                     
 % mwavePath is a function that returns the path to the to the folder where
 % mwave is kept it locates this by finding a file called mwave.home     
@@ -68,7 +68,7 @@ M(6,6) = Izz;
 
 cyl = FloatingBody();           % Create a 'FloatingBody' object
 geoFile = 'wam_1b_6dof_1';
-copyfile([mwavePath '\Examples\BemRuns\geometry\' geoFile '.gdf'], ...
+copyfile([mwavePath 'Examples\BemRuns\geometry\' geoFile '.gdf'], ...
     [folder '\' geoFile '.gdf']);
 cyl.GeoFile = geoFile;  % Point the body to the geometry file (it 
                         % is a .gdf file, but don't include .gdf)
@@ -98,10 +98,10 @@ wam_run.FloatingBodies = cyl;       % Now set the floating body we just
                                     % created as the body used in Wamit run
                                     
 % The following are default values, but just to show that they can be set
-wam_run.ExePath = 'N:\wamitv7';           % This points to the location 
+wam_run.ExePath = 'C:\wamitv7';           % This points to the location 
                                             % of the Wamit.exe
-wam_run.ScratchPath = 'N:\wamitv7\scratch'; % Wamit needs a scratch folder
-wam_run.UseridPath = 'N:\wamitv7';          % Location of UserId (license)
+wam_run.ScratchPath = 'C:\wamitv7\scratch'; % Wamit needs a scratch folder
+wam_run.UseridPath = 'C:\wamitv7';          % Location of UserId (license)
 
 wam_run.WriteRun;                   % this writes all the necessary Wamit 
                                     % input files

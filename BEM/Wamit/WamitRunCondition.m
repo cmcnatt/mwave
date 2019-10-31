@@ -662,6 +662,9 @@ classdef WamitRunCondition < IBemRunCondition
             else
                 irr = 0;
             end
+            if (run.floatBods(1).MakeSurfPan)
+                irr = 3;
+            end
             fprintf(fileID, 'IRR = %i\n', irr);
             fprintf(fileID, 'ILOG = 1\n');
             fprintf(fileID, 'IALTFRC = 2\n');

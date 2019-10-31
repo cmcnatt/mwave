@@ -51,6 +51,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
         iGenMds;
         iLowHi;
         iSurfPan;
+        makeSurfPan;
         wdipole;
         panSize;
         surfAboveZ0;
@@ -93,6 +94,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
         WamPanelSize;   % See WAMIT PANEL_SIZE .cfg parameter
         WamDipoles;     % Indices of panels or patches that are thin members (dipoles)
         ISurfPan;       % Indicates whether the geometry has interior surface panels
+        MakeSurfPan;    % Indicates whether WAMIT should make interior surface panels - overrides ISurfPan
         SurfAboveZ0;    % Indicates that there are surfaces of the geometry above the z = 0 water plane
         WriteFileMeth;  % Additional methods to support the writing of a geometry file
         WriteParams;    % Parameters of the WriteFileMeth
@@ -128,6 +130,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
                 fb.iGenMds = 0;
                 fb.iLowHi = 0;
                 fb.iSurfPan = 0;
+                fb.makeSurfPan = 0;
                 fb.wdipole = [];
                 fb.surfAboveZ0 = false;
                 fb.writeFileMeth = [];
@@ -163,6 +166,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
                 fb.iLowHi = fbin.iLowHi;
                 fb.panSize = fbin.panSize;
                 fb.iSurfPan = fbin.iSurfPan;
+                fb.makeSurfPan = fbin.makeSurfPan;
                 fb.wdipole = fbin.wdipole;
                 fb.surfAboveZ0 = fbin.surfAboveZ0;
                 fb.writeFileMeth = fbin.writeFileMeth;
@@ -595,7 +599,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
             % Indicates whether the geometry has interior surface panels
             isp = fb.iSurfPan;
         end
-        function [fb] = set.ISurfPan(fb, isp)
+        function [] = set.ISurfPan(fb, isp)
             % Indicates whether the geometry has interior surface panels
             if (~isBool(isp))
                 error('value must be boolean, 1 or 0');
@@ -603,6 +607,20 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
             fb.iSurfPan = isp;
         end
         
+        function [val] = get.MakeSurfPan(fb)
+            % Indicates whether WAMIT should make interior surface panels
+            % Overrides ISurfPan
+            val = fb.makeSurfPan;
+        end
+        function [] = set.MakeSurfPan(fb, val)
+            % Indicates whether WAMIT should make interior surface panels
+            % Overrides ISurfPan
+            if (~isBool(val))
+                error('value must be boolean, 1 or 0');
+            end
+            fb.makeSurfPan = val;
+        end
+                
         function [val] = get.WamDipoles(fb)
             % Indices of the panels or patches that are thin members (i.e.
             % dipoles)
