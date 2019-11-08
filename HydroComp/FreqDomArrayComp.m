@@ -29,7 +29,7 @@ classdef FreqDomArrayComp < IFreqDomComp
     
     properties (Access = private)
         omega;
-        k0;
+       % k0;
         hbs;
         Nhb;
         isBTmatComp;
