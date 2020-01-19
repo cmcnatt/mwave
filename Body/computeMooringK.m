@@ -1,4 +1,5 @@
 function [K] = computeMooringK(cg, pos, ks, anghs, angvs)
+% computes spring damping matrix for a 6DOF body
 
 nlin = max([length(ks), length(anghs), length(angvs)]);
 
