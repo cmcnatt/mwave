@@ -405,7 +405,7 @@ classdef WamitResult < IBemResult
                     [P_rad, P_diff, centers] = Wamit_readNum5p(fullpath, result.runName, {result.floatingbodies.GeoFile}, length(result.t), length(result.beta), result.dof, result.rho, result.g, cgs, useSing, opts{:});
 
                     if (result.readVelocity)
-                        [V_rad, V_diff] = Wamit_readNum5v(fullpath, result.runName, result.floatingbodies(1).GeoFile, result.t, length(result.beta), result.dof, result.g, useSing, opts);
+                        [V_rad, V_diff] = Wamit_readNum5v(fullpath, result.runName, {result.floatingbodies.GeoFile}, result.t, length(result.beta), result.dof, result.g, useSing, opts);
                     end
                 end
                 
@@ -418,6 +418,7 @@ classdef WamitResult < IBemResult
                         
                     if ~isempty(centers{l})
                         bodyGeo = result.floatingbodies(l).PanelGeo;
+                        bodyGeo = bodyGeo.GetSubsetPanels(true, false);
 
                         if isempty(bodyGeo)
                             if isempty(result.floatingbodies(l).CompGeoFile)
@@ -538,9 +539,9 @@ classdef WamitResult < IBemResult
                     rwfs(n) = WaveField(result.rho, result.g, result.h, result.t, thisP, thisV, 0, bodCenters);
                 end
                 rwavefield = WaveFieldCollection(rwfs, 'MotionIndex', (1:result.dof));
-                result.waveBody = BodySurfWaveField(bodyGeo, iwavefield, swavefield, rwavefield);
-                result.waveBody.BodyInds = bodyInds;
-                result.waveBody.MotionFuncs = motionFuncs;
+                result.waveBody = BodySurfWaveField(bodyGeo, iwavefield, swavefield, rwavefield);   % Creates BodySurfWaveField with geometry (PanelGeo), and wave fields (i.e. pressure and velocities)
+                result.waveBody.BodyInds = bodyInds;                        % which panels are from which body (if more than one body)
+                result.waveBody.MotionFuncs = motionFuncs;                  % Return unit vector for a given motion
                 result.waveBody.MotionBodyInds = motBodyInds;
             end
             

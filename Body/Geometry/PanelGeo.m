@@ -61,7 +61,6 @@ classdef PanelGeo < handle
                     geo.xsym = pans.Xsymmetry;
                     geo.ysym = pans.Ysymmetry;
                 else
-                    length(pans)
                     N = length(pans);
                     for n = 1:N
                         newPans(n) = Panel(pans(n).Vertices);
@@ -183,6 +182,20 @@ classdef PanelGeo < handle
         
         function [ysy] = get.Ysymmetry(geo)
             ysy = geo.ysym;
+        end
+        
+        function [newGeo] = GetSubsetPanels(geo, incWet, incInt)
+            pans = geo.panels;
+            N = length(pans);
+            inds = true(N, 1);
+            if incWet
+                inds = geo.IsWets == true;
+            end
+            if ~incInt 
+                inds = inds & (geo.IsInteriors == false);
+            end
+            
+            newGeo = PanelGeo(pans(inds));
         end
         
         function [] = Translate(geo, vector)

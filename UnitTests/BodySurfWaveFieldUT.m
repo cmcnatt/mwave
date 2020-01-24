@@ -28,9 +28,10 @@ classdef BodySurfWaveFieldUT < matlab.unittest.TestCase
             % Just an RAO
             wam_run = WamitRunCondition(BodySurfWaveFieldUT.getFolder, 'test');  
             
-            cyl = BodySurfWaveFieldUT.createCylFB;
-            cyl.GeoFile = 'cyl_mesh';  
-            cyl.ISurfPan = 1;
+            cyl = BodySurfWaveFieldUT.CreateCylFB;
+            % cyl.GeoFile = 'cyl_mesh';  Commented out 21/01/2020 because
+            % using programmatically create geometry
+            % cyl.ISurfPan = 1;
 
             cyl.Modes = ModesOfMotion([1 0 1 0 1 0]);   
 
@@ -61,9 +62,9 @@ classdef BodySurfWaveFieldUT < matlab.unittest.TestCase
             % compute total wave field, and basic hydrostatic, use geo mesh
             wam_run = WamitRunCondition(BodySurfWaveFieldUT.getFolder, 'test');  
             
-            cyl = BodySurfWaveFieldUT.createCylFB;
-            cyl.GeoFile = 'cyl_mesh_noInt';
-            cyl.ISurfPan = 0;
+            cyl = BodySurfWaveFieldUT.CreateCylFB;
+%             cyl.GeoFile = 'cyl_mesh_noInt';
+%             cyl.ISurfPan = 0;
 
             cyl.Modes = ModesOfMotion([1 0 1 0 1 0]);   
 
@@ -687,11 +688,84 @@ classdef BodySurfWaveFieldUT < matlab.unittest.TestCase
             A = 0.5;
             waveBody.WritePressureFile(folder, name, time, A)
         end
+        
+        function energyFlux(testCase)
+            % compute energy flux body surf
+            wam_run = WamitRunCondition(BodySurfWaveFieldUT.getFolder, 'test');  
+            
+            cyl = BodySurfWaveFieldUT.CreateCylFB;
+%             cyl.GeoFile = 'cyl_mesh_noInt';
+%             cyl.ISurfPan = 0;
+
+            cyl.Modes = ModesOfMotion([1 0 1 0 1 0]);   
+
+            wam_run.Rho = BodySurfWaveFieldUT.getRho;      
+            wam_run.T = 6;   
+            wam_run.Beta = 0;       
+            wam_run.H = Inf;    
+
+            wam_run.FloatingBodies = cyl;   
+
+            wam_run.ComputeBodyPoints = true;
+            wam_run.ComputeVelocity = true;
+
+            wam_run.WriteRun;                   
+
+            wam_run.Run;                          
+            wam_result = WamitResult(wam_run);  
+            wam_result.ReadResult;   
+
+            waveBody = wam_result.WaveBody;
+            hydroForces = wam_result.FreqDomForces;
+            
+            comp = FreqDomComp(hydroForces, cyl);
+
+            waveBody.BodyMotions = comp.Motions;
+
+            flux0 = waveBody.EnergyFlux([], 'Total');
+            fluxD = waveBody.EnergyFlux([], 'Diffracted');
+            flux0 = flux0{1};
+            figure; 
+            subplot(2,1,1);
+            surf(flux0); 
+            axis equal
+            title('No PTO Damping');
+            
+            Dpto = zeros(3,3);
+            Dpto(2,2) = 10^6;
+            comp.SetDpto(Dpto);
+            waveBody.BodyMotions = comp.Motions;
+            
+            fluxP = waveBody.EnergyFlux([], 'Total');
+            fluxP = fluxP{1};
+            subplot(2,1,2);
+            surf(fluxP); 
+            axis equal
+            title('With PTO Damping');
+        end
+    end
+    
+    methods (Static, Access = public)
+        
+        function [cyl] = CreateCylFB()
+            diameter = 10;
+            draft = 10;
+            height = 12; 
+            
+            Ntheta = 24;
+            Nr = 8;
+            Nz = 12;
+            
+            rho = BodySurfWaveFieldUT.getRho;
+            
+            cyl = FloatingCylinder(rho, diameter/2, height, draft, Ntheta, Nr, Nz);
+
+        end
     end
     
     methods (Static, Access = private)
         
-        function [cyl] = createCylFB()
+        function [cyl] = createCylFBOld()
             diameter = 10;
             draft = 10;
             height = 12;           
@@ -720,7 +794,7 @@ classdef BodySurfWaveFieldUT < matlab.unittest.TestCase
         end
         
         function [mainPath] = getFolder()
-            mainPath = [mwavePath '\UnitTests\WamitRuns\bodySurfUT'];
+            mainPath = [mwavePath '\UnitTests\WamitRuns\tempRun'];
         end
         
         function [rho] = getRho()
