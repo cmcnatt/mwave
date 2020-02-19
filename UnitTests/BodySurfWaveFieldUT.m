@@ -730,6 +730,7 @@ classdef BodySurfWaveFieldUT < matlab.unittest.TestCase
             surf(flux0); 
             axis equal
             title('No PTO Damping');
+            set(gca, 'view', [0 -40]);
             
             Dpto = zeros(3,3);
             Dpto(2,2) = 10^6;
@@ -742,6 +743,13 @@ classdef BodySurfWaveFieldUT < matlab.unittest.TestCase
             surf(fluxP); 
             axis equal
             title('With PTO Damping');
+            set(gca, 'view', [0 -40]);
+            
+            powComp = comp.Power;
+            powComp = powComp(1,1,2);
+            powSurf = -sum(fluxP.Values.*fluxP.Areas);
+            
+            testCase.assertEqual(powSurf, powComp, 'RelTol', 0.01);
         end
     end
     
