@@ -432,7 +432,8 @@ classdef WamitResult < IBemResult
                         else
                             bodyGeo.Translate([0, 0, result.floatingbodies(1).Zpos]);
                         end
-                        bodyGeo.Translate(result.floatingbodies(l).Cg);
+                        % TODO (line below may need uncommented for higher order meshes)
+                        %bodyGeo.Translate(result.floatingbodies(l).Cg);
                         
                         centsBG = bodyGeo.Centroids;
                         [nBodPoints, ~] = size(centsBG);
