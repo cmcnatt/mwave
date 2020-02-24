@@ -527,6 +527,7 @@ classdef WamitRunCondition < IBemRunCondition
                     geoFile = [run.runName num2str(n)];
                     run.writeGdf(run.floatBods(n), geoFile, run.floatBods(n).ISurfPan);
                     run.geoFiles{n} = geoFile;
+                    run.floatBods(n).WamitSetGeoFile(geoFile);
                 else
                     run.geoFiles{n} = run.floatBods(n).GeoFile;
                 end

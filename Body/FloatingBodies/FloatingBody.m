@@ -217,6 +217,12 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
             end
         end
         
+        function [] = WamitSetGeoFile(fb, fn)
+            % Method used by WAMIT in conjuctions with a Panel Geo to set
+            % the GeoFile name following the creation of the GDF files
+            fb.geoFile = fn;
+        end
+        
         function [fn] = get.CompGeoFile(fb)
             % Get the name of geometry file associated with the compuation of pointns on the floating body
             fn = fb.compGeoFile;
