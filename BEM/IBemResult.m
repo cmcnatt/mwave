@@ -47,6 +47,7 @@ classdef IBemResult < handle
         waveArray;
         hasBeenRead;
         errLog;
+        driftForces; % This drift force structure could contain more than just the mean drift forces that will be computed initially
     end
 
     properties (Dependent)
@@ -61,6 +62,7 @@ classdef IBemResult < handle
         WavePoints;         % Wave field at field points
         WaveArray;          % Wave field at array locations
         ErrorLog;
+        DriftForces; 
     end
     
     methods (Abstract)
@@ -150,6 +152,15 @@ classdef IBemResult < handle
                 hf = result.hydroForces;
             else
                 hf = [];
+            end
+        end
+        
+        function [df] = get.DriftForces(result)
+            % The DriftForces structure
+            if (result.hasBeenRead)
+                df = result.driftForces;
+            else
+                df = [];
             end
         end
         

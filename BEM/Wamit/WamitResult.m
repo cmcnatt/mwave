@@ -38,6 +38,8 @@ classdef WamitResult < IBemResult
         fieldPointsAsBody;
         bodyPansWithPress;
         bodyPanInds;
+        compDrift;
+        driftOption;
     end
 
     properties (Dependent)
@@ -74,6 +76,8 @@ classdef WamitResult < IBemResult
                     result.fieldArray = runCondition.FieldArray;
                     result.cylArray = runCondition.CylArray;
                     result.compFK = runCondition.ComputeFK;
+                    result.compDrift = runCondition.CompDrift;
+                    result.driftOption = runCondition.DriftOption;
                     if (~isempty(result.fieldPoints) || ~isempty(result.fieldArray) || ~isempty(result.cylArray))
                         result.solveField = true;
                     end
@@ -767,8 +771,67 @@ classdef WamitResult < IBemResult
                 end
             end
             
+            % Read drift forces
+            if result.compDrift
+                result.driftForces = ReadDriftForces(result);
+            end
+            
             result.hasBeenRead = 1;
         end
+    end
+    
+    methods (Access = private)
+        
+        function [df] = ReadDriftForces(result)
+            % READDRIFTFORCES Extracts the drift forces from the apropriate 
+            % WAMIT output file. Outputs a structure containing all the
+            % results. This could be expanded upon later to include further
+            % quantities if desired.
+            
+            driftMethodNames = {'Control surface','Momentum conservation','Pressure integration'};
+            
+            for n = 1:length(result.driftOption)
+                ext = num2str(result.driftOption(n)+6); % Find file extension based on which drift methods have been used
+                data = importdata([result.Folder '\' result.RunName '.' ext]);
+                driftData = data.data;
+                
+                % First, find out how many periods there are and make a vector of them.
+                T = unique(driftData(:,1));
+                
+                % Second, find out how many directions there are and make a vector for each of them.
+                Beta1 = unique(driftData(:,2));
+                Beta2 = unique(driftData(:,3));
+                
+                % Find out which modes are present (including the negative numbers
+                % that represent the components of the moment about the moving origin)
+                modeIndices = unique(driftData(:,4));
+                modeIndices_posOnly = unique(abs(modeIndices)); % The total moments are given by the positively numbered indices
+                
+                % Dimensionalised mean drift forces for unit amplitude
+                mdf = zeros(length(T),max(modeIndices_posOnly),length(Beta1),length(Beta2)); % Initialise mean drift force array
+                for j = 1:length(Beta1)
+                    for k = 1:length(Beta2)
+                        for i = 1:length(modeIndices_posOnly) % This depends on the number of bodies present
+                            mdf(:,modeIndices_posOnly(i),j,k) = ...
+                                (driftData(driftData(:,4)==modeIndices_posOnly(i) & driftData(:,2)==Beta1(j) & driftData(:,3)==Beta2(k),7) + ...
+                                1i*driftData(driftData(:,4)==modeIndices_posOnly(i) & driftData(:,2)==Beta1(j) & driftData(:,3)==Beta2(k),8))*9.81*1000;
+                        end
+                    end
+                end
+                
+                df(n).T = T; % Same wave periods have to be used for each method in a given run
+                df(n).meanDriftForces = mdf;
+                df(n).methodName = driftMethodNames{n};
+
+            end % for n = 1:length(result.driftOption)
+            
+      %%% NOTE with relation to control surface and pressure integration results:
+            %%% This code assumes that we don't care about the division of
+            %%% the moments between the static and moving frames, hence
+            %%% the data with negative mode indices is ignored here.
+            
+        end % ReadDriftForces
+        
     end
     
     % Static Methods    

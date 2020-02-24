@@ -42,6 +42,10 @@ classdef WamitRunCondition < IBemRunCondition
         blockItCnt;
         useHaskind;
         computeFK;
+        compDrift;
+        autoCSF;
+        driftOption;
+        boxCSF;
     end
 
     properties (Dependent)
@@ -67,6 +71,10 @@ classdef WamitRunCondition < IBemRunCondition
         BlockIterativeSolverCount;
         UseHaskind;
         ComputeFK;
+        CompDrift;          % Whether or not to compute drift forces (using control surface(s))
+        AutoCSF;            % Whether or not to use automatic control surface creation
+        DriftOption;        % Which methods to use to compute the mean drift forces
+        BoxCSF;
     end
 
     methods
@@ -90,6 +98,10 @@ classdef WamitRunCondition < IBemRunCondition
             run.blockItCnt = [];
             run.useHaskind = false;
             run.computeFK = false;
+            run.compDrift = false; % by default do not compute drift forces
+            run.driftOption = [];
+            run.autoCSF = [];
+            run.boxCSF = [];
             run.geoFiles = [];
             if (nargin == 0)
                 run.folder = ' ';
@@ -403,6 +415,60 @@ classdef WamitRunCondition < IBemRunCondition
             run.computeFK = val;
         end
         
+        function [val] = get.CompDrift(run)
+            % Compute the mean drift forces acting on the body/bodies
+            val = run.compDrift;
+        end
+        function [] = set.CompDrift(run, val)
+            % Compute the mean drift forces acting on the body/bodies
+            if (~isBool(val))                
+                error('CompDrift must be a boolean');
+            end
+            
+            run.compDrift = val;
+        end
+        
+        function [val] = get.AutoCSF(run)
+            % Compute the mean drift forces acting on the body/bodies
+            val = run.autoCSF;
+        end
+        function [] = set.AutoCSF(run, val)
+            % Compute the mean drift forces acting on the body/bodies
+            if (~isBool(val))                
+                error('AutoCSF must be a boolean');
+            end
+            
+            run.autoCSF = val;
+        end
+        
+        function [val] = get.DriftOption(run)
+            % Compute the mean drift forces acting on the body/bodies
+            val = run.driftOption;
+        end
+        function [] = set.DriftOption(run, val)
+            % Compute the mean drift forces acting on the body/bodies
+            if (~isInt(val))                
+                error('DriftOption must be a vector or scalar of only integer values.');
+            elseif sum(~ismember(val,[1 2 3]))~=0
+                error('Drift options can only take 1, 2 or 3 as possible values.')
+            end
+            
+            run.driftOption = val;
+        end
+        
+        function [val] = get.BoxCSF(run)
+            % Use box control surface or a cylindrical one
+            val = run.boxCSF;
+        end
+        function [] = set.BoxCSF(run, val)
+            % Use box control surface or a cylindrical one
+            if (~isBool(val))                
+                error('BoxCSF must be a boolean');
+            end
+            
+            run.boxCSF = val;
+        end
+        
         function [] = CleanRunFolder(run, varargin)
             opts = checkOptions({'ExceptGdf'}, varargin);
             if ~opts(1)
@@ -544,14 +610,28 @@ classdef WamitRunCondition < IBemRunCondition
             fprintf(fileID, [run.runName '.frc\n']);
             for n = 1:length(run.geoFiles)
                 fprintf(fileID, [run.geoFiles{n} '.gdf\n']);
+                if (run.CompDrift)
+                    fprintf(fileID, [run.geoFiles{n} '.csf\n']);
+                end
             end
             
             fclose(fileID);
-                        
+            
+            % Other files
             run.writeWamConfig;
             run.writeCfg;
             run.writePot;
             run.writeFrc;
+            if (run.AutoCSF)
+                for n = 1:nbody
+                    if (isempty(run.floatBods(n).GeoFile))
+                        geoFile = [run.runName num2str(n)];
+                    else
+                        geoFile = run.floatBods(n).GeoFile;
+                    end
+                    run.writeAutoCsf(run.floatBods(n), geoFile);
+                end
+            end
         end
         
         function [] = Run(run, varargin)
@@ -638,6 +718,97 @@ classdef WamitRunCondition < IBemRunCondition
             end
         end
         
+        function [] = writeAutoCsf(run, fb, geoFile)
+            % WRITEAUTOCSF Writes the .CSF file for automatic creation of
+            % the control surface for computing drift forces.
+            if isempty(run.boxCSF)
+                run.boxCSF = true; % Use box-shaped control surface by default
+            end
+            
+            filename = [run.folder '\' geoFile '.csf']; % file must have same 
+                                            % name as corresponding .GDF file.
+            fileID = fopen(filename, 'wt');
+            
+            fprintf(fileID, ['Model ' geoFile ', created: ' date '\n']);
+            fprintf(fileID, '1\n'); % ILOWHICSF (1 - higher order, 0 - lower order)
+            fprintf(fileID, '%i %i \n',fb.PanelGeo.Xsymmetry,fb.PanelGeo.Ysymmetry); % Use same symmetry as .gdf file
+            if isempty(fb.WamPanelSize) % i.e. if low order method was used for GDF
+                csfPanelSize = fb.PanelGeo.AvgPanelArea*4; % use average panel size from GDF - this might be quite small so need to choose the multiplier here carefully
+            else
+                csfPanelSize = fb.WamPanelSize; % use same panel size as GDF
+            end
+            fprintf(fileID, '0 0 %4.2f\n',csfPanelSize); % NPATCSF (must be = 0 for auto),
+            % ICDEF (must be = 0 for auto), PSZCSF (akin to PANEL_SIZE for the GDF)
+            
+            % Find required size of control surface (using PanelGeo if available)
+            multip = 1.1; % multiplier used to ensure control surface encapsulates the body surface.
+            
+            if isempty(fb.PanelGeo) % create PanelGeo if does not exist, or derive verts if high order method used for gdf
+                if run.FloatingBodies.WamILowHi == 0 % if low order method used for gdf
+                    fb.PanelGeo = Wamit_readGdf(run.Folder, geoFile);
+                    for i = 1:size(fb.PanelGeo.Panels,2)
+                        panVerts_x(:,i) = fb.PanelGeo.Panels(i).Vertices(:,1);
+                        panVerts_y(:,i) = fb.PanelGeo.Panels(i).Vertices(:,2);
+                        panVerts_z(:,i) = fb.PanelGeo.Panels(i).Vertices(:,3);
+                    end
+                elseif run.FloatingBodies.WamILowHi == 1 % if high order used for gdf
+                    verts = Wamit_readGdfHi(run.Folder, geoFile);
+                    for i = 1:size(verts,1)
+                        vertsSize(i) = size(verts{i,1},1);
+                    end
+                    panVerts_x = zeros(max(vertsSize),size(verts,1));
+                    for i = 1:size(verts,1)
+                        panVerts_x(1:length(verts{i,1}),i) = verts{i,1}(:,1);
+                        panVerts_y(1:length(verts{i,1}),i) = verts{i,1}(:,2);
+                        panVerts_z(1:length(verts{i,1}),i) = verts{i,1}(:,3);
+                    end
+                end
+            else % i.e. if the panelGeo is already defined
+                for i = 1:size(fb.PanelGeo.Panels,2)
+                    panVerts_x(:,i) = fb.PanelGeo.Panels(i).Vertices(:,1);
+                    panVerts_y(:,i) = fb.PanelGeo.Panels(i).Vertices(:,2);
+                    panVerts_z(:,i) = fb.PanelGeo.Panels(i).Vertices(:,3);
+                end
+            end
+            
+            x_max = max(abs(max(max(panVerts_x))),abs(min(min(panVerts_x))));
+            y_max = max(abs(max(max(panVerts_y))),abs(min(min(panVerts_y))));
+            rad = max(x_max,y_max)*multip;
+            
+            z_max = min(min(panVerts_z)); % I think this should be the minimum z-coordinate
+            % as measured from the free
+            % surface.
+            dep = abs(z_max)*multip;
+            npart = 0; % must = 0 for cylinder by WAMIT convention (see section 11.5 of v7.3 manual)
+            
+            if run.boxCSF 
+                rad = 0; % For box, need to set rad = 0 since vertices below define the x-y proections of surface
+                npart = 1; % x-y vertices definition to follow below...
+            end
+            
+            fprintf(fileID, '%4.2f %4.2f\n',rad,dep); % RADIUS (>0 for cylinder, <=0 for box, 
+                                        % box needs additional info, see wamit manual), 
+                                        % DEPTH (vertical coverage of control surface)
+            fprintf(fileID, '%i\n', npart); % NPART (=0 if using cylinder and only exists one waterline, =1 for a single box-shaped surface.)
+            
+            if run.boxCSF
+                % Find x-y vertices of control surface
+                xu = max(max(panVerts_x))*multip; xl = min(min(panVerts_x))*multip;
+                yu = max(max(panVerts_y))*multip; yl = min(min(panVerts_y))*multip;
+                
+                fprintf(fileID, '4\n'); % Currently set up to allow only 4 vertices to form box around body surface
+                
+                fprintf(fileID, '%4.4f  %4.4f\n', xu, yu); % Coordinates must proceed in a counter-clockwise
+                fprintf(fileID, '%4.4f  %4.4f\n', xl, yu); % direction around the edge of the control surface,
+                fprintf(fileID, '%4.4f  %4.4f\n', xl, yl); % as viewed from above.
+                fprintf(fileID, '%4.4f  %4.4f\n', xu, yl);
+    
+            end
+            
+            fclose(fileID);
+            
+        end % writeAutoCsf
+        
         function [] = writeWamConfig(run)
             filename = [run.folder '\config.wam'];
             fileID = fopen(filename, 'wt');
@@ -657,6 +828,11 @@ classdef WamitRunCondition < IBemRunCondition
 
             fprintf(fileID, 'IDELFILES = 2\n');
             fprintf(fileID, 'IALTPOT = 2\n');
+            if (run.compDrift & ismember(1,run.driftOption))
+            fprintf(fileID, 'IALTCSF = 2\n'); % Alternative 2 must be used 
+                         % if controls surfaces are very close to the body 
+                         % surface. (it includes the waterline integral)
+            end
             if (run.floatBods(1).ISurfPan)
                 irr = 1;
             else
@@ -675,7 +851,7 @@ classdef WamitRunCondition < IBemRunCondition
             fprintf(fileID, 'ILOWHI = %i\n', run.floatBods(1).WamILowHi);
             if (run.floatBods(1).WamILowHi)
                 if isempty(run.floatBods(1).WamPanelSize)
-                    error('WamPaneSize not set for WamILowHi = 1');
+                    error('WamPanelSize not set for WamILowHi = 1');
                 end
                 fprintf(fileID, 'PANEL_SIZE = %i\n', run.floatBods(1).WamPanelSize); 
             end
@@ -759,7 +935,8 @@ classdef WamitRunCondition < IBemRunCondition
                     fprintf(fileID, 'ISOLVE = 0\n');
                 end
             end
-            if (run.computeBody && run.computeVelocity)
+            if (run.computeBody && run.computeVelocity) || ...
+                    (~run.floatBods(1).WamILowHi && run.CompDrift)
                 fprintf(fileID, 'ISOR = 1\n');
             else
                 fprintf(fileID, 'ISOR = 0\n');
@@ -804,8 +981,10 @@ classdef WamitRunCondition < IBemRunCondition
             % 5 - pressure and velocity on body
             % 6 - pressure velocity: 0 - no output; 1/-1 - pressure
             % potential/source; 2/-2 - velocity potential/source; 3/-3 -
-            % both potenital/source
-            % 7 - mean drift forces
+            % both potential/source
+            % 7 - mean drift force using control surface
+            % 8 - mean drift forces using conservation of momentum 
+            % 9 - mean drift forces using pressure integration
             iradf = 1;
             if (run.computeFK)
                 fk = 2;
@@ -824,7 +1003,16 @@ classdef WamitRunCondition < IBemRunCondition
                 iexH = 0;
                 iexD = 1;
             end
-            fprintf(fileID, '%i  %i  %i  0  %i  %i  0 0  0\n', iradf, iexH, iexD, ibp, ifldp);  
+            imot = 2; % Output body motions (& use these for computation of drift forces (and vels and pressures if applicable)) Haskind - 1, diffraction - 2
+            %%% MAY WANT TO CHANGE THIS LATER TO TURN THIS OPTION OFF WHEN
+            %%% IREADRAO = 2 or 3 FOR DRIFT FORCE CALCULATIONS.
+            iCompDrift = [0 0 0]; % Initialise vector of drift options
+            if (run.compDrift) % Using control surface
+                for i = 1:length(run.driftOption)
+                    icompDrift(run.driftOption(i)) = 1; % (switch each driftOption on)
+                end
+            end
+            fprintf(fileID, '%i  %i  %i  %i  %i  %i  %i  %i  %i\n', iradf, iexH, iexD, imot, ibp, ifldp, icompDrift);  
             % rho
             fprintf(fileID, '%8.4f\n', run.rho);
             % cg
