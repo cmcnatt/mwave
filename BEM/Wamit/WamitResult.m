@@ -794,7 +794,11 @@ classdef WamitResult < IBemResult
             
             for n = 1:length(result.driftOption)
                 ext = num2str(result.driftOption(n)+6); % Find file extension based on which drift methods have been used
-                data = importdata([result.Folder '\' result.RunName '.' ext]);
+                try
+                    data = importdata([result.Folder '\' result.RunName '.' ext]);
+                catch
+                    error('Unable to extract drift forces from results files.')
+                end
                 driftData = data.data;
                 
                 % First, find out how many periods there are and make a vector of them.
