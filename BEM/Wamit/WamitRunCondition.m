@@ -74,7 +74,7 @@ classdef WamitRunCondition < IBemRunCondition
         CompDrift;          % Whether or not to compute drift forces (using control surface(s))
         AutoCSF;            % Whether or not to use automatic control surface creation
         DriftOption;        % Which methods to use to compute the mean drift forces
-        BoxCSF;
+        BoxCSF;             % Whether to use a 'box' shaped control surface or a cylindrical one
     end
 
     methods
@@ -1007,7 +1007,7 @@ classdef WamitRunCondition < IBemRunCondition
             imot = 2; % Output body motions (& use these for computation of drift forces (and vels and pressures if applicable)) Haskind - 1, diffraction - 2
             %%% MAY WANT TO CHANGE THIS LATER TO TURN THIS OPTION OFF WHEN
             %%% IREADRAO = 2 or 3 FOR DRIFT FORCE CALCULATIONS.
-            iCompDrift = [0 0 0]; % Initialise vector of drift options
+            icompDrift = [0 0 0]; % Initialise vector of drift options
             if (run.compDrift) % Using control surface
                 for i = 1:length(run.driftOption)
                     icompDrift(run.driftOption(i)) = 1; % (switch each driftOption on)
