@@ -638,6 +638,10 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
             if (~isInt(val))
                 error('values must be integers');
             end
+            
+            if ~(length(origin) == length(unique(origin)))
+                error('values must be unique integers');
+            end
             fb.wdipole = val;
         end
         

@@ -724,7 +724,7 @@ classdef IFreqDomComp < IEnergyComp & handle
         
         function [energy, energyMat, powerMat, idptos] = AnnualEnergyProd(hcomp, waveClim, varargin)
             
-            [opts, args] = checkOptions({{'Sample', 1}, {'ratedPow', 1}, {'dptos', 1}, {'minOcc', 1}}, varargin);
+            [opts, args] = checkOptions({{'Sample', 1}, {'ratedPow', 1}, {'dptos', 1}, {'minOcc', 1}, {'perOcc'}}, varargin);
             
             sampSize = 1;
             if opts(1)
@@ -749,6 +749,10 @@ classdef IFreqDomComp < IEnergyComp & handle
                 occlim = args{4};
             end
             
+            if opts(5)
+                perOccur = true;
+            end
+            
             idptos = 1;
             
             if ~perOccur
@@ -758,6 +762,10 @@ classdef IFreqDomComp < IEnergyComp & handle
 
                 % MWh/yr
                 energy = pow*hrsYr./10^3;
+                
+                % set empty values for non-returned items
+                energyMat = [];
+                powerMat = [];
             
             else
                 plim = 1e3;             % ignore sea states below a 1 kW total
