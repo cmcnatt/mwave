@@ -636,11 +636,11 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
            % Indices of the panels or patches that are thin members (i.e.
             % dipoles)
             if (~isInt(val))
-                error('values must be integers');
+                error('values must be positive integers');
             end
             
-            if ~(length(origin) == length(unique(origin)))
-                error('values must be unique integers');
+            if ~(length(val) == length(unique(val)))
+                error('values must be unique positive integers');
             end
             fb.wdipole = val;
         end
