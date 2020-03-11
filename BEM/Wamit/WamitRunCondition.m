@@ -46,6 +46,8 @@ classdef WamitRunCondition < IBemRunCondition
         autoCSF;
         driftOption;
         boxCSF;
+        iReadRAO;
+        motionRAOs;
     end
 
     properties (Dependent)
@@ -75,6 +77,8 @@ classdef WamitRunCondition < IBemRunCondition
         AutoCSF;            % Whether or not to use automatic control surface creation
         DriftOption;        % Which methods to use to compute the mean drift forces
         BoxCSF;             % Whether to use a 'box' shaped control surface or a cylindrical one
+        IReadRAO;           % Whether to use .4 file or user-input RAOs for evaluating options 5-9
+        MotionRAOs;         % RAOs computed externally to WAMIT, for computing drift forces with ireadrao option
     end
 
     methods
@@ -102,6 +106,7 @@ classdef WamitRunCondition < IBemRunCondition
             run.driftOption = [];
             run.autoCSF = [];
             run.boxCSF = [];
+            run.iReadRAO = 0; % by default, use .4 file to get RAOs for options 5-9
             run.geoFiles = [];
             if (nargin == 0)
                 run.folder = ' ';
@@ -469,6 +474,50 @@ classdef WamitRunCondition < IBemRunCondition
             run.boxCSF = val;
         end
         
+        function [val] = get.MotionRAOs(run)
+            % Pass the motion RAOs in so can be written to .RAO file
+            val = run.motionRAOs;
+        end
+        function [] = set.MotionRAOs(run, val)
+            % Pass the motion RAOs in so can be written to .RAO file
+            if ~(ndims(val)==3)
+                error('MotionRAOs must be a three-dimensional array.')
+            end
+            % Find total no. of DoFs across all bodies
+            nDoFs = 0;
+            for i = 1:length(run.floatBods)
+                nDoFs = nDoFs + run.floatBods(i).Modes.DoF;
+            end
+            if (size(val,1)~=length(run.T))                
+                error('MotionRAOs must have number of rows equal to the number of wave periods.');
+            elseif (size(val,2)~=length(run.Beta))
+                error('MotionRAOs must have number of columns equal to the number of wave angles.');
+            elseif (size(val,3)~=nDoFs)
+                error('MotionRAOs must have same number of columns in direction 3 as the total number of DoFs.')
+            end
+            
+            run.motionRAOs = val; % When the public version, MotionRAOs is set by the user,
+                                  % it is essentially relabelled as the
+                                  % private version, motionRAOs.
+        end
+        
+        
+        function [val] = get.IReadRAO(run)
+            % Where to get RAOs from for evaluating options 5-9
+            val = run.iReadRAO;
+        end
+        function [] = set.IReadRAO(run, val)
+            % Where to get RAOs from for evaluating options 5-9
+            if (~isInt(val))                
+                error('IReadRAO must be an integer value.');
+            elseif sum(~ismember(val,[0 1 2 3]))~=0
+                error('IReadRAO can only take 0, 1, 2 or 3 as possible values.')
+            end
+            
+            run.iReadRAO = val;
+        end
+        
+        
         function [] = CleanRunFolder(run, varargin)
             opts = checkOptions({'ExceptGdf'}, varargin);
             if ~opts(1)
@@ -570,8 +619,14 @@ classdef WamitRunCondition < IBemRunCondition
                 fprintf(fileID, ['set "fN=' run.runName '"\n\n']);
                 fprintf(fileID, 'del %%fN%%.out %%fN%%.1 %%fN%%.2 %%fN%%.3 %%fN%%.4 ');
                 fprintf(fileID, '%%fN%%.5 %%fN%%.6p %%fN%%.6vx %%fN%%.6vy %%fN%%.6vz ');
-                fprintf(fileID, '%%fN%%.fpt %%fN%%.p2f errorf.log ');
-                fprintf(fileID, 'errorp.log rgkinit.txt rgklog.txt wamitlog.txt %%fN%%_batch.log\n\n');
+                fprintf(fileID, '%%fN%%.fpt ');
+                if run.iReadRAO == 0 %i.e. if running WAMIT for just options 5-9, no need to rerun POTEN module,
+                    % so need to retain the p2f file.
+                fprintf(fileID, '%%fN%%.p2f ');
+                fprintf(fileID, 'errorp.log ');
+                end
+                fprintf(fileID, 'errorf.log ');
+                fprintf(fileID, 'rgkinit.txt rgklog.txt wamitlog.txt %%fN%%_batch.log\n\n');
                 if (run.floatBods(1).WamIGenMds == 0 && run.floatBods(1).Ngen > 0)
                     for n = 1:nbody
                         fprintf(fileID, 'del %%fN%%.pre %%fN%%.mod\n\n');
@@ -634,6 +689,25 @@ classdef WamitRunCondition < IBemRunCondition
                 end
             end
         end
+        
+        function [] = WriteRunIReadRAO(run, varargin)
+            % WRITERUNIREADRAO This method is used if the WAMIT parameter,
+            % IREADRAO is originally set to 1, so that the original run
+            % just computes options 1-4, letting the user generate custom
+            % RAOs before running again using this method, where IREADRAO
+            % will be changed to a value of 2 or 3, in order to obtain
+            % options 5-9.
+            
+            run.IReadRAO = 3; % Change so that WAMIT knows to read in the user-inputted RAOs:
+                              % 2 - input real and imaginary parts - must
+                              % be preceded by columns where the modulus
+                              % and phase would be.
+                              % 3 - provide just modulus and phase values.
+                              % (see manual for more details)
+            run.writeCfg; % Rewrite the .CFG file
+            run.writeRAOs; % Write the user-generated RAO file for WAMIT to read.
+            
+        end % WriteRunIReadRAO
         
         function [] = Run(run, varargin)
             % Runs the batch file created to run Wamit with the system
@@ -920,7 +994,13 @@ classdef WamitRunCondition < IBemRunCondition
                     end
                 end
             end
-            fprintf(fileID, 'IPOTEN = 1\n');
+            if run.iReadRAO > 1 % i.e. if running WAMIT for the second time to evaluate options 5-9
+                ipoten = 0; % Don't solve for potentials
+            else
+                ipoten = 1; % Solve for potentials
+            end
+            fprintf(fileID, 'IPOTEN = %i\n', ipoten);
+            fprintf(fileID, 'IREADRAO = %i\n', run.iReadRAO); % This will = 0 if user has not switched it to a value >0.
             fprintf(fileID, 'ISCATT = 0\n');
             if (run.useDirect)
                 % User input to use the direct solver
@@ -1134,6 +1214,48 @@ classdef WamitRunCondition < IBemRunCondition
             
             fclose(fileID);
         end
+        
+        function [] = writeRAOs(run)
+            % WRITERAOS Writes RAOs computed outside of WAMIT to a .RAO
+            % file of the same name as the FRC file. Used for input to
+            % WAMIT in order to compute options 5-9 (pressures, velocities 
+            % or drift forces).
+            
+            % First, read the mode indices so know which DoFs are which in
+            % the motionRAOs matrix
+            try
+                file_data = importdata([run.folder '/' run.runName '.4']);
+            catch
+                error('WamitRunCondition:writeRAOs:noRAOdemoFile',...
+                    'The demo RAO file does not exist.');
+            end
+            mode_indices = unique(file_data.data(:,3));
+            if length(mode_indices)~=size(run.motionRAOs,3)
+                error('WamitRunCondition:writeRAOs:motionIndicesDoNotMatch',['The mode indices from the original .4 file do ' ... 
+                    'not match those given in the motionRAOs structure.']);
+            end
+            
+            % Now, open and write the RAO file to be read in by WAMIT            
+            filename = [run.folder '\' run.runName '.rao'];
+            fileID = fopen(filename, 'wt');
+            
+            % header
+            fprintf(fileID, ['.rao file   Series: '  '    Run: ' run.runName '\n']);
+            
+            % print RAOs
+            for j = 1:length(run.beta)
+                for i = 1:length(run.t)
+                    for k = 1:size(run.motionRAOs,3)
+                    fprintf(fileID, '%8.4f\t%8.4f\t%i\t%8.6e\t%8.6e\n', ...
+                        run.t(i),run.beta(j),mode_indices(k),...
+                        abs(run.motionRAOs(i,j,k)),angle(run.motionRAOs(i,j,k))*180/pi);  
+                                    % period, angle, DoF, abs(RAO), angle(RAO) in degrees
+                    end
+                end
+            end
+            fclose(fileID);
+            
+        end % writeRAOs
         
         function [] = writePot(run)
             filename = [run.folder '\' run.runName '.pot'];

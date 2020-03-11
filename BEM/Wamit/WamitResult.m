@@ -40,6 +40,7 @@ classdef WamitResult < IBemResult
         bodyPanInds;
         compDrift;
         driftOption;
+        iReadRAO;
     end
 
     properties (Dependent)
@@ -78,6 +79,7 @@ classdef WamitResult < IBemResult
                     result.compFK = runCondition.ComputeFK;
                     result.compDrift = runCondition.CompDrift;
                     result.driftOption = runCondition.DriftOption;
+                    result.iReadRAO = runCondition.IReadRAO;
                     if (~isempty(result.fieldPoints) || ~isempty(result.fieldArray) || ~isempty(result.cylArray))
                         result.solveField = true;
                     end
@@ -340,6 +342,7 @@ classdef WamitResult < IBemResult
                 result.hydroForces = FreqDomForces(result.t, result.beta, a_, b_, c_, f, result.h, result.rho, f_fk, a0, ainf);
             end
             
+            if (result.iReadRAO ~= 1) % i.e. do the following unless only options 1-4 have been computed.
             if (isempty(result.solveBody))
                 result.solveBody = false;
                 if result.fieldPointsAsBody
@@ -774,9 +777,11 @@ classdef WamitResult < IBemResult
             end
             
             % Read drift forces
-            if result.compDrift
+            if (result.compDrift)
                 result.driftForces = ReadDriftForces(result);
             end
+            
+            end % if (result.iReadRAO ~= 1)
             
             result.hasBeenRead = 1;
         end

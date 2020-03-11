@@ -51,6 +51,8 @@ T = unique(data(:,1));
 if (T(1) ~= data(1,1));
     T = flipud(T);
 end
+%%% BUT it doesn't appear that this T vector is even used anymore, so
+%%% ignore the above comment about reversing the periods.
 
 % Second, find out how many direction there are and make a vector of them.
 Beta = unique(data(:,2));
