@@ -63,7 +63,7 @@ for m = 1:M
     end
     
     % default value
-    args{m} = -1;
+    args{m} = NaN;
 
     for n = 1:N
         inputn = inputs{n};
