@@ -32,6 +32,12 @@ Examples/BemRuns/wam_array_1/**
 Examples/BemRuns/wam_hb_1/**
 Examples/BemRuns/wam_hb_2/**
 Examples/BemRuns/wam_mb_1/**
+Examples/BemRuns/wam_1b_6dof_3**
+Examples/BemRuns/wam_1b_6dof_3_autoCyl**
+Examples/BemRuns/wam_1b_6dof_3_manCSF**
+Examples/BemRuns/wam_1b_6dof_4**
+Examples/BemRuns/wam_1b_6dof_4_iReadRAO_0**
+Examples/BemRuns/wam_1b_6dof_4_iReadRAO_1**
 
 # Ignore contents of UnitTest Wamit folders
 UnitTests/WamitRuns/mv_ut1/**
