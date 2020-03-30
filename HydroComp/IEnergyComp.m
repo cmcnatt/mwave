@@ -23,7 +23,6 @@ classdef IEnergyComp < handle
     properties (Abstract)
         T;                      % Periods (s)
         H;                      % Water depth
-        DeviceCount;            % The number of devices evaluated in the EnergyComp
     end
     
     methods (Abstract)
