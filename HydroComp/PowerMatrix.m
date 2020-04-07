@@ -147,7 +147,7 @@ classdef PowerMatrix < IEnergyComp
             interpPmat = opts(1);
             
             if interpPmat
-                pmatI = pmat.InterpolateTo(waveClim.Hs('intended'), waveClim.T02('intented'));
+                pmatI = pmat.InterpolateTo(waveClim.Hs('intended'), waveClim.T02('intended'));
                 waveClimI = waveClim;
             else
                 pmatI = pmat;
