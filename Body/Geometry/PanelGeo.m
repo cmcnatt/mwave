@@ -497,10 +497,14 @@ classdef PanelGeo < handle
     methods (Access = private)
         function [] = plotFuncs(geo, func, varargin)
 
-            opts = checkOptions({{'ShowSym'}, {'ShowNorm'}, {'OnlyWet'}}, varargin);
+            [opts, args] = checkOptions({{'ShowSym'}, {'ShowNorm'}, {'OnlyWet'}, {'color', 1}}, varargin);
             showSym = opts(1);
             showNorm = opts(2);
             onlyWet = opts(3);
+            color = [];
+            if opts(4)
+                color = args{4};
+            end
             
             xsy = false;
             ysy = false;
@@ -509,26 +513,39 @@ classdef PanelGeo < handle
             
             vals = geo.Values;
             
+            args = {'faces', mesh, 'vertices', verts,...
+                    'facelighting', 'none', 'facecolor', 'flat', 'edgelighting', 'flat',...
+                    'parent',gca};
+            
             if strcmp(func, 'plot')
                 colV = MColor.Blue;
-                patch('faces', mesh, 'vertices', verts,'facevertexcdata',colV,...
-                    'facecolor','none','edgecolor',colV,...
-                    'facelighting', 'none', 'edgelighting', 'flat',...
-                    'parent',gca);
+                args{length(args) + 1} = 'edgecolor';
+                args{length(args) + 1} = colV;
+                args{length(args) + 1} = 'facecolor';
+                args{length(args) + 1} = 'none';
             elseif strcmp(func, 'surf')
                 colV = MColor.Black;
-                if isnan(vals(1))
-                    cents = geo.Centroids;
-                    colF = cents(:,3);
+                args{length(args) + 1} = 'edgecolor';
+                args{length(args) + 1} = colV;
+                
+                if ~isempty(color)
+                    args{length(args) + 1} = 'facecolor';
+                    args{length(args) + 1} = color;
                 else
-                    colF = vals;
+                    if isnan(vals(1))
+                        cents = geo.Centroids;
+                        colF = cents(:,3);
+                    else
+                        colF = vals;
+                    end
+                    args{length(args) + 1} = 'facevertexcdata';
+                    args{length(args) + 1} = colF;
+                    args{length(args) + 1} = 'cdata';
+                    args{length(args) + 1} = colF;
                 end
-                patch('faces', mesh, 'vertices', verts,...
-                    'facecolor','flat', 'facevertexcdata',colF,...
-                    'cdata',colF,'edgecolor',colV,...
-                    'facelighting', 'none', 'edgelighting', 'flat',...
-                    'parent',gca);
             end
+            
+            patch(args{:});
             
             if (showNorm)
                 hold on;
@@ -537,37 +554,6 @@ classdef PanelGeo < handle
                 area = geo.Areas;
                 quiver3(cent(:,1), cent(:,2), cent(:,3), norm(:,1), norm(:,2), norm(:,3));
             end
-            
-            
-            %quadmesh(mesh, verts(:,1), verts(:,2), verts(:,3), colV, 'color', colF);
-            
-            % Old very slow methdo
-%             if (showSym)
-%                 xsy = geo.xsym;
-%                 ysy = geo.ysym;
-%             end
-%             
-%             if (~xsy && ~ysy)
-%                 for n = 1:N
-%                     func(geo.panels(n), varargin{:});
-%                     hold on;
-%                 end
-%             elseif (xsy && ~ysy)
-%                 for n = 1:N
-%                     func(geo.panels(n), 'xsym', varargin{:});
-%                     hold on;
-%                 end
-%             elseif (~xsy && ysy)
-%                 for n = 1:N
-%                     func(geo.panels(n), 'ysym', varargin{:});
-%                     hold on;
-%                 end
-%             elseif (xsy && ysy)
-%                 for n = 1:N
-%                     func(geo.panels(n), 'xsym', 'ysym', varargin{:});
-%                     hold on;
-%                 end
-%             end
         end
     end
 end

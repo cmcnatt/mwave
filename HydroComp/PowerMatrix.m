@@ -120,7 +120,7 @@ classdef PowerMatrix < IEnergyComp
             isTe = opts(3);
             
             if isempty(pmat.f)
-                pmat.f =  griddedInterpolant({pmat.hs, pmat.t02}, pmat.Matrix, 'linear');
+                pmat.f =  griddedInterpolant({pmat.hs, pmat.t02}, pmat.Matrix, 'linear', 'none');
             end
             
             Ti = T;
@@ -133,6 +133,7 @@ classdef PowerMatrix < IEnergyComp
             end
             
             p = pmat.f(Hs, Ti);
+            p(isnan(p)) = 0;
         end
         
         function [val] = PowerRAO(pmat)

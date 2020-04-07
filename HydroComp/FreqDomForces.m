@@ -55,83 +55,86 @@ classdef FreqDomForces
     
     methods
         function [hf] = FreqDomForces(t, beta, A, B, C, Ex, varargin)
-            hf.nT = length(t);
-            hf.nB = length(beta);
             
-            hf.t = t;
-            hf.beta = beta;
-            
-            dofA = [];
-            if ~isempty(A)
-                [nt dof1 dof2] = size(A);
-                if ((nt ~= hf.nT) || (dof1 ~= dof2))
-                    error('Invalid added mass matrix');
+            if nargin > 1
+                hf.nT = length(t);
+                hf.nB = length(beta);
+
+                hf.t = t;
+                hf.beta = beta;
+
+                dofA = [];
+                if ~isempty(A)
+                    [nt dof1 dof2] = size(A);
+                    if ((nt ~= hf.nT) || (dof1 ~= dof2))
+                        error('Invalid added mass matrix');
+                    end
+
+                    dofA = dof1;
+
+                    [nt dof1 dof2] = size(B);
+                    if ((nt ~= hf.nT) || (dof1 ~= dof2))
+                        error('Invalid damping matrix');
+                    end
+
+                    if (dofA ~= dof1)
+                        error('FreqDomForces matrix size mismatch');
+                    end
+
+                    [dof1 dof2] = size(C);
+                    if (dof1 ~= dof2)
+                        error('Invalid hydrostatic stiffness matrix');
+                    end
+
+                    if (dofA ~= dof1)
+                        error('FreqDomForces matrix size mismatch');
+                    end
                 end
 
-                dofA = dof1;
-
-                [nt dof1 dof2] = size(B);
-                if ((nt ~= hf.nT) || (dof1 ~= dof2))
-                    error('Invalid damping matrix');
+                [nt nb dofe] = size(Ex);
+                if isempty(dofA)
+                    dofA = dofe;
+                end
+                if ((nt ~= hf.nT) || (nb ~= hf.nB) || (dofe ~= dofA))
+                    error('Invalid exciting force vector');
                 end
 
-                if (dofA ~= dof1)
-                    error('FreqDomForces matrix size mismatch');
+                if ~isempty(varargin)
+                    hf.h = varargin{1};
+                else
+                    hf.h = [];
                 end
 
-                [dof1 dof2] = size(C);
-                if (dof1 ~= dof2)
-                    error('Invalid hydrostatic stiffness matrix');
+                if length(varargin) >= 2
+                    hf.rho = varargin{2};
+                else
+                    hf.rho = [];
                 end
 
-                if (dofA ~= dof1)
-                    error('FreqDomForces matrix size mismatch');
+                if length(varargin) >= 3
+                    hf.fk = varargin{3};
+                else
+                    hf.fk = [];
                 end
-            end
-            
-            [nt nb dofe] = size(Ex);
-            if isempty(dofA)
-                dofA = dofe;
-            end
-            if ((nt ~= hf.nT) || (nb ~= hf.nB) || (dofe ~= dofA))
-                error('Invalid exciting force vector');
-            end
-            
-            if ~isempty(varargin)
-                hf.h = varargin{1};
-            else
-                hf.h = [];
-            end
-            
-            if length(varargin) >= 2
-                hf.rho = varargin{2};
-            else
-                hf.rho = [];
-            end
-            
-            if length(varargin) >= 3
-                hf.fk = varargin{3};
-            else
-                hf.fk = [];
-            end
-            
-            if length(varargin) >= 4
-                hf.a0 = varargin{4};
-            else
-                hf.a0 = [];
-            end
-            
-            if length(varargin) >= 5
-                hf.ainf = varargin{5};
-            else
-                hf.ainf = [];
-            end
 
-            hf.a = A;
-            hf.b = B;
-            hf.c = C;
-            hf.ex = Ex;
-            hf.dof = dofe;
+                if length(varargin) >= 4
+                    hf.a0 = varargin{4};
+                else
+                    hf.a0 = [];
+                end
+
+                if length(varargin) >= 5
+                    hf.ainf = varargin{5};
+                else
+                    hf.ainf = [];
+                end
+
+                hf.a = A;
+                hf.b = B;
+                hf.c = C;
+                hf.ex = Ex;
+                hf.dof = dofe;
+            end
         end
         
         function [t_] = get.T(hf)

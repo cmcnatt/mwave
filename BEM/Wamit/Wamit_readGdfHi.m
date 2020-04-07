@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Contributors:
     C. McNatt
 %}
-function [verts] = Wamit_readGdfHi(folderpath, filename)
+function [panGeo] = Wamit_readGdfHi(folderpath, filename)
 
 fid = fopen([folderpath '\' filename '.gdf']);
 fgetl(fid);
@@ -57,12 +57,16 @@ for n = 1:Npan
     
     num = textscan(fid, '%f', Nb*3);
     
-    verts{n} = reshape(num{1},3,Nb)';    
+    vertsn = reshape(num{1},3,Nb)'; 
+    verts{n} = vertsn;          % verts in WAMIT order  
+    vertsn4 = vertsn(4, :);     % need to swap points 3 and 4 to make panel
+    vertsn(4, :) = vertsn(3, :);
+    vertsn(3, :) = vertsn4;
 
-    %pans(n) = Panel(verts{n});
+    pans(n) = Panel(vertsn);
 end
 
-%panGeo = PanelGeo(pans);
+panGeo = PanelGeo(pans);
 
 fclose(fid);
 
