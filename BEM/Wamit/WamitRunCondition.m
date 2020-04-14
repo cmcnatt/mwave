@@ -796,6 +796,11 @@ classdef WamitRunCondition < IBemRunCondition
         function [] = writeAutoCsf(run, fb, geoFile)
             % WRITEAUTOCSF Writes the .CSF file for automatic creation of
             % the control surface for computing drift forces.
+            
+            %%% NOTE: not sure that this will set the ocrrect panel size if
+            %%% using the higher order method.. should check this later if
+            %%% important (noted on 25/3/20)
+            
             if isempty(run.boxCSF)
                 run.boxCSF = true; % Use box-shaped control surface by default
             end
@@ -1243,13 +1248,13 @@ classdef WamitRunCondition < IBemRunCondition
             fprintf(fileID, ['.rao file   Series: '  '    Run: ' run.runName '\n']);
             
             % print RAOs
-            for j = 1:length(run.beta)
-                for i = 1:length(run.t)
+            for i = 1:length(run.t)
+                for j = 1:length(run.beta)
                     for k = 1:size(run.motionRAOs,3)
-                    fprintf(fileID, '%8.4f\t%8.4f\t%i\t%8.6e\t%8.6e\n', ...
-                        run.t(i),run.beta(j),mode_indices(k),...
-                        abs(run.motionRAOs(i,j,k)),angle(run.motionRAOs(i,j,k))*180/pi);  
-                                    % period, angle, DoF, abs(RAO), angle(RAO) in degrees
+                        fprintf(fileID, '%8.4f\t%8.4f\t%i\t%8.6e\t%8.6e\n', ...
+                            run.t(i),run.beta(j)*180/pi,mode_indices(k),...
+                            abs(run.motionRAOs(i,j,k)),angle(run.motionRAOs(i,j,k))*180/pi);
+                        % period, angle (in degrees), DoF, abs(RAO), angle(RAO) in degrees
                     end
                 end
             end

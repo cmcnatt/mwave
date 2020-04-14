@@ -807,7 +807,7 @@ classdef WamitResult < IBemResult
                 driftData = data.data;
                 
                 % First, find out how many periods there are and make a vector of them.
-                T = unique(driftData(:,1));
+                T = unique(driftData(:,1),'stable'); % Want to keep same order so the indices match those of hydro.w
                 
                 % Second, find out how many directions there are and make a vector for each of them.
                 Beta1 = unique(driftData(:,2));
@@ -819,14 +819,15 @@ classdef WamitResult < IBemResult
                 modeIndices_posOnly = unique(abs(modeIndices)); % The total moments are given by the positively numbered indices
                 
                 % Dimensionalised mean drift forces for unit amplitude
+                % Currently only set up to read drift forces for single
+                % frequencies - i.e. the diagonal elements of the QTF
+                % matrix.
                 mdf = zeros(length(T),max(modeIndices_posOnly),length(Beta1),length(Beta2)); % Initialise mean drift force array
                 for j = 1:length(Beta1)
-                    for k = 1:length(Beta2)
-                        for i = 1:length(modeIndices_posOnly) % This depends on the number of bodies present
-                            mdf(:,modeIndices_posOnly(i),j,k) = ...
-                                (driftData(driftData(:,4)==modeIndices_posOnly(i) & driftData(:,2)==Beta1(j) & driftData(:,3)==Beta2(k),7) + ...
-                                1i*driftData(driftData(:,4)==modeIndices_posOnly(i) & driftData(:,2)==Beta1(j) & driftData(:,3)==Beta2(k),8))*9.81*1000;
-                        end
+                    for i = 1:length(modeIndices_posOnly) % This depends on the number of bodies present
+                        mdf(:,modeIndices_posOnly(i),j,j) = ...
+                            (driftData(driftData(:,4)==modeIndices_posOnly(i) & driftData(:,2)==Beta1(j) & driftData(:,3)==Beta2(j),7) + ...
+                            1i*driftData(driftData(:,4)==modeIndices_posOnly(i) & driftData(:,2)==Beta1(j) & driftData(:,3)==Beta2(j),8))*9.81*1000;
                     end
                 end
                 
