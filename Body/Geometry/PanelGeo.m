@@ -497,13 +497,17 @@ classdef PanelGeo < handle
     methods (Access = private)
         function [] = plotFuncs(geo, func, varargin)
 
-            [opts, args] = checkOptions({{'ShowSym'}, {'ShowNorm'}, {'OnlyWet'}, {'color', 1}}, varargin);
+            [opts, args] = checkOptions({{'ShowSym'}, {'ShowNorm'}, {'OnlyWet'}, {'color', 1}, {'alpha', 1}}, varargin);
             showSym = opts(1);
             showNorm = opts(2);
             onlyWet = opts(3);
             color = [];
             if opts(4)
                 color = args{4};
+            end
+            alpha = 1;
+            if opts(5)
+                alpha = args{5};
             end
             
             xsy = false;
@@ -527,6 +531,8 @@ classdef PanelGeo < handle
                 colV = MColor.Black;
                 args{length(args) + 1} = 'edgecolor';
                 args{length(args) + 1} = colV;
+                args{length(args) + 1} = 'facealpha';
+                args{length(args) + 1} = alpha;
                 
                 if ~isempty(color)
                     args{length(args) + 1} = 'facecolor';
@@ -552,7 +558,7 @@ classdef PanelGeo < handle
                 cent = geo.Centroids;
                 norm = geo.Normals;
                 area = geo.Areas;
-                quiver3(cent(:,1), cent(:,2), cent(:,3), norm(:,1), norm(:,2), norm(:,3));
+                quiver3(cent(:,1), cent(:,2), cent(:,3), norm(:,1), norm(:,2), norm(:,3), 'color', MColor.Black);
             end
         end
     end
