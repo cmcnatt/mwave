@@ -709,6 +709,12 @@ classdef WamitRunCondition < IBemRunCondition
             
         end % WriteRunIReadRAO
         
+        function WriteRAOs(run)
+            % WriteRAOs: Public version of writeRAOs - needed for creating
+            % the drift force computation using the MoeSim class.
+            run.writeRAOs;
+        end
+        
         function [] = Run(run, varargin)
             % Runs the batch file created to run Wamit with the system
             % command.
@@ -802,7 +808,7 @@ classdef WamitRunCondition < IBemRunCondition
             %%% important (noted on 25/3/20)
             
             if isempty(run.boxCSF)
-                run.boxCSF = true; % Use box-shaped control surface by default
+                run.boxCSF = false; % Use cylinder-shaped control surface by default
             end
             
             filename = [run.folder '\' geoFile '.csf']; % file must have same 
