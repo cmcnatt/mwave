@@ -58,7 +58,7 @@ for m = 1:Ngdf
     fid = fopen([sourceFolder '\' csfIn{m} '.csf']);
     
     header{m} = fgetl(fid);
-    num = textscan(fid,'%f',2);
+    num = textscan(fid,'%f',1);
     num = num{1};
     iLowHiCsf(m) = num(1);
 
