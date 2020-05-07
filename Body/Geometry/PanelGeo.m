@@ -1,23 +1,3 @@
-%{ 
-mwave - A water wave and wave energy converter computation package 
-Copyright (C) 2014  Cameron McNatt
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-Contributors:
-    C. McNatt
-%}
 classdef PanelGeo < handle
     
     properties (Access = private)
@@ -429,8 +409,8 @@ classdef PanelGeo < handle
             geo.plotFuncs('surf', varargin{:});
         end
         
-        % Overloaded plus operator
         function [geoOut] = plus(geoa, geob)
+            % PLUS: overloade addition operator
             
             if (xor(geoa.Xsymmetry, geob.Xsymmetry) || xor(geoa.Ysymmetry, geob.Ysymmetry))
                 error('PanelGeos must have the same symmetry to add');
@@ -449,20 +429,47 @@ classdef PanelGeo < handle
             geoOut = PanelGeo(newPans);
         end
         
-        % Overloaded times operator
-        function [geoOut] = times(geoIn, val)
+        function [geoOut] = times(arg1, arg2)
+            % TIMES: overloaded times operator
+            if isa(arg1, 'PanelGeo')
+                geoIn = arg1;
+                val = arg2;
+            else
+                geoIn = arg2;
+                val = arg1;
+            end
             
             geoOut = PanelGeo(geoIn);
             
             geoOut.Values = geoIn.Values.*val;
         end
         
-        % Overloaded mtimes operator
-        function [geoOut] = mtimes(geoIn, val)
+        function [geoOut] = mtimes(arg1, arg2)
+            % MTIMES: overloaded mtimes operator
+            if isa(arg1, 'PanelGeo')
+                geoIn = arg1;
+                val = arg2;
+            else
+                geoIn = arg2;
+                val = arg1;
+            end
             
             geoOut = PanelGeo(geoIn);
             
             geoOut.Values = geoIn.Values*val;
+        end
+        
+        function [geoOut] = rdivide(arg1, arg2)
+            % RDIVIDE: overloaded rdivide operator
+            if isa(arg1, 'PanelGeo')
+                geoIn = arg1;
+                val = arg2;
+            else
+                geoIn = arg2;
+                val = arg1;
+            end
+            
+            geoOut = geoIn.*(1./val);
         end
         
         % Overloaded real operator
