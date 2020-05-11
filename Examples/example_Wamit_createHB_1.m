@@ -1,23 +1,3 @@
-%{ 
-mwave - A water wave and wave energy converter computation package 
-Copyright (C) 2014  Cameron McNatt
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-Contributors:
-    C. McNatt
-%}
 % In this run, we will create a 'HydroBody' in Wamit. A HydroBody is a
 % special class that is required for the array interaction theory. It is
 % basically a FloatingBody with hydrodynamic parameters attached, including
@@ -36,12 +16,13 @@ Contributors:
 % Engineering paper.
 %
 % For a more introductory case with more explanations, look at 
-% Wamit_1bod_6dof_2
+% example_Wamit_1bod_6dof_2
 %
 % For more introduction on WaveFields take a look at
-% Wamit_1bod_wavefield_1
+% example_Wamit_1bod_wavefield_1
 %
-% For more info on the geometry used here, check out Wamit_1bod_atten8dof_1
+% For more info on the geometry used here, check out 
+% example_Wamit_1bod_atten8dof_1
 
 %% Set up run
 
