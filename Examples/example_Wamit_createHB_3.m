@@ -20,10 +20,15 @@
 %
 % For more introduction on WaveFields take a look at
 % example_Wamit_1bod_wavefield_1
+%
+% For more info on the geometry used here, check out 
+% example_Wamit_1bod_atten8dof_1
 
 clear; close all; clc;
 
 %% Set up run
+
+disp('ERROR: This example is not working correctly')
 
 run_name = 'wam_hb_1';               
 folder = [mwavePath '\Examples\bemRunFolder'];  
@@ -32,23 +37,23 @@ if 0 == exist(folder, 'dir')
 end
 delete([folder '\*']);
 
-rho = 1025;     % water density
-T = 1:0.5:8;    % wave periods      
+rho = 1000;     
 
-% set up cylinder dimension
-rad = 1;
-draft = 1;
-hei = 2;
+% set up a normal body
+len = 60;
+dia = 10;
+hingePos = [-10; 10];   
+sphereRad = 0.1*len;    
 
-Ntheta = 24;   
-Nr = 10;
-Nz = 10;
+Nx = 80;                
+Ntheta = 24;            
 
-wec = FloatingCylinder(rho, rad, hei, draft, Ntheta, Nr, Nz);
-wec.Modes = ModesOfMotion([0 0 1 0 0 0]);   % compute for heave only
+wec = FloatingSphereEndCyl(rho, len, dia/2, sphereRad, hingePos, ...
+    Nx, Ntheta, 'Notch');  
 
 % Now we need to give Wamit lots of incident wave directions covering the
-% full range from 0 to 2pi 
+% full range from 0 to 2pi (Like I said in the intro, body geometry
+% symmetry has not been taken advantage of yet. That's a TODO)
 N = 40;                         % 40 directions
 Beta = 0:2*pi/N:2*pi*(1-1/N);   % from 0 to 2pi
 
@@ -81,7 +86,7 @@ points = makeCirWFPoints(r, nTheta, z); % This function makes the points.
 wam_run = WamitRunCondition(folder, run_name);  
 
 wam_run.Rho = rho;      
-wam_run.T = T;                
+wam_run.T = 4:1:12;             % Do fewer periods   
 wam_run.Beta = Beta;            % The list of incident directions       
 wam_run.H = h;        
 wam_run.FloatingBodies = wec;       
@@ -107,7 +112,7 @@ hydroForces = wam_result.FreqDomForces;
 
 % It can be a good idea to just say these, so that they can be reloaded 
 % later, but they are also massive files.. 
-save([mwavePath '\Examples\mat\wam_hb1_1_out'], 'waveCir', 'hydroForces', 'wec', '-v7.3');
+% save([folder '\wam_hb1_1_out'], 'waveCir', 'hydroForces', 'wec');
 
 %% create HydroBody and save it
 
@@ -128,16 +133,16 @@ hydBody = computeHydroBody(waveCir, hydroForces, wec, 'SigFigCutoff', 5,...
 % This is because the diffraction transfer matrix has some small values,
 % which are likely meaningless, and which makes the matrix solution hard to
 % find. To get rid of these values, when you create the HydroBody, use, the
-% options 'SigFigCutoff', 5, and 'AccTrim'. 
+% options 'SigFigCutoff', 5, and 'AccTrim'. See example, Wamit_createHB_1
 
 
 % Here, we're saving it in the working folder that we've been using and
 % saving it by a name that will help us recognize it. It does take a while
 % to do these runs in Wamit, so you really only want to create a HydroBody
 % once and then save it 
-save([mwavePath '\Examples\mat\wam_hb1_1_hb'], 'hydBody');
+save([mwavePath 'Examples\HydroBodies\wam_hb1_1_hb'], 'hydBody');
 
 % And that's it for this example, in other examples we'll use the HydroBody
 % to see its power!!
-%   - example_hydroBody_1: use a single HydroBody to compute power and WaveFields
-%   - example_array_inter_1: use the HydroBody to compute array interactions
+%   - hydroBody_1: use a single HydroBody to compute power and WaveFields
+%   - array_inter_1: use the HydroBody to compute array interactions

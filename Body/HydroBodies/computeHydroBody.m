@@ -1,25 +1,5 @@
-%{ 
-mwave - A water wave and wave energy converter computation package 
-Copyright (C) 2014  Cameron McNatt
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-Contributors:
-    C. McNatt
-%}
 function [hydroB, eta0aSw, eta0aRw] = computeHydroBody(waveCP, hydroF, floatB, varargin)
-% TODO: document this man
+% TODO: document this
 
 [opts, args] = checkOptions({{'SigFigCutoff', 1}, {'Movie', 1}, {'Mmax', 1}, ...
     {'AccTrim'}, {'Waves', 1}, {'Scattered', 1} {'Radiated', 1}, {'AxisSym',1}, ...
@@ -44,7 +24,7 @@ sigFig = args{1};
 movLoc = args{2};
 Mmax = args{3};
 
-if (opts(2))
+if opts(2)
     showMov = 'Movie';
 else
     showMov = [];
@@ -144,7 +124,7 @@ else
     Mb2 = Mb/2-1;
 end
 
-if (Mmax < 0)
+if isnan(Mmax)
     if (symA)
         Mmax = 30;
     else
@@ -315,7 +295,7 @@ for nt = 1:nT
         end
     end
     
-    if (sigFig > 0)
+    if ~isnan(sigFig)
         D = roundSigFig(D, sigFig);
     end
 
@@ -477,7 +457,7 @@ M = (M-1)/2;
 
 trimM = M;
 
-if (sigFigs > 0)
+if ~isnan(sigFigs)
     maxVal = max(abs(eta0));
     expV = floor(log10(maxVal));
     cutOffVal = 10^(expV-sigFigs);

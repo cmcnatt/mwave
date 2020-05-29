@@ -1,38 +1,26 @@
-%{ 
-mwave - A water wave and wave energy converter computation package 
-Copyright (C) 2014  Cameron McNatt
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-Contributors:
-    C. McNatt
-%}
 % This example sets up and computes an array in Wamit directly - that is,
 % we put multiple bodies into Wamit and Wamit computes the full Added Mass,
 % Damping, and Excitation force matrices. This is as oppposed to using
 % Interation Theory.
 %
 % For a more introductory case with more explanations, look at 
-% Wamit_1bod_6dof_2
+% example_Wamit_1bod_6dof_2
 %
 % For more introduction on WaveFields take a look at
-% Wamit_1bod_wavefield_1
+% example_Wamit_1bod_wavefield_1
+
+clear; close all; clc;
 
 %% Set up run
 
-run_name = 'wam_mb_1';         
-folder = [mwavePath '\Examples\BemRuns\' run_name];  
+disp('ERROR: This example is not working correctly')
+
+run_name = 'wam_mb_1';                
+folder = [mwavePath '\Examples\bemRunFolder'];  
+if 0 == exist(folder, 'dir')
+    mkdir(folder);
+end
+delete([folder '\*']);
 
 rho = 1000;     
 
@@ -46,8 +34,8 @@ sphereRad = 0.1*len;
 Nx = 80;                
 Ntheta = 24;            
 
-atten1 = FloatingSphereEndCylHinge(rho, len, dia/2, sphereRad, hingePos,...
-    Nx, Ntheta);  
+atten1 = FloatingSphereEndCyl(rho, len, dia/2, sphereRad, hingePos,...
+    Nx, Ntheta, 'notch');  
 atten1.Modes = ModesOfMotion([1 1 1 1 1 1 1 1]);   
 atten1.Handle = 'atten1';
 

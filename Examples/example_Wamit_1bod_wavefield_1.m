@@ -212,7 +212,7 @@ end
 
 % Now let's apply some real motions to this body. To compute the motions,
 % use the FreqDomComp
-hydroComp = FreqDomComp(hydroForces, cyl);
+fdComp = FreqDomComp(hydroForces, cyl);
 
 dof = cyl.Modes.DoF;
 Dpto = zeros(dof, dof);     
@@ -220,10 +220,10 @@ Dpto(2,2) = 10^3;           % Set a damping in the heave mode of motion,
                             % which is the second degree of freedom in this
                             % case
 
-hydroComp.SetDpto(Dpto);   
+fdComp.SetDpto(Dpto);   
 
 % Set the wave field body's motion to the motions computed by hydroComp
-xi = hydroComp.Motions;
+xi = fdComp.Motions;
 waveField.BodyMotions = xi;
 
 % Look at surge and heave
