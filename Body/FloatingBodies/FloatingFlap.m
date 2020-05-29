@@ -88,7 +88,7 @@ classdef FloatingFlap < FloatingBody
         end
         
         function [] = MakePanelGeometry(fb, Nx, Ny, Nz)
-            panGeo = makePanel_box(fb.length, fb.beam, fb.draft, Nx, Ny, Nz, 'Quarter');
+            panGeo = makePanel_box(fb.len, fb.beam, fb.draft, Nx, Ny, Nz, 'Quarter');
             fb.panelGeo = panGeo;
             fb.iLowHi = 0;
         end
