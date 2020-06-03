@@ -943,6 +943,12 @@ classdef WamitRunCondition < IBemRunCondition
             end
             if (run.floatBods(1).WamILowHi)
                 fprintf(fileID, 'ILOWGDF = 0\n');
+                if (sum((run.floatBods(1).WamSpline)~=0))
+                    fprintf(fileID, 'KSPLIN = %i\n', run.floatBods(1).WamSpline(1))
+                    fprintf(fileID, 'IQUADO = %i\n', run.floatBods(1).WamSpline(2))
+                    fprintf(fileID, 'IQUADI = %i\n', run.floatBods(1).WamSpline(3))
+                end
+                    
             end
             if run.floatBods(1).SurfAboveZ0
                 fprintf(fileID, 'ITRIMWL = %i\n', Nbod);
