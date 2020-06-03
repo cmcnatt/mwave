@@ -2,7 +2,7 @@
 mwave is a water wave and wave energy converter (WEC) computation package written for MATLAB.
 Copyright (C) 2014  Cameron McNatt
 contact: cameron.mcnatt@gmail.com
-repository: https://github.com/camalamadingdong/mwave
+repository: https://github.com/cmcnatt/mwave
 
 README Last modified: 3 September, 2015
 
