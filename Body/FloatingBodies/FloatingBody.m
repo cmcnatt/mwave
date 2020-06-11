@@ -21,6 +21,12 @@ Contributors:
 classdef FloatingBody < matlab.mixin.Heterogeneous & handle
     % Defines a wave energy converter geometry
     
+    properties (Access = public)
+        
+        WamSpline (:,3) double;   % indicates the spline order when using a high-order geometry discretisation. 
+        
+    end
+    
     properties (Access = protected)
         handle;
         geoFile;
