@@ -634,14 +634,17 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
         end
         function [] = set.WamDipoles(fb, val)
            % Indices of the panels or patches that are thin members (i.e.
-            % dipoles)
-            if (~isInt(val))
-                error('values must be positive integers');
-            end
-            
-            if ~(length(val) == length(unique(val)))
-                error('values must be unique positive integers');
-            end
+           % dipoles)
+           %
+           % Can be specified as an integer array:
+           % [8 10]: panels 8:10 are dipoles
+           % [8 10 12]: panels 8, 10, and 12 are dipoles
+           %
+           % Or can be specified as cell array:
+           % {[8 10]}: panels 8:10 are dipoles
+           % {[8], [10], [12]}: panels 8, 10 and 12 are dipoles
+           % {[8 10], [12]}: panels 8:10 and 12 are dipoles
+           
             fb.wdipole = val;
         end
         

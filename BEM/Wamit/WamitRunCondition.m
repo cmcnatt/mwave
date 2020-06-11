@@ -976,32 +976,63 @@ classdef WamitRunCondition < IBemRunCondition
                 fprintf(fileID, 'NEWMDS = %i\n', run.floatBods(1).Ngen);
                 fprintf(fileID, 'IGENMDS = %i\n', run.floatBods(1).WamIGenMds);
             end
-            if Nbod > 1
-                for n = 1:Nbod
-                    dipoles = run.floatBods(n).WamDipoles;
-                    if ~isempty(dipoles)
-                        if length(dipoles) == 2
-                            fprintf(fileID, 'NPDIPOLE(%i) = (%i-%i)\n', n, dipoles(1), dipoles(2));
-                        else
-                            fprintf(fileID, 'NPDIPOLE(%i) =', n);
+            
+            
+            
+            dipoles = run.floatBods.WamDipoles;
+            if ~isempty(dipoles)
+                if iscell(dipoles)
+                    % New method requires cell array of panel indices
+                    for n = 1:Nbod
+                        dipoles = run.floatBods(n).WamDipoles;
+                        if ~isempty(dipoles)
+                            if Nbod == 1
+                                fprintf(fileID, 'NPDIPOLE =');
+                            else
+                                fprintf(fileID, 'NPDIPOLE(%i) =', n);
+                            end
                             for m = 1:length(dipoles)
-                                fprintf(fileID, ' %i', dipoles(m));
+                                dipm = dipoles{m};
+                                if length(dipm) == 0
+                                    % skip
+                                elseif length(dipm) == 2
+                                    fprintf(fileID, ' (%i %i)', dipm(1), dipm(2));
+                                elseif length(dipm) == 1
+                                    fprintf(fileID, ' %i', dipm(1));
+                                else
+                                    error('Unrecognized array size in Wamit Dipole panels');
+                                end
                             end
                             fprintf(fileID, '\n');
                         end
                     end
-                end
-            else
-                dipoles = run.floatBods.WamDipoles;
-                if ~isempty(dipoles)
-                    if length(dipoles) == 2
-                        fprintf(fileID, 'NPDIPOLE = (%i-%i)\n', dipoles(1), dipoles(2));
-                    else
-                        fprintf(fileID, 'NPDIPOLE =');
-                        for m = 1:length(dipoles)
-                            fprintf(fileID, ' %i', dipoles(m));
+                else
+                    % Old method: Doesn't use cell array for capturing
+                    % dipoles. Can't do two individual panels - i.e.
+                    % assumes [10 12] is the range 10-12, rather than
+                    % individual panels 10 and 12. Also, can't do
+                    % combinations of ranges, and individual panels.
+                    for n = 1:Nbod
+                        dipoles = run.floatBods(n).WamDipoles;
+                        if ~isempty(dipoles)
+                            if length(dipoles) == 2
+                                if Nbod == 1
+                                    fprintf(fileID, 'NPDIPOLE = (%i %i)\n', dipoles(1), dipoles(2));
+                                else
+                                    fprintf(fileID, 'NPDIPOLE(%i) = (%i %i)\n', n, dipoles(1), dipoles(2));
+                                end
+                            else
+                                if Nbod == 1
+                                    fprintf(fileID, 'NPDIPOLE =');
+                                else
+                                    fprintf(fileID, 'NPDIPOLE(%i) =', n);
+                                end
+                                for m = 1:length(dipoles)
+                                    fprintf(fileID, ' %i', dipoles(m));
+                                end
+                                fprintf(fileID, '\n');
+                            end
                         end
-                        fprintf(fileID, '\n');
                     end
                 end
             end
