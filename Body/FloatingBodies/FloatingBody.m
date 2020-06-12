@@ -1,35 +1,16 @@
-%{ 
-mwave - A water wave and wave energy converter computation package 
-Copyright (C) 2014  Cameron McNatt
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-Contributors:
-    C. McNatt
-%}
 classdef FloatingBody < matlab.mixin.Heterogeneous & handle
     % Defines a wave energy converter geometry
     
     properties (Access = public)
         
-        WamSpline (:,3) double;   % indicates the spline order when using a high-order geometry discretisation. 
+        WamSpline (:,3) double;         % indicates the spline order when using a high-order geometry discretisation. 
+        
+        GeoFile (1,:) char = []         % The file name of the geometry (i.e. in WAMIT GDF file) - should not include extension (i.e. .gdf)
         
     end
     
     properties (Access = protected)
         handle;
-        geoFile;
         compGeoFile;
         panelGeo;
         stlGeoFile;
@@ -67,7 +48,6 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
 
     properties (Dependent)
         Handle;         % Descriptive name of floating body
-        GeoFile;        % Name of .gdf geometry file (do not include ".gdf")
         CompGeoFile;    % Name of .gdf geometry file associated with the computation of pessures and velocities on the body surface
         PanelGeo;       % The actual panel geometry  
         StlGeoFile;     % Name and file location of .stl file of geomety
@@ -112,7 +92,6 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
             % Constructor
             if (nargin == 0)
                 fb.handle = 'newFB';
-                fb.geoFile = [];
                 fb.compGeoFile = [];
                 fb.panelGeo = [];
                 fb.stlGeoFile = [];
@@ -147,7 +126,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
                 fb.surfArea = [];
             elseif (isa(varargin{1},'FloatingBody'))
                 fbin = varargin{1};
-                fb.geoFile = fbin.geoFile;
+                fb.GeoFile = fbin.GeoFile;
                 fb.compGeoFile = fbin.compGeoFile;
                 fb.panelGeo = fbin.panelGeo;
                 fb.stlGeoFile = fbin.stlGeoFile;
@@ -198,37 +177,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
                 error('The Handle must be a string');
             end
         end
-
-        function [fn] = get.GeoFile(fb)
-            % Get the name of geometry file associated with this floating body
-            fn = fb.geoFile;
-        end
-        function [] = set.GeoFile(fb, fn)
-            % Set the name of geometry file associated with this floating body
-            if (~isempty(fb.panelGeo))
-                error('The FloatingBody contains a panel geometry that defines the geometry, and so an external geometry file cannot be used');
-            else
-                if (ischar(fn))
-                    fb.geoFile = fn;
-                    lfn = length(fn);
-                    if(lfn > 4)
-                        ending = fn((lfn-3):lfn);
-                        if (ending == '.gdf')
-                            error('The GeoFile should not include .gdf');
-                        end
-                    end
-                else
-                    error('The GeoFile must be a string');
-                end
-            end
-        end
-        
-        function [] = WamitSetGeoFile(fb, fn)
-            % Method used by WAMIT in conjuctions with a Panel Geo to set
-            % the GeoFile name following the creation of the GDF files
-            fb.geoFile = fn;
-        end
-        
+                
         function [fn] = get.CompGeoFile(fb)
             % Get the name of geometry file associated with the compuation of pointns on the floating body
             fn = fb.compGeoFile;
@@ -480,7 +429,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
                 p = fb.centRot;
             end
         end
-        function [fb] = set.CenterRot(fb, p)
+        function set.CenterRot(fb, p)
             % Positon about which body rotated in body coordinates - if not specified, then is CG.
             fb.checkSizeNx1(p,3);
             fb.centRot = p;

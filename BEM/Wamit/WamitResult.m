@@ -424,21 +424,45 @@ classdef WamitResult < IBemResult
                     NmotFunc = length(motFuncl);
                         
                     if ~isempty(centers{l})
-                        bodyGeo = result.floatingbodies(l).PanelGeo;
-                        bodyGeo = bodyGeo.GetSubsetPanels(true, false);
-
-                        if isempty(bodyGeo)
-                            if isempty(result.floatingbodies(l).CompGeoFile)
-                                if ~result.floatingbodies(l).WamILowHi
-                                    meshName = result.floatingbodies(l).GeoFile;
-                                end
-                            else
-                                meshName = result.floatingbodies(l).CompGeoFile;
-                            end
-                            bodyGeo = Wamit_readGdf(fullpath, meshName);
+                        if result.floatingbodies(l).WamILowHi
+                            % high order GDF
+                            % For high order, need a CompGeoFile - i.e. a
+                            % low order GDF
+                            bodyGeo = Wamit_readGdf(fullpath, result.floatingbodies(l).CompGeoFile);
                         else
-                            bodyGeo.Translate([0, 0, result.floatingbodies(1).Zpos]);
+                            % low order GDF
+                            if ~isempty(result.floatingbodies(l).PanelGeo)
+                                % if has a PanelGeo us that
+                                bodyGeo = result.floatingbodies(l).PanelGeo;
+                                % get the wet subset of panels
+                                bodyGeo = bodyGeo.GetSubsetPanels(true, false);
+                            else
+                                bodyGeo = Wamit_readGdf(fullpath, result.floatingbodies(l).GeoFile);
+                                % GDF files that are read in are centered
+                                % at their center of rotation
+                                bodyGeo.Translate(result.floatingbodies(l).CenterRot);
+                                % get the wet subset of panels - b/c read
+                                % in, interior panels not indicated, so
+                                % can't use .GetSubsetPanels, so use
+                                % just get the panels where z < 0
+                                inds = bodyGeo.Centroids(:,3) < 0;
+                                bodyGeo = PanelGeo(bodyGeo.Panels(inds));
+                            end
                         end
+                        
+
+%                         if isempty(bodyGeo)
+%                             if isempty(result.floatingbodies(l).CompGeoFile)
+%                                 if ~result.floatingbodies(l).WamILowHi
+%                                     meshName = result.floatingbodies(l).GeoFile;
+%                                 end
+%                             else
+%                                 meshName = result.floatingbodies(l).CompGeoFile;
+%                             end
+%                             bodyGeo = Wamit_readGdf(fullpath, meshName);
+%                         else
+%                             bodyGeo.Translate([0, 0, result.floatingbodies(1).Zpos]);
+%                         end
                         % TODO (line below may need uncommented for higher order meshes)
                         %bodyGeo.Translate(result.floatingbodies(l).Cg);
                         
