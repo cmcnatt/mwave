@@ -1,32 +1,18 @@
-%{ 
-mwave - A water wave and wave energy converter computation package 
-Copyright (C) 2014  Cameron McNatt
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-Contributors:
-    C. McNatt
-%}
 % This test sets up and runs Wamit on a 6 dof cylinder. 
 % In this case, we want to compute the wave field around the cylinder. 
 % For a more introductory case with more explanations, look at 
-% Wamit_1bod_6dof_2
+% example_Wamit_1bod_6dof_2
+
+clear; close all; clc;
 
 %% Set up the run
 
 run_name = 'wam_1b_wf_1';         
-folder = [mwavePath '\Examples\BemRuns\' run_name];  
+folder = [mwavePath '\Examples\bemRunFolder'];  
+if 0 == exist(folder, 'dir')
+    mkdir(folder);
+end
+delete([folder '\*']);
 
 rho = 1000;     
 
@@ -73,8 +59,8 @@ wam_run.WriteRun;
                                     
 %% Run Wamit
 
-% wam_run.Run;
-wam_run.Run('Background');             
+wam_run.Run;
+% wam_run.Run('Background');             
 
 %% Read results
 
@@ -226,7 +212,7 @@ end
 
 % Now let's apply some real motions to this body. To compute the motions,
 % use the FreqDomComp
-hydroComp = FreqDomComp(hydroForces, cyl);
+fdComp = FreqDomComp(hydroForces, cyl);
 
 dof = cyl.Modes.DoF;
 Dpto = zeros(dof, dof);     
@@ -234,10 +220,10 @@ Dpto(2,2) = 10^3;           % Set a damping in the heave mode of motion,
                             % which is the second degree of freedom in this
                             % case
 
-hydroComp.SetDpto(Dpto);   
+fdComp.SetDpto(Dpto);   
 
 % Set the wave field body's motion to the motions computed by hydroComp
-xi = hydroComp.Motions;
+xi = fdComp.Motions;
 waveField.BodyMotions = xi;
 
 % Look at surge and heave

@@ -1,23 +1,4 @@
-%{ 
-mwave - A water wave and wave energy converter computation package 
-Copyright (C) 2014  Cameron McNatt
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-Contributors:
-    C. McNatt
-%}
 % In this run, we will create a 'HydroBody' in Wamit. The HydroBody will be
 % a cylinder in heave. For more details on creating a HydroBody, see 
 % example Wamit_createHB_1.
@@ -30,11 +11,8 @@ run_name = 'wam_hb_2';
 folder = [mwavePath '\Examples\BemRuns\' run_name];  
 
 rho = 1025;     % water density
-h = 8;          % water depth
-T = 1:0.5:8;    % wave periods (8 s wave is 64 m long at 8 m depth, if 
-                % this were scaled to full scale by mulitplying by 5 (40 m
-                % water depth), the wave would be 320 m long, and have a
-                % period of 17 s)
+h = 50;         % water depth
+T = 1:0.5:8;    % wave periods 
 
 % set up cylinder dimension
 rad = 1;

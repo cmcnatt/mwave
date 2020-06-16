@@ -1,26 +1,8 @@
-%{ 
-mwave - A water wave and wave energy converter computation package 
-Copyright (C) 2014  Cameron McNatt
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-Contributors:
-    C. McNatt
-%}
 % This test sets up and runs Wamit on a 6 dof cylinder. 
 % The cylinder's geometry file was already made by an external program 
 % in a Wamit format (e.g. Multisurf can do this)
+
+clear; close all; clc;
 
 %% Set up the run
 
@@ -28,10 +10,12 @@ Contributors:
 % based off this name
 run_name = 'wam_1b_6dof_1';         
 
-% This is the folder where all the Wamit input and output files go (You 
-% need to make this folder!). It is good practise to name the folder the 
-% same as the run name.
-folder = [mwavePath 'Examples\BemRuns\' run_name];  
+% This is the folder where all the Wamit input and output files go.
+folder = [mwavePath '\Examples\bemRunFolder'];  
+if 0 == exist(folder, 'dir')
+    mkdir(folder);
+end
+delete([folder '\*']);
                                                     
 % mwavePath is a function that returns the path to the to the folder where
 % mwave is kept it locates this by finding a file called mwave.home     
@@ -68,7 +52,7 @@ M(6,6) = Izz;
 
 cyl = FloatingBody();           % Create a 'FloatingBody' object
 geoFile = 'wam_1b_6dof_1';
-copyfile([mwavePath 'Examples\BemRuns\geometry\' geoFile '.gdf'], ...
+copyfile([mwavePath '\Examples\bemGeos\' geoFile '.gdf'], ...
     [folder '\' geoFile '.gdf']);
 cyl.GeoFile = geoFile;  % Point the body to the geometry file (it 
                         % is a .gdf file, but don't include .gdf)
@@ -98,7 +82,7 @@ wam_run.FloatingBodies = cyl;       % Now set the floating body we just
                                     % created as the body used in Wamit run
                                     
 % The following are default values, but just to show that they can be set
-wam_run.ExePath = 'C:\wamitv7';           % This points to the location 
+wam_run.ExePath = 'C:\wamitv7';             % This points to the location 
                                             % of the Wamit.exe
 wam_run.ScratchPath = 'C:\wamitv7\scratch'; % Wamit needs a scratch folder
 wam_run.UseridPath = 'C:\wamitv7';          % Location of UserId (license)
@@ -108,14 +92,13 @@ wam_run.WriteRun;                   % this writes all the necessary Wamit
                                     
 %% Run Wamit
 
-wam_run.Run;                           % Runs Wamit on the run that   
-                                            % just created. Ties up Matlab
+wam_run.Run;                            % Runs Wamit on the run that was 
+                                        % just created. Ties up Matlab
                                             
-% wam_run.Run('Background');             % Runs Wamit in a command
-                                            % window. Matlab can be used,
-                                            % but make sure you wait to
-                                            % read the results until the
-                                            % run is finished.
+% wam_run.Run('Background');            % Runs Wamit in a command window. 
+                                        % Matlab can be used, but make sure 
+                                        % you wait to read the results 
+                                        % until the run is finished.
 
 %% Read results
 
@@ -143,15 +126,18 @@ plot(T, squeeze(A(:,3,3)));
 title({'Results for Cylinder (dia: 10 m, draft: 10 m, height: 15 m)', ...
     'Added Mass'});
 ylabel('kg');
+grid on;
 subplot(3,1,2);
 plot(T, squeeze(B(:,3,3)));
 title('Hydrodynamic Damping')
 ylabel('Ns/m');
+grid on;
 subplot(3,1,3);
 plot(T, abs(squeeze(Fex(:,1,3))));
 title('Excitation Force');
 xlabel('Period (s)');
 ylabel('N');
+grid on;
 
 
 %% Analyze results
@@ -163,7 +149,7 @@ hydroComp = FreqDomComp(hydroForces, cyl);
 % power computation requires a linear mechanical damping. 
 dof = cyl.Modes.DoF;
 Dpto = zeros(dof, dof);     % PTO damping matrix of size DoF x DoF
-Dpto(3,3) = 10^3;           % Set a damping in the heave mode of motion
+Dpto(3,3) = 5*10^4;           % Set a damping in the heave mode of motion
 
 hydroComp.SetDpto(Dpto);    % Set the damping on the HydroComp
 
@@ -194,15 +180,18 @@ ylabel(axe(2), 'Pitch (deg/m)');
 title({'Results for Cylinder (dia: 10 m, draft: 10 m, height: 15 m)', ...
     'Response Amplitude Operator'});
 legend('Surge', 'Heave', 'Pitch', 'Location', 'NorthWest');
+grid on;
 
 subplot(3,1,2);
 plot(T, power./1000);
 title('Power in 2 m high waves')
 ylabel('kW');
+grid on;
 
 subplot(3,1,3);
 plot(T, RCW);
 title('Relative capture width');
 xlabel('Period (s)');
 ylabel('RCW');
+grid on;
 

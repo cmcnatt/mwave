@@ -1,23 +1,3 @@
-%{ 
-mwave - A water wave and wave energy converter computation package 
-Copyright (C) 2014  Cameron McNatt
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-Contributors:
-    C. McNatt
-%}
 classdef PanelGeo < handle
     
     properties (Access = private)
@@ -385,18 +365,16 @@ classdef PanelGeo < handle
             fclose(fid);
         end
         
-        function [faces, verts] = QuadMesh(geo, noInt)
+        function [faces, verts] = QuadMesh(geo, noInt, onlyWet)
             if nargin < 2
                 noInt = true;
             end
-            N0 = geo.Count;
-            if noInt
-                inclPan = ~geo.IsInteriors;
-                N = N0 - sum(geo.IsInteriors);
-            else
-                inclPan = ones(N0, 1);
-                N = N0;
+            if nargin < 3
+                onlyWet = false;
             end
+            N0 = geo.Count;
+            inclPan = geo.getIndices(noInt, onlyWet);
+            N = sum(inclPan);
             verts0 = zeros(4*N, 3);
             faces0 = zeros(N, 4);
             
@@ -429,8 +407,8 @@ classdef PanelGeo < handle
             geo.plotFuncs('surf', varargin{:});
         end
         
-        % Overloaded plus operator
         function [geoOut] = plus(geoa, geob)
+            % PLUS: overloade addition operator
             
             if (xor(geoa.Xsymmetry, geob.Xsymmetry) || xor(geoa.Ysymmetry, geob.Ysymmetry))
                 error('PanelGeos must have the same symmetry to add');
@@ -449,20 +427,47 @@ classdef PanelGeo < handle
             geoOut = PanelGeo(newPans);
         end
         
-        % Overloaded times operator
-        function [geoOut] = times(geoIn, val)
+        function [geoOut] = times(arg1, arg2)
+            % TIMES: overloaded times operator
+            if isa(arg1, 'PanelGeo')
+                geoIn = arg1;
+                val = arg2;
+            else
+                geoIn = arg2;
+                val = arg1;
+            end
             
             geoOut = PanelGeo(geoIn);
             
             geoOut.Values = geoIn.Values.*val;
         end
         
-        % Overloaded mtimes operator
-        function [geoOut] = mtimes(geoIn, val)
+        function [geoOut] = mtimes(arg1, arg2)
+            % MTIMES: overloaded mtimes operator
+            if isa(arg1, 'PanelGeo')
+                geoIn = arg1;
+                val = arg2;
+            else
+                geoIn = arg2;
+                val = arg1;
+            end
             
             geoOut = PanelGeo(geoIn);
             
             geoOut.Values = geoIn.Values*val;
+        end
+        
+        function [geoOut] = rdivide(arg1, arg2)
+            % RDIVIDE: overloaded rdivide operator
+            if isa(arg1, 'PanelGeo')
+                geoIn = arg1;
+                val = arg2;
+            else
+                geoIn = arg2;
+                val = arg1;
+            end
+            
+            geoOut = geoIn.*(1./val);
         end
         
         % Overloaded real operator
@@ -495,12 +500,22 @@ classdef PanelGeo < handle
     end
     
     methods (Access = private)
-        function [] = plotFuncs(geo, func, varargin)
+        function inclPan = getIndices(obj, noInt, onlyWet)
+            inclPan = true(obj.Count, 1);
+            if noInt
+                inclPan = inclPan & ~obj.IsInteriors;
+            end
+            if onlyWet
+                inclPan = inclPan & obj.IsWets;
+            end
+        end
+        
+        function plotFuncs(obj, func, varargin)
 
-            [opts, args] = checkOptions({{'ShowSym'}, {'ShowNorm'}, {'OnlyWet'}, {'color', 1}, {'alpha', 1}}, varargin);
-            showSym = opts(1);
-            showNorm = opts(2);
-            onlyWet = opts(3);
+            [opts, args] = checkOptions({{'ShowNorm'}, {'OnlyWet'}, {'NoInt'}, {'color', 1}, {'alpha', 1}}, varargin);
+            showNorm = opts(1);
+            onlyWet = opts(2);
+            noInt = opts(3);
             color = [];
             if opts(4)
                 color = args{4};
@@ -513,9 +528,9 @@ classdef PanelGeo < handle
             xsy = false;
             ysy = false;
             
-            [mesh, verts] = geo.QuadMesh(~onlyWet);
+            [mesh, verts] = obj.QuadMesh(noInt, onlyWet);
             
-            vals = geo.Values;
+            vals = obj.Values;
             
             args = {'faces', mesh, 'vertices', verts,...
                     'facelighting', 'none', 'facecolor', 'flat', 'edgelighting', 'flat',...
@@ -539,7 +554,7 @@ classdef PanelGeo < handle
                     args{length(args) + 1} = color;
                 else
                     if isnan(vals(1))
-                        cents = geo.Centroids;
+                        cents = obj.Centroids;
                         colF = cents(:,3);
                     else
                         colF = vals;
@@ -555,10 +570,11 @@ classdef PanelGeo < handle
             
             if (showNorm)
                 hold on;
-                cent = geo.Centroids;
-                norm = geo.Normals;
-                area = geo.Areas;
-                quiver3(cent(:,1), cent(:,2), cent(:,3), norm(:,1), norm(:,2), norm(:,3), 'color', MColor.Black);
+                ipan = obj.getIndices(noInt, onlyWet);
+                cent = obj.Centroids;
+                norm = obj.Normals;
+                area = obj.Areas;
+                quiver3(cent(ipan,1), cent(ipan,2), cent(ipan,3), norm(ipan,1), norm(ipan,2), norm(ipan,3), 'color', MColor.Black);
             end
         end
     end

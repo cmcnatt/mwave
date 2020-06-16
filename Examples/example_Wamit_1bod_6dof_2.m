@@ -1,26 +1,8 @@
-%{ 
-mwave - A water wave and wave energy converter computation package 
-Copyright (C) 2014  Cameron McNatt
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-Contributors:
-    C. McNatt
-%}
 % This test sets up and runs Wamit on a 6 dof cylinder. 
 % The cylinder's geometry file is made in matlab with mwave. This example 
-% is the same as Wamit_1bod_6dof_1, except for that aspect. 
+% is the same as example_Wamit_1bod_6dof_1, except for that aspect. 
+
+clear; close all; clc;
 
 %% Set up the run
 
@@ -28,10 +10,12 @@ Contributors:
 % based off this name
 run_name = 'wam_1b_6dof_2';         
 
-% This is the folder where all the Wamit input and output files go (You 
-% need to make this folder!). It is good practise to name the folder the 
-% same as the run name.
-folder = [mwavePath '\Examples\BemRuns\' run_name];  
+% This is the folder where all the Wamit input and output files go 
+folder = [mwavePath '\Examples\bemRunFolder'];  
+if 0 == exist(folder, 'dir')
+    mkdir(folder);
+end
+delete([folder '\*']);
                                                     
 % mwavePath is a function that returns the path to the to the folder where
 % mwave is kept it locates this by finding a file called mwave.home     
@@ -49,9 +33,9 @@ height = 15;            % 10 m below the free surface, 5 m above
 
 % These parameters described the number of panels that will be used to
 % create the panel mesh (.gdf file)
-Ntheta = 48;            % Number in the circular direction
-Nr = 8;                 % Number in the radial direction
-Nz = 24;                % Number in the vertical direction
+Ntheta = 36;            % Number in the circular direction
+Nr = 6;                 % Number in the radial direction
+Nz = 18;                % Number in the vertical direction
 
 cyl = FloatingCylinder(rho, diameter/2, height, draft, Ntheta, Nr, Nz);
 
@@ -64,26 +48,12 @@ cyl = FloatingCylinder(rho, diameter/2, height, draft, Ntheta, Nr, Nz);
 
 % We can look at the Geometry..
 figure;
-subplot(1,2,1);
 plot(cyl.PanelGeo);
 axis equal;
-title({'Cylinder Panelization', 'dia: 10 m, draft: 10 m, height: 15 m',...
-    'Body Coordinates'});
-
-% The result may look a little strange at first.. The bottom is at z = -7.5
-% and the top is at z = 2.5. So what's happening. 1) Only the part below
-% the free surface is panelized. Here, the draft is 10, so we have panels
-% of length 10 in the z direction (2.5 - -7.5). 2) It's drawn in body
-% coordinates, the body origin is at (0,0,0).  When it goes into Wamit, we
-% tell Wamit the Z position of the origin and it effectivly shifts it by
-% its z position. 
-
-globCylPanGeo = PanelGeo(cyl.PanelGeo);
-globCylPanGeo.Translate([0 0 cyl.Zpos]);
-subplot(1,2,2);
-plot(globCylPanGeo);
-axis equal;
-title('Global Coordinates');
+box on;
+grid on;
+set(gca, 'view', [-10 22]);
+title({'Cylinder Panelization', 'dia: 10 m, draft: 10 m, height: 15 m',});
 
 % Like in  wam_1b_6dof_1, we still need to do these things, and the rest of
 % the computation is the same as wam_1b_6dof_1
@@ -108,21 +78,14 @@ wam_run.WriteRun;                   % this writes all the necessary Wamit
                                     
 %% Run Wamit
 
-% The following are default values, but just to show that they can be set
-wam_run.ExePath = 'N:\wamitv7';           % This points to the location 
-                                            % of the Wamit.exe
-wam_run.ScratchPath = 'N:\wamitv7\scratch'; % Wamit needs a scratch folder
-wam_run.UseridPath = 'N:\wamitv7';          % Location of UserId (license)
-
-wam_run.Run;                           % Runs Wamit on the run that   
-                                            % just created. Ties up Matlab
+wam_run.Run;                            % Runs Wamit on the run that was 
+                                        % just created. Ties up Matlab
                                             
-% wam_run.Run('Background');             % Runs Wamit in a command
-                                            % window. Matlab can be used,
-                                            % but make sure you wait to
-                                            % read the results until the
-                                            % run is finished.
-
+% wam_run.Run('Background');            % Runs Wamit in a command window. 
+                                        % Matlab can be used, but make sure 
+                                        % you wait to read the results 
+                                        % until the run is finished.
+                                        
 %% Read results
 
 % the WamitResult class reads in Wamit output files. 
@@ -149,15 +112,18 @@ plot(T, squeeze(A(:,3,3)));
 title({'Results for Cylinder (dia: 10 m, draft: 10 m, height: 15 m)', ...
     'Added Mass'});
 ylabel('kg');
+grid on;
 subplot(3,1,2);
 plot(T, squeeze(B(:,3,3)));
 title('Hydrodynamic Damping')
 ylabel('Ns/m');
+grid on;
 subplot(3,1,3);
 plot(T, abs(squeeze(Fex(:,1,3))));
 title('Excitation Force');
 xlabel('Period (s)');
 ylabel('N');
+grid on;
 
 
 %% Analyze results
@@ -169,7 +135,7 @@ hydroComp = FreqDomComp(hydroForces, cyl);
 % power computation requires a linear mechanical damping. 
 dof = cyl.Modes.DoF;
 Dpto = zeros(dof, dof);     % PTO damping matrix of size DoF x DoF
-Dpto(3,3) = 10^3;           % Set a damping in the heave mode of motion
+Dpto(3,3) = 5*10^4;           % Set a damping in the heave mode of motion
 
 hydroComp.SetDpto(Dpto);    % Set the damping on the HydroComp
 
@@ -200,15 +166,18 @@ ylabel(axe(2), 'Pitch (deg/m)');
 title({'Results for Cylinder (dia: 10 m, draft: 10 m, height: 15 m)', ...
     'Response Amplitude Operator'});
 legend('Surge', 'Heave', 'Pitch', 'Location', 'NorthWest');
+grid on;
 
 subplot(3,1,2);
 plot(T, power./1000);
 title('Power in 2 m high waves')
 ylabel('kW');
+grid on;
 
 subplot(3,1,3);
 plot(T, RCW);
 title('Relative capture width');
 xlabel('Period (s)');
 ylabel('RCW');
+grid on;
 

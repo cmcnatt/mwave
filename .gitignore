@@ -16,28 +16,7 @@ wam_hb1_1_out.mat
 # Nemoh output files
 
 # Ignore the contents of the Example BEM folders
-Examples/BemRuns/nem_1b_1dof_1/**
-Examples/BemRuns/nem_1b_1dof_1w/**
-Examples/BemRuns/nem_1b_6dof_1/**
-Examples/BemRuns/nem_1b_6dof_1w/**
-Examples/BemRuns/nem_array_1/**
-Examples/BemRuns/nem_hb_1/**
-Examples/BemRuns/nem_hb_2/**
-Examples/BemRuns/nem_hb_3/**
-Examples/BemRuns/wam_1b_6dof_1/**
-Examples/BemRuns/wam_1b_6dof_2/**
-Examples/BemRuns/wam_1b_atten_1/**
-Examples/BemRuns/wam_1b_wf_1/**
-Examples/BemRuns/wam_array_1/**
-Examples/BemRuns/wam_hb_1/**
-Examples/BemRuns/wam_hb_2/**
-Examples/BemRuns/wam_mb_1/**
-Examples/BemRuns/wam_1b_6dof_3**
-Examples/BemRuns/wam_1b_6dof_3_autoCyl**
-Examples/BemRuns/wam_1b_6dof_3_manCSF**
-Examples/BemRuns/wam_1b_6dof_4**
-Examples/BemRuns/wam_1b_6dof_4_iReadRAO_0**
-Examples/BemRuns/wam_1b_6dof_4_iReadRAO_1**
+Examples/bemRunFolder/**
 
 # Ignore contents of UnitTest Wamit folders
 UnitTests/WamitRuns/mv_ut1/**
@@ -51,3 +30,4 @@ UnitTests/WamitRuns/ut8/**
 UnitTests/WamitRuns/ut9/**
 UnitTests/WamitRuns/bodySurfUT/**
 UnitTests/WamitRuns/tempRun/**
+Examples/bemRunFolder/

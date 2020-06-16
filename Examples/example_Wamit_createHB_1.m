@@ -1,23 +1,3 @@
-%{ 
-mwave - A water wave and wave energy converter computation package 
-Copyright (C) 2014  Cameron McNatt
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-Contributors:
-    C. McNatt
-%}
 % In this run, we will create a 'HydroBody' in Wamit. A HydroBody is a
 % special class that is required for the array interaction theory. It is
 % basically a FloatingBody with hydrodynamic parameters attached, including
@@ -36,35 +16,39 @@ Contributors:
 % Engineering paper.
 %
 % For a more introductory case with more explanations, look at 
-% Wamit_1bod_6dof_2
+% example_Wamit_1bod_6dof_2
 %
 % For more introduction on WaveFields take a look at
-% Wamit_1bod_wavefield_1
-%
-% For more info on the geometry used here, check out Wamit_1bod_atten8dof_1
+% example_Wamit_1bod_wavefield_1
+
+clear; close all; clc;
 
 %% Set up run
 
-run_name = 'wam_hb_1';         
-folder = [mwavePath '\Examples\BemRuns\' run_name];  
+run_name = 'wam_hb_1';               
+folder = [mwavePath '\Examples\bemRunFolder'];  
+if 0 == exist(folder, 'dir')
+    mkdir(folder);
+end
+delete([folder '\*']);
 
-rho = 1000;     
+rho = 1025;     % water density
+T = 1:0.5:8;    % wave periods      
 
-% set up a normal body
-len = 60;
-dia = 10;
-hingePos = [-10; 10];   
-sphereRad = 0.1*len;    
+% set up cylinder dimension
+rad = 1;
+draft = 1;
+hei = 2;
 
-Nx = 80;                
-Ntheta = 24;            
+Ntheta = 24;   
+Nr = 10;
+Nz = 10;
 
-wec = FloatingSphereEndCyl(rho, len, dia/2, sphereRad, hingePos, ...
-    Nx, Ntheta, 'Notch');  
+wec = FloatingCylinder(rho, rad, hei, draft, Ntheta, Nr, Nz);
+wec.Modes = ModesOfMotion([0 0 1 0 0 0]);   % compute for heave only
 
 % Now we need to give Wamit lots of incident wave directions covering the
-% full range from 0 to 2pi (Like I said in the intro, body geometry
-% symmetry has not been taken advantage of yet. That's a TODO)
+% full range from 0 to 2pi 
 N = 40;                         % 40 directions
 Beta = 0:2*pi/N:2*pi*(1-1/N);   % from 0 to 2pi
 
@@ -97,7 +81,7 @@ points = makeCirWFPoints(r, nTheta, z); % This function makes the points.
 wam_run = WamitRunCondition(folder, run_name);  
 
 wam_run.Rho = rho;      
-wam_run.T = 4:1:12;             % Do fewer periods   
+wam_run.T = T;                
 wam_run.Beta = Beta;            % The list of incident directions       
 wam_run.H = h;        
 wam_run.FloatingBodies = wec;       
@@ -123,7 +107,7 @@ hydroForces = wam_result.FreqDomForces;
 
 % It can be a good idea to just say these, so that they can be reloaded 
 % later, but they are also massive files.. 
-% save([folder '\wam_hb1_1_out'], 'waveCir', 'hydroForces', 'wec');
+save([mwavePath '\Examples\mat\wam_hb1_1_out'], 'waveCir', 'hydroForces', 'wec', '-v7.3');
 
 %% create HydroBody and save it
 
@@ -144,16 +128,16 @@ hydBody = computeHydroBody(waveCir, hydroForces, wec, 'SigFigCutoff', 5,...
 % This is because the diffraction transfer matrix has some small values,
 % which are likely meaningless, and which makes the matrix solution hard to
 % find. To get rid of these values, when you create the HydroBody, use, the
-% options 'SigFigCutoff', 5, and 'AccTrim'. See example, Wamit_createHB_1
+% options 'SigFigCutoff', 5, and 'AccTrim'. 
 
 
 % Here, we're saving it in the working folder that we've been using and
 % saving it by a name that will help us recognize it. It does take a while
 % to do these runs in Wamit, so you really only want to create a HydroBody
 % once and then save it 
-save([mwavePath 'Examples\HydroBodies\wam_hb1_1_hb'], 'hydBody');
+save([mwavePath '\Examples\mat\wam_hb1_1_hb'], 'hydBody');
 
 % And that's it for this example, in other examples we'll use the HydroBody
 % to see its power!!
-%   - hydroBody_1: use a single HydroBody to compute power and WaveFields
-%   - array_inter_1: use the HydroBody to compute array interactions
+%   - example_hydroBody_1: use a single HydroBody to compute power and WaveFields
+%   - example_array_inter_1: use the HydroBody to compute array interactions

@@ -1,35 +1,25 @@
-%{ 
-mwave - A water wave and wave energy converter computation package 
-Copyright (C) 2014  Cameron McNatt
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-Contributors:
-    C. McNatt
-%}
 % This test sets up and runs Wamit on a body with 8 DoF using the Wamit
 % generalized modes. It used a built-in mwave geometry which makes setting
 % up the body relatively straightforward, and some amount of explanation is
 % given on what goes on under the hood.
 %
 % For a more introductory case with more explanations, look at 
-% Wamit_1bod_6dof_2
+% example_Wamit_1bod_6dof_2
+
+clear; close all; clc;
 
 %% Set up the run
 
+% Currently, this example is not working and should be fixed at some
+% point... TODO: fix example
+warning('Example known not to be working');
+
 run_name = 'wam_1b_atten_1';         
-folder = [mwavePath '\Examples\BemRuns\' run_name];  
+folder = [mwavePath '\Examples\bemRunFolder'];  
+if 0 == exist(folder, 'dir')
+    mkdir(folder);
+end
+delete([folder '\*']);
 
 rho = 1000;     
 
@@ -45,8 +35,8 @@ sphereRad = 0.1*len;    % How large the spherical ends are
 Nx = 80;                % number of panels along body length
 Ntheta = 24;            % number of panels around the body
 
-wec = FloatingSphereEndCylHinge(rho, len, dia/2, sphereRad, hingePos, ...
-    Nx, Ntheta);  
+wec = FloatingSphereEndCyl(rho, len, dia/2, sphereRad, hingePos, ...
+    Nx, Ntheta, 'notch');  
 % What take a little while is computing the mass matrix. It is an 8x8 mass
 % matrix and there is coupling between some of the modes. This is computed
 % using the MassBody and MassPoint classes and following the method
@@ -58,6 +48,7 @@ figure;
 plot(wec.PanelGeo);
 axis equal;
 title('Two-hinge Attenuator Panelization');
+set(gca, 'view', [-35 15]);
 
 
 % The mass matrix assumes the body is like a sausage, and what is show in
@@ -97,7 +88,6 @@ wam_run.WriteRun;
 %% Run Wamit
 
 wam_run.Run;                           
-% wam_run.Run('Background');           
 
 %% Read results
 
