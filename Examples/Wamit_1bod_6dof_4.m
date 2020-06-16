@@ -209,8 +209,8 @@ figure
 for i = 1:6
     subplot(3,2,i)
     hold on
-    for j = 1:size(driftForces,2)
-        plot(2*pi./driftForces(j).T(22:end),abs(driftForces(j).meanDriftForces(22:end,i)),'-')
+    for j = 1:size(driftForces,2)-1
+        plot(2*pi./driftForces(j).T(57:437),abs(driftForces(j).meanDriftForces(57:437,i)),'-')
     end
     xlabel('Wave frequency / rad/s')
     ylabel('Force/Moment')

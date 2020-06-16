@@ -118,7 +118,7 @@ if wam_run.CompDrift
     if ismember(1,wam_run.DriftOption)
         wam_run.AutoCSF = true; % Decide whether to use user-input control surface (false) 
                          % or to use the automatic creation feature of WAMIT (true).
-        wam_run.BoxCSF = true; % Use cylinder or quadrilateral-based box shapes control surface (true - box, false - cylinder)
+        wam_run.BoxCSF = false; % Use cylinder or quadrilateral-based box shapes control surface (true - box, false - cylinder)
     end
 end
 
@@ -169,9 +169,9 @@ for i = 1:6
     subplot(3,2,i)
     hold on
     for j = 1:size(driftForces,2)
-        plot(driftForces(j).T,abs(driftForces(j).meanDriftForces(:,i)))
+        plot(2*pi./driftForces(j).T(23:end),abs(driftForces(j).meanDriftForces(23:end,i)),'-')
     end
-    xlabel('Wave period / s')
+    xlabel('Wave frequency / rad/s')
     ylabel('Force/Moment')
     title(dofsTitle{i})
 end
