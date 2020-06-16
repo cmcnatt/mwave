@@ -651,7 +651,7 @@ classdef FloatingBody < matlab.mixin.Heterogeneous & handle
            % {[8], [10], [12]}: panels 8, 10 and 12 are dipoles
            % {[8 10], [12]}: panels 8:10 and 12 are dipoles
            
-            fb.wdipole = val;
+            %fb.wdipole = val;
         end
         
         function [val] = get.SurfAboveZ0(fb)
