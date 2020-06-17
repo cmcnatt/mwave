@@ -252,8 +252,7 @@ classdef Panel < handle
                     hold on;
                     cent = pan.Centroid;
                     norm = pan.Normal;
-                    area = pan.Area;
-                    quiver3(cent(1), cent(2), cent(3), norm(1), norm(2), norm(3), 10*area, 'Color', [0.8500 0.3250 0.0980]);
+                    quiver3(cent(1), cent(2), cent(3), norm(1), norm(2), norm(3), 'Color', MColor.Black);
                 end
 
                 if (xsym && ~ysym)

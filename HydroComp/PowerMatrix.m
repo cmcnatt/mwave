@@ -302,7 +302,7 @@ classdef PowerMatrix < IEnergyComp
                 Dpto0 = comp.Dpto;
             end
 
-            parfor m = 1:Mc % this line can be parfor/for
+            for m = 1:Mc % this line can be parfor/for
                 for n = 1:Nc
                     if ~isempty(occlim)
                         if (freqOccs(m, n) <= occlim)
