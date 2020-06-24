@@ -572,11 +572,11 @@ classdef WamitRunCondition < IBemRunCondition
             run.geoFiles = cell(1, nbody);
             Np = 0;
             for n = 1:nbody
-                if (isempty(run.floatBods(n).GeoFile))
+                if isempty(run.floatBods(n).GeoFile)
                     geoFile = [run.runName num2str(n)];
                     run.writeGdf(run.floatBods(n), geoFile, run.floatBods(n).ISurfPan);
                     run.geoFiles{n} = geoFile;
-                    run.floatBods(n).WamitSetGeoFile(geoFile);
+                    run.floatBods(n).GeoFile = geoFile;
                 else
                     run.geoFiles{n} = run.floatBods(n).GeoFile;
                 end
