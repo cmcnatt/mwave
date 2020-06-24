@@ -572,11 +572,11 @@ classdef WamitRunCondition < IBemRunCondition
             run.geoFiles = cell(1, nbody);
             Np = 0;
             for n = 1:nbody
-                if (isempty(run.floatBods(n).GeoFile))
+                if isempty(run.floatBods(n).GeoFile)
                     geoFile = [run.runName num2str(n)];
                     run.writeGdf(run.floatBods(n), geoFile, run.floatBods(n).ISurfPan);
                     run.geoFiles{n} = geoFile;
-                    run.floatBods(n).WamitSetGeoFile(geoFile);
+                    run.floatBods(n).GeoFile = geoFile;
                 else
                     run.geoFiles{n} = run.floatBods(n).GeoFile;
                 end
@@ -944,9 +944,9 @@ classdef WamitRunCondition < IBemRunCondition
             if (run.floatBods(1).WamILowHi)
                 fprintf(fileID, 'ILOWGDF = 0\n');
                 if (sum((run.floatBods(1).WamSpline)~=0))
-                    fprintf(fileID, 'KSPLIN = %i\n', run.floatBods(1).WamSpline(1))
-                    fprintf(fileID, 'IQUADO = %i\n', run.floatBods(1).WamSpline(2))
-                    fprintf(fileID, 'IQUADI = %i\n', run.floatBods(1).WamSpline(3))
+                    fprintf(fileID, 'KSPLIN = %i\n', run.floatBods(1).WamSpline(1));
+                    fprintf(fileID, 'IQUADO = %i\n', run.floatBods(1).WamSpline(2));
+                    fprintf(fileID, 'IQUADI = %i\n', run.floatBods(1).WamSpline(3));
                 end
                     
             end
@@ -963,7 +963,7 @@ classdef WamitRunCondition < IBemRunCondition
             if (~all([isempty(run.fieldArray) isempty(run.fieldPoints) isempty(run.cylArray)]))
                 fprintf(fileID, 'INUMOPT6 = 1 \n');
             end
-            if run.computeBody && isempty(run.fieldPointAsBodyDist);
+            if run.computeBody && isempty(run.fieldPointAsBodyDist)
                 fprintf(fileID, 'INUMOPT5 = 1 \n');
                 if (run.floatBods(1).WamILowHi > 0) || ~isempty(run.floatBods(1).CompGeoFile)
                     ipnlbpt = -4;
@@ -1064,7 +1064,7 @@ classdef WamitRunCondition < IBemRunCondition
                     fprintf(fileID, 'ISOLVE = 0\n');
                 end
             end
-            if (run.computeBody && run.computeVelocity) || ...
+            if (run.computeBody && run.computeVelocity && ~run.floatBods(1).WamILowHi) || ...
                     (~run.floatBods(1).WamILowHi && run.CompDrift)
                 fprintf(fileID, 'ISOR = 1\n');
             else
@@ -1373,7 +1373,6 @@ classdef WamitRunCondition < IBemRunCondition
                 pos = [fb.XYpos(1) fb.XYpos(2) fb.Zpos];
                 pos = pos + cR; % add cr bc body moved so cr is the origin. 
                 fprintf(fileID, '%8.4f\t%8.4f\t%8.4f\t%8.4f\n', pos(1), pos(2), pos(3), fb.Angle);
-                %fprintf(fileID, '%8.4f\t%8.4f\t%8.4f\t%8.4f\n', fb.XYpos(1), fb.XYpos(2), fb.Zpos, fb.Angle);
                 % modes to be computed of body n
                 modes = fb.Modes;
                 vect = modes.Vector;
