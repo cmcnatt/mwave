@@ -98,7 +98,7 @@ classdef PowerMatrix < IEnergyComp
         end
         
         function [val] = get.Hs(pmat)
-            % the signifincant wave heights used
+            % the significant wave heights used
             val = pmat.hs;
         end
         

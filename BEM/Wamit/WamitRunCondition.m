@@ -1282,6 +1282,8 @@ classdef WamitRunCondition < IBemRunCondition
                 error('WamitRunCondition:writeRAOs:motionIndicesDoNotMatch',['The mode indices from the original .4 file do ' ... 
                     'not match those given in the motionRAOs structure.']);
             end
+%             mode_indices = mode_indices(mode_indices<=12); % DoFs 1-12 as numbered by wamit will always refer to the two hulls,
+                                                           % any additional indices will refer to damping plates.  
             
             % Now, open and write the RAO file to be read in by WAMIT            
             filename = [run.folder '\' run.runName '.rao'];
@@ -1293,7 +1295,7 @@ classdef WamitRunCondition < IBemRunCondition
             % print RAOs
             for i = 1:length(run.t)
                 for j = 1:length(run.beta)
-                    for k = 1:size(run.motionRAOs,3)
+                    for k = 1:length(mode_indices)
                         fprintf(fileID, '%8.4f\t%8.4f\t%i\t%8.6e\t%8.6e\n', ...
                             run.t(i),run.beta(j)*180/pi,mode_indices(k),...
                             abs(run.motionRAOs(i,j,k)),angle(run.motionRAOs(i,j,k))*180/pi);
