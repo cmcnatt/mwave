@@ -25,7 +25,12 @@ The documentation ('Documentation' folder and source files) is still a bit spars
 
 I'm sure there are bugs and better ways of doing things than I've implemented. And so, please contribute to the code! If you contribute to a given file, add your name to the header. If you create a new file, add the header, by either copying and pasting the header from the file mwaveHeader in the 'Header' folder, or by running addMwaveHeader on that file. Then submit a GitHub pull request.
 
-##INSTALLATION:
+## DEPENDENCIES
+
+ - MATLAB (2019b)
+ - WAMIT (must be installed in `C:\\wamitv7\`)
+
+## INSTALLATION:
 1) Put the mwave folder where ever you'd like it.
 2) Add it to your MATLAB path, by 
 
@@ -39,7 +44,7 @@ I'm sure there are bugs and better ways of doing things than I've implemented. A
 
 3) Add newmodes.dll, see NEWMODES below.
 
-##NEWMODES:
+## NEWMODES:
 The Newmodes.dll is a library of user defined subroutines that WAMIT uses to compute generalized modes of motion. WAMIT comes with some prewritten subroutines, but I've added some custom ones as well.
 
 The attenuator floating bodies ('FloatingAttenuator', 'FloatingSphereEndCyl', 'FloatingSphereEndCylHinge') use WAMIT generalized modes. Custom subroutines were written for the WAMIT Newmodes.dll.  
@@ -47,7 +52,7 @@ The attenuator floating bodies ('FloatingAttenuator', 'FloatingSphereEndCyl', 'F
 At this point, the jury is still out on whether I can share my Newmodes.dll or Newmodes.f fortran source code, and so unfortunately, unless you write your own version of my subroutine, you cannot run the WAMIT runs with these geometries.
  
 
-##GETTING STARTED:
+## GETTING STARTED:
 The best place to get started is with the examples in the 'Examples' folder. I tried to very explicit with my comment here. The UnitTest folder also has some good examples.
 
 I would really like to make this code as useful to people as possible, so if you have any questions or need help, please contact me at cameron.mcnatt@gmail.com
