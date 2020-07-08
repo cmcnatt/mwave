@@ -951,7 +951,8 @@ classdef WamitRunCondition < IBemRunCondition
                     
             end
             if run.floatBods(1).SurfAboveZ0
-                fprintf(fileID, 'ITRIMWL = %i\n', Nbod);
+                fprintf(fileID, 'ITRIMWL = %i\n', 10);
+%                 fprintf(fileID, 'ITRIMWL = %i\n', Nbod);
                 if Nbod > 1
                     for n = 1:Nbod
                         fprintf(fileID, 'XTRIM(%i) = 0.0 0.0 0.0\n', n);
