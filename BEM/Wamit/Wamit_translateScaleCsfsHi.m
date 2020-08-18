@@ -121,7 +121,7 @@ for m = 1:Ngdf
     fprintf(fid, header{m});
     fprintf(fid, '\n%i\tILOWHICSF\n', iLowHiCsf(m));
     fprintf(fid, '%i %i\tISXCSF, ISYCSF\n', isxcsf(m), isycsf(m));
-    fprintf(fid, '%i %i %4.2f\tNPATCSF, ICDEF, PSZCSF\n', Npatcsf(m), icdef(m), pszcsf(m));
+    fprintf(fid, '%i %i %4.2f\tNPATCSF, ICDEF, PSZCSF\n', Npatcsf(m), icdef(m), pszcsf(m)*scale); % The panel size needs adjusting from the default if the body has been scaled!
 
     for n = 1:Npatcsf(m)
         
