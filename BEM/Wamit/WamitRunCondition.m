@@ -199,9 +199,9 @@ classdef WamitRunCondition < IBemRunCondition
             % Set the array of floating bodies
             pass = 1;
             genmds = 0;
-            if ((length(val) > 1) && run.computeBody)
-                error('Cannot compute body points for an array of floating bodies');
-            end
+%             if ((length(val) > 1) && run.computeBody)
+%                 error('Cannot compute body points for an array of floating bodies');
+%             end
             for n = 1:length(val)
                 if (~isa(val(n), 'FloatingBody'))
                     pass = 0;
