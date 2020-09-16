@@ -512,7 +512,7 @@ classdef PanelGeo < handle
         
         function plotFuncs(obj, func, varargin)
 
-            [opts, args] = checkOptions({{'ShowNorm'}, {'OnlyWet'}, {'NoInt'}, {'color', 1}, {'alpha', 1}}, varargin);
+            [opts, args] = checkOptions({{'ShowNorm'}, {'OnlyWet'}, {'NoInt'}, {'color', 1}, {'alpha', 1}, {'edge', 1}}, varargin);
             showNorm = opts(1);
             onlyWet = opts(2);
             noInt = opts(3);
@@ -523,7 +523,12 @@ classdef PanelGeo < handle
             alpha = 1;
             if opts(5)
                 alpha = args{5};
+            end           
+            edge = [];
+            if opts(6)
+                edge = args{6};
             end
+            
             
             xsy = false;
             ysy = false;
@@ -538,6 +543,9 @@ classdef PanelGeo < handle
             
             if strcmp(func, 'plot')
                 colV = MColor.Blue;
+                if ~isempty(edge)
+                colV = edge;
+                end               
                 args{length(args) + 1} = 'edgecolor';
                 args{length(args) + 1} = colV;
                 args{length(args) + 1} = 'facecolor';
@@ -563,6 +571,11 @@ classdef PanelGeo < handle
                     args{length(args) + 1} = colF;
                     args{length(args) + 1} = 'cdata';
                     args{length(args) + 1} = colF;
+                end
+                
+                if ~isempty(edge)
+                    args{length(args) + 1} = 'edgecolor';
+                    args{length(args) + 1} = edge;
                 end
             end
             
