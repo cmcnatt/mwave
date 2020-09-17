@@ -512,7 +512,7 @@ classdef PanelGeo < handle
         
         function plotFuncs(obj, func, varargin)
 
-            [opts, args] = checkOptions({{'ShowNorm'}, {'OnlyWet'}, {'NoInt'}, {'color', 1}, {'alpha', 1}, {'edge', 1}}, varargin);
+            [opts, args] = checkOptions({{'ShowNorm'}, {'OnlyWet'}, {'NoInt'}, {'color', 1}, {'alpha', 1}, {'edge', 1} {'line', 1}}, varargin);
             showNorm = opts(1);
             onlyWet = opts(2);
             noInt = opts(3);
@@ -527,6 +527,10 @@ classdef PanelGeo < handle
             edge = [];
             if opts(6)
                 edge = args{6};
+            end
+            line = [];
+            if opts(7)
+                line = args{7};
             end
             
             
@@ -543,13 +547,19 @@ classdef PanelGeo < handle
             
             if strcmp(func, 'plot')
                 colV = MColor.Blue;
+                lineW = 0.5;
                 if ~isempty(edge)
                 colV = edge;
-                end               
+                end 
+                if ~isempty(line)
+                    lineW = line;
+                end
                 args{length(args) + 1} = 'edgecolor';
                 args{length(args) + 1} = colV;
                 args{length(args) + 1} = 'facecolor';
                 args{length(args) + 1} = 'none';
+                args{length(args) +1 } = 'linewidth';
+                args{length(args) +1 } = lineW;
             elseif strcmp(func, 'surf')
                 colV = MColor.Black;
                 args{length(args) + 1} = 'edgecolor';
@@ -576,7 +586,7 @@ classdef PanelGeo < handle
                 if ~isempty(edge)
                     args{length(args) + 1} = 'edgecolor';
                     args{length(args) + 1} = edge;
-                end
+                end                
             end
             
             patch(args{:});
@@ -587,7 +597,9 @@ classdef PanelGeo < handle
                 cent = obj.Centroids;
                 norm = obj.Normals;
                 area = obj.Areas;
-                quiver3(cent(ipan,1), cent(ipan,2), cent(ipan,3), norm(ipan,1), norm(ipan,2), norm(ipan,3), 'color', MColor.Black);
+                quiver3(cent(ipan,1), cent(ipan,2), cent(ipan,3), norm(ipan,1), norm(ipan,2), norm(ipan,3),'color', MColor.Black);
+%                 h1 = quiver3(cent(ipan,1), cent(ipan,2), cent(ipan,3), norm(ipan,1), norm(ipan,2), norm(ipan,3),'color', MColor.Black,'linewidth',1.5);
+%                 set(h1,'AutoScale','on', 'AutoScaleFactor', 1.5)
             end
         end
     end
