@@ -877,10 +877,85 @@ classdef WamitResult < IBemResult
 
             end % for n = 1:length(result.driftOption)
             
-      %%% NOTE with relation to control surface and pressure integration results:
+            %%% NOTE with relation to control surface and pressure integration results:
             %%% This code assumes that we don't care about the division of
             %%% the moments between the static and moving frames, hence
             %%% the data with negative mode indices is ignored here.
+            
+            if ~isempty(result.spikeFreqs{1,1}) || ~isempty(result.spikeFreqs{2,1}) % i.e. if spike interpolation frequencies have been provided
+                %%  Use interpolation to smooth out spikes (if desired)
+                % Find indices that correspond to the frequency ranges provided
+                warning('Remember that the spike removal option is only set up to work with a two body WAMIT run (planar or 6DoF).')
+                w = 2*pi./T;
+                % Check the provided frequencies are sensible
+                spikeFreqs = result.spikeFreqs;
+                if ~iscell(spikeFreqs)
+                    error('SpikeFreqs must be a cell array.')
+                end
+                if size(spikeFreqs,1) ~= 2
+                    error('SpikeFreqs must contain two rows - the first for in-plane modes, the second for out-of-plane modes.')
+                end
+                for i = 1:size(spikeFreqs,1)
+                    for j = 1:size(spikeFreqs,2)
+                        if ~(size(spikeFreqs{i,j},1)==1 && size(spikeFreqs{i,j},2)==2)
+                            error('Each cell in cell array must be a 1x2 vector containing the lower and upper frequency bounds.')
+                        end
+                    end
+                end
+                % Find indices that correspond to the frequency range
+                for i = 1:2 % Row 1 contains in-plane freq ranges, row 2 out-of-plane freq ranges.
+                    for j = 1:size(spikeFreqs,2) % No. of spikes to interpolate out
+                        for k = 1:2 % upper and lower bounds
+                            [~,interpInds{i,j}(k)] = min(abs(w - spikeFreqs{i,j}(k)));
+                        end
+                        if interpInds{i,j}(1) == interpInds{i,j}(2)
+                            warning('Upper bound index == lower bound index: This may suggest user did not run WAMIT over enough frequencies, or that the spike frequencies are too close together.')
+                        end
+                    end
+                end
+                
+                for n = 1:length(result.driftOption)
+                    % Set degrees of freedom vector
+                    if length(modeIndices_posOnly)==12
+                        if strcmp(df(n).methodName,'Momentum conservation')
+                            DOFinds = [1:6]; % Treats the device as a single body for this method
+                        else
+                            DOFinds = [1:12]; % all DoFs
+                        end
+                    elseif length(modeIndices_posOnly)==6
+                        if strcmp(df(n).methodName,'Momentum conservation')
+                            DOFinds = [1:3]; % Treats the device as a single body for this method
+                        else
+                            DOFinds = [1:6]; % All are in-plane DoFs
+                        end
+                    else
+                        error('No. of modes in WAMIT run is not compatible with spike removal option.')
+                    end
+                    % Remove spikes from drift force coefficients
+                    % NOTE: It was found that spikes appearing in the hydrodynamic coefficients for the in-plane and
+                    % out-of-plane DoFs could appear in all the DoFs for the drift forces, hence all spikes
+                    % are removed here from all DoFs.
+                    for i = 1:round(length(modeIndices_posOnly)/6) % i=1: remove spikes from in-plane DoFs, i=2: from out-of-plane DoFs
+                        for j = 1:size(spikeFreqs,2)
+                            interp_lb = interpInds{i,j}(1);
+                            interp_ub = interpInds{i,j}(2);
+                            for k = interp_lb:interp_ub
+                                if interp_ub == length(w)
+                                    df(n).meanDriftForces(k,DOFinds,:) = df(n).meanDriftForces(interp_lb-1,DOFinds,:);
+                                else
+                                    df(n).meanDriftForces(k,DOFinds,:) = df(n).meanDriftForces(interp_lb-1,DOFinds,:) + ...
+                                        (df(n).meanDriftForces(interp_ub+1,DOFinds,:)-df(n).meanDriftForces(interp_lb-1,DOFinds,:)).*(k-(interp_lb-1))./((interp_ub+1)-(interp_lb-1));
+                                end
+                                if interp_lb == 1
+                                    error('Code not currently set up to use lowest frequency as part of interpolation range.\n%s',...
+                                        'Spikes are not likely to occur here anyway if choose frequency range prudently.')
+                                end
+                            end
+                        end
+                    end
+                end
+    
+            end % if ~isempty(result.spikeFreqs{1,1}) || ~isempty(result.spikeFreqs{2,1})
             
         end % ReadDriftForces
         
