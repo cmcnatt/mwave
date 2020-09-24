@@ -48,6 +48,7 @@ classdef WamitRunCondition < IBemRunCondition
         boxCSF;
         iReadRAO;
         motionRAOs;
+        spikeFreqs;
     end
 
     properties (Dependent)
@@ -79,6 +80,7 @@ classdef WamitRunCondition < IBemRunCondition
         BoxCSF;             % Whether to use a 'box' shaped control surface or a cylindrical one
         IReadRAO;           % Whether to use .4 file or user-input RAOs for evaluating options 5-9
         MotionRAOs;         % RAOs computed externally to WAMIT, for computing drift forces with ireadrao option
+        SpikeFreqs;         % Frequencies of spikes to be interpolated out from WAMIT results (optional)
     end
 
     methods
@@ -107,6 +109,7 @@ classdef WamitRunCondition < IBemRunCondition
             run.autoCSF = [];
             run.boxCSF = [];
             run.iReadRAO = 0; % by default, use .4 file to get RAOs for options 5-9
+            run.spikeFreqs = cell(2,1);
             run.geoFiles = [];
             if (nargin == 0)
                 run.folder = ' ';
@@ -501,6 +504,30 @@ classdef WamitRunCondition < IBemRunCondition
                                   % private version, motionRAOs.
         end
         
+        function [val] = get.SpikeFreqs(run)
+            % Pass the interpolation spike frequencies in
+            val = run.spikeFreqs;
+        end
+        function [] = set.SpikeFreqs(run, val)
+            % Pass the interpolation spike frequencies in
+            if ~iscell(val)
+                error('SpikeFreqs must be a cell array.')
+            end
+            if size(val,1) ~= 2
+                error('SpikeFreqs must contain two rows - the first for in-plane modes, the second for out-of-plane modes.')
+            end
+            for i = 1:size(val,1)
+                for j = 1:size(val,2)
+                    if ~(size(val{i,j},1)==1 && size(val{i,j},2)==2)
+                        error('Each cell in cell array must be a 1x2 vector containing the lower and upper frequency bounds.')
+                    end
+                end
+            end
+            
+            run.spikeFreqs = val; % When the public version, SpikeFreqs is set by the user,
+                                  % it is essentially relabelled as the
+                                  % private version, spikeFreqs.
+        end
         
         function [val] = get.IReadRAO(run)
             % Where to get RAOs from for evaluating options 5-9

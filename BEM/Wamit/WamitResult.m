@@ -41,6 +41,7 @@ classdef WamitResult < IBemResult
         compDrift;
         driftOption;
         iReadRAO;
+        spikeFreqs;
     end
 
     properties (Dependent)
@@ -80,6 +81,7 @@ classdef WamitResult < IBemResult
                     result.compDrift = runCondition.CompDrift;
                     result.driftOption = runCondition.DriftOption;
                     result.iReadRAO = runCondition.IReadRAO;
+                    result.spikeFreqs = runCondition.SpikeFreqs;
                     if (~isempty(result.fieldPoints) || ~isempty(result.fieldArray) || ~isempty(result.cylArray))
                         result.solveField = true;
                     end
@@ -279,7 +281,11 @@ classdef WamitResult < IBemResult
             
             if (result.solveRad)                
                 % Added Mass and Damping 
-                [a_, b_, t_, modes, ainf, a0] = Wamit_read1(fullpath, result.runName, result.rho);
+                if ~isempty(result.spikeFreqs{1,1}) || ~isempty(result.spikeFreqs{2,1}) % i.e. if spike interpolation frequencies have been provided
+                    [a_, b_, t_, modes, ainf, a0] = Wamit_read1(fullpath, result.runName, result.rho, 'removeSpikes', result.spikeFreqs);
+                else
+                    [a_, b_, t_, modes, ainf, a0] = Wamit_read1(fullpath, result.runName, result.rho);
+                end
                 result.dof = length(modes);
                 
                 % Check periods
@@ -312,12 +318,22 @@ classdef WamitResult < IBemResult
             if (result.solveDiff)
                 % Excitation force
                 if result.compFK
-                    [f_fk] = Wamit_read23(fullpath, result.runName, result.rho, result.g, 'fk');
-                    [f_sc, t_, bet] = Wamit_read23(fullpath, result.runName, result.rho, result.g, 'sc');
+                    if ~isempty(result.spikeFreqs{1,1}) || ~isempty(result.spikeFreqs{2,1}) % i.e. if spike interpolation frequencies have been provided
+                        [f_fk] = Wamit_read23(fullpath, result.runName, result.rho, result.g, 'fk', 'removeSpikes', result.spikeFreqs);
+                        [f_sc, t_, bet] = Wamit_read23(fullpath, result.runName, result.rho, result.g, 'sc', 'removeSpikes', result.spikeFreqs);
+                    else
+                        [f_fk] = Wamit_read23(fullpath, result.runName, result.rho, result.g, 'fk');
+                        [f_sc, t_, bet] = Wamit_read23(fullpath, result.runName, result.rho, result.g, 'sc');
+                    end
+                    
                     f = f_fk + f_sc;
                 else
                     f_fk = [];
-                    [f, t_, bet] = Wamit_read23(fullpath, result.runName, result.rho, result.g);
+                    if ~isempty(result.spikeFreqs{1,1}) || ~isempty(result.spikeFreqs{2,1}) % i.e. if spike interpolation frequencies have been provided
+                        [f, t_, bet] = Wamit_read23(fullpath, result.runName, result.rho, result.g, 'removeSpikes', result.spikeFreqs);
+                    else
+                        [f, t_, bet] = Wamit_read23(fullpath, result.runName, result.rho, result.g);
+                    end
                 end
                 
                 % Check directions

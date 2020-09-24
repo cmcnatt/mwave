@@ -22,18 +22,40 @@ function [Forces, T, Beta, Modes] = Wamit_read23(folderpath, runname, rho, g, va
 % reads WAMIT .2 output file
 % returns the diffraction forces (Forces), the periods (T), the headings 
 % (Beta), and the Modes (Modes)
-if ~isempty(varargin)
-    ext = varargin{1};
-    if ~strcmp(ext, 'fk') 
-        if ~strcmp(ext, 'sc')
-            error(['The additional argument for Wamit_read23 must be either ' ...
-                ' ''fk'' or ''sc'' indicating the Froude-Krylov or scattering force should be read']);
-        end
-    end
+
+% Check if spikes should also be removed from coefficients (based on
+% user-specified frequency ranges, e.g. a spike due to a trapped mode resulting from the mesh design).
+[opts, args] = checkOptions({{'fk'},{'sc'},{'removeSpikes',1}}, varargin);
+
+if opts(1) && opts(2)
+    warning('User should not select for both ''fk'' and ''sc'' excitation forces to be read from WAMIT files by Wamit_read23 function.\n%s','Nonetheless, in this case, scattering forces will be read.')
+    ext = 'sc';
+elseif opts(1) % 'fk' argument
+    ext = 'fk';
+elseif opts(2) % 'sc' argument
+    ext = 'sc';
 else
+    % If no option is selected, WAMIT just outputs a .2 or .3 file, so
+    % don't need any further letters for file extension.
     ext = '';
 end
 
+if opts(3)
+    spikeFreqs = args{3};
+    if ~iscell(spikeFreqs)
+        error('SpikeFreqs must be a cell array.')
+    end
+    if size(spikeFreqs,1) ~= 2
+        error('SpikeFreqs must contain two rows - the first for in-plane modes, the second for out-of-plane modes.')
+    end
+    for i = 1:size(spikeFreqs,1)
+        for j = 1:size(spikeFreqs,2)
+            if ~(size(spikeFreqs{i,j},1)==1 && size(spikeFreqs{i,j},2)==2)
+                error('Each cell in cell array must be a 1x2 vector containing the lower and upper frequency bounds.')
+            end
+        end
+    end
+end
 
 % read in the file and ignore the header line.
 try
@@ -74,6 +96,50 @@ for i = 1:nt
             Forces(i, j, k) = rho*g*complex(re_im(1), re_im(2));
         end
     end
+end
+
+if opts(3)
+    %%  Use interpolation to smooth out spikes (if desired)
+    % Find indices that correspond to the frequency ranges provided
+    warning('Remember that the spike removal option is only set up to work with a two body WAMIT run (planar or 6DoF).')
+    w = 2*pi./T;
+    for i = 1:2 % Row 1 contains in-plane freq ranges, row 2 out-of-plane freq ranges.
+        for j = 1:size(spikeFreqs,2) % No. of spikes to interpolate out
+            for k = 1:2 % upper and lower bounds
+                [~,interpInds{i,j}(k)] = min(abs(w - spikeFreqs{i,j}(k)));
+            end
+            if interpInds{i,j}(1) == interpInds{i,j}(2)
+                warning('Upper bound index == lower bound index: This may suggest user did not run WAMIT over enough frequencies, or that the spike frequencies are too close together.')
+            end
+        end
+    end
+    if length(Modes)==12
+        DOFinds{1,1} = [1,3,5,7,9,11]; % in-plane DoFs
+        DOFinds{2,1} = [2,4,6,8,10,12]; % out-of-plane DoFs
+    elseif length(Modes)==6
+        DOFinds{1,1} = [1:6]; % All are in-plane DoFs
+    else
+        error('No. of modes in WAMIT run is not compatible with spike removal option.')
+    end
+    for i = 1:round(length(Modes)/6) % i=1: remove spikes from in-plane DoFs, i=2: from out-of-plane DoFs
+        for j = 1:size(spikeFreqs,2)
+            interp_lb = interpInds{i,j}(1);
+            interp_ub = interpInds{i,j}(2);
+            for k = interp_lb:interp_ub
+                if interp_ub == length(w)
+                    Forces(k,:,DOFinds{i,1}) = Forces(interp_lb-1,:,DOFinds{i,1});
+                else
+                    Forces(k,:,DOFinds{i,1}) = Forces(interp_lb-1,:,DOFinds{i,1}) + ...
+                        (Forces(interp_ub+1,:,DOFinds{i,1})-Forces(interp_lb-1,:,DOFinds{i,1})).*(k-(interp_lb-1))./((interp_ub+1)-(interp_lb-1));
+                end
+                if interp_lb == 1
+                    error('Code not currently set up to use lowest frequency as part of interpolation range.\n%s',...
+                        'Spikes are not likely to occur here anyway if choose frequency range prudently.')
+                end
+            end
+        end
+    end
+    
 end
 
 
