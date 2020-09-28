@@ -518,8 +518,10 @@ classdef WamitRunCondition < IBemRunCondition
             end
             for i = 1:size(val,1)
                 for j = 1:size(val,2)
-                    if ~(size(val{i,j},1)==1 && size(val{i,j},2)==2)
-                        error('Each cell in cell array must be a 1x2 vector containing the lower and upper frequency bounds.')
+                    if ~isempty(val{i,j}) % want to allow possibility of leaving the cells empty is not using spike removal option
+                        if ~(size(val{i,j},1)==1 && size(val{i,j},2)==2)
+                            error('Each cell in cell array must be a 1x2 vector containing the lower and upper frequency bounds.')
+                        end
                     end
                 end
             end
