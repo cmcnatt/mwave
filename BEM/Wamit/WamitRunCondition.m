@@ -1379,7 +1379,7 @@ classdef WamitRunCondition < IBemRunCondition
             end
             % periods
             for n = 1:nT
-                fprintf(fileID, '%8.4f\n', t_(n));
+                fprintf(fileID, '%11.7f\n', t_(n));
             end
             % NBETA - number of directions
             bet = run.beta;
