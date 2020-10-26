@@ -130,7 +130,7 @@ for m = 1:Ngdf
         
         for ii = 1:2
             for i = 1:length(knts{m}{n,ii})
-                fprintf(fid, ' %11.7f', knts{m}{n,ii}(i));
+                fprintf(fid, ' %8.4f', knts{m}{n,ii}(i));
             end
             fprintf(fid, '\n');
         end
@@ -138,7 +138,7 @@ for m = 1:Ngdf
         Nv = size(verts{m}{n}, 1);
         for ii = 1:Nv
             for i = 1:3
-                fprintf(fid, ' %11.4f', scale*(verts{m}{n}(ii,i)) + delta(i)); % The precision here was reduced to sidestep an error where wamit thought the panels were above the free surface
+                fprintf(fid, ' %8.4f', scale*(verts{m}{n}(ii,i)) + delta(i)); % The precision here was reduced to sidestep an error where wamit thought the panels were above the free surface
             end
             fprintf(fid, '\n');
         end

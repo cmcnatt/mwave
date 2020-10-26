@@ -1402,7 +1402,7 @@ classdef WamitRunCondition < IBemRunCondition
                 cR = fb.CenterRot;
                 pos = [fb.XYpos(1) fb.XYpos(2) fb.Zpos];
                 pos = pos + cR; % add cr bc body moved so cr is the origin. 
-                fprintf(fileID, '%8.4f\t%8.4f\t%11.7f\t%8.4f\n', pos(1), pos(2), pos(3), fb.Angle);
+                fprintf(fileID, '%8.4f\t%8.4f\t%8.4f\t%8.4f\n', pos(1), pos(2), pos(3), fb.Angle);
                 % modes to be computed of body n
                 modes = fb.Modes;
                 vect = modes.Vector;
