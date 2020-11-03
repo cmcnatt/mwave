@@ -1103,7 +1103,7 @@ classdef WamitRunCondition < IBemRunCondition
             fprintf(fileID, 'MAXITT = %i\n', run.maxItt);
             fprintf(fileID, 'MAXMIT = 8\n');
             fprintf(fileID, 'MONITR = 0\n');
-            fprintf(fileID, 'NOOUT = 1  1  1  1  0  0  0  0  0\n');
+            fprintf(fileID, 'NOOUT = 1  1  1  1  0  0  1  0  0\n');
             fprintf(fileID, 'NUMHDR = 1\n');
             fprintf(fileID, 'IPLTDAT = 1\n');
             fprintf(fileID, 'NUMNAM = 0\n');
