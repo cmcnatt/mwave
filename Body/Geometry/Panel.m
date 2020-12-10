@@ -145,6 +145,11 @@ classdef Panel < handle
             cent = cent + dist*norm;
         end
         
+        function [] = FlipNormals(pan)
+            
+            pan.vertices = flipud(pan.vertices);
+        end
+        
         function [] = Translate(pan, vector)
             if (length(vector) ~= 3)
                 error('Translational vector must be 3x1 or 1x3');
@@ -159,7 +164,7 @@ classdef Panel < handle
             
             pan.centroid = [];
         end
-        
+
         function [] = Rotate(pan, varargin)
             
             [opts, args] = checkOptions({{'RotMat', 1}, {'AxisAngle', 2}, {'Origin', 1}}, varargin);
