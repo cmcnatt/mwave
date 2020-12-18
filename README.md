@@ -34,11 +34,18 @@ I'm sure there are bugs and better ways of doing things than I've implemented. A
 1) Put the mwave folder where ever you'd like it.
 2) Add it to your MATLAB path, by 
 
-	a) running in MATLAB: 
-		addpath(genpath(folderName),'-frozen')
-		savepath
+	a) running in MATLAB:
+
+	```matlab
+	addpath(genpath(folderName),'-frozen')
+	savepath
+	```
+
 	b) adding to your startup.m file:
-		addpath(genpath(folderName),'-frozen')
+
+	```matlab
+	addpath(genpath(folderName),'-frozen')
+	```
  
  where folderName is the full path to the mwave folder. Because '-frozen' is used, MATLAB won't recognize when you add a new file, so be sure to explicitly add that file as well (or run addpath again).
 
