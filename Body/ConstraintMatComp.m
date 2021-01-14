@@ -120,8 +120,10 @@ classdef ConstraintMatComp
             P = PT.';
             
             if planar
-                [M, N] = size(P);
-                P = P(1:2:M, 1:2:N);
+%                 [M, N] = size(P);
+%                 P = P(1:2:M, 1:2:N);
+                P(2:2:6,:) =[]; % remove constrained out of plane
+                P(:,2:2:end) =[]; % remove body out of plane
             end
         end
         
