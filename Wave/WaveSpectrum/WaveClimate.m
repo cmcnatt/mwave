@@ -368,7 +368,13 @@ classdef WaveClimate < handle
         function [wc] = MakeWaveClimate(type, Hs, T, f, varargin)
             [opts, args] = checkOptions({{'FreqOcc', 1}, {'H', 1}, {'Rho', 1}, {'T02'}, {'Tp'}}, varargin);
             
-            nHs = length(Hs);
+            if size(Hs,1) > 1 && size(Hs,2) > 1
+                typeSe = 1; % when wave steepness is used, there is a unique Hs for each Se-Te pairing
+                nHs = size(Hs,1);
+            else
+                typeSe = 0;
+                nHs = length(Hs);
+            end
             nT = length(T);
             
             if (opts(1))
@@ -412,9 +418,17 @@ classdef WaveClimate < handle
                 for m = 1:nHs
                     for n = 1:nT
                         if bs
-                            specs_(m,n) = Bretschneider(Hs(m), T(n), 1./f, Ttype);
+                            if typeSe
+                                specs_(m,n) = Bretschneider(Hs(m,n), T(n), 1./f, Ttype);
+                            else
+                                specs_(m,n) = Bretschneider(Hs(m), T(n), 1./f, Ttype);
+                            end
                         else
-                            specs_(m,n) = JONSWAP(Hs(m), T(n), 1./f, Ttype);
+                            if typeSe
+                                specs_(m,n) = JONSWAP(Hs(m,n), T(n), 1./f, Ttype);
+                            else
+                                specs_(m,n) = JONSWAP(Hs(m), T(n), 1./f, Ttype);
+                            end
                         end
                     end
                 end

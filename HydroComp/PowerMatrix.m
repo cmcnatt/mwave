@@ -279,12 +279,19 @@ classdef PowerMatrix < IEnergyComp
 
             [Mc, Nc] = waveClim.Size;
             
-            Hs = waveClim.Hs('intended');
             Te = Bretschneider.ConverterT(waveClim.T02('intended'), 't02', 'te');
-            if ~isempty(hslim)
-                Mc = indexOf(Hs, hslim);
+            Hs = waveClim.Hs('intended');
+            if size(Hs,1) > 1 && size(Hs,2) > 1
+                typeSe = 1; % when wave steepness is used, there is a unique Hs for each Se-Te pairing
+            else
+                typeSe = 0;
             end
             
+            if ~isempty(hslim)
+                if ~typeSe
+                    Mc = indexOf(Hs, hslim); % If using Se, Hs does not simply trim some rows off the matrix, so keep Mc x Nc in size.
+                end
+            end
             
             freqOccs = waveClim.FreqOccurance;
             Efs = waveClim.EnergyFlux;
@@ -317,6 +324,14 @@ classdef PowerMatrix < IEnergyComp
                             continue;
                         end
                     end
+                    
+                    if typeSe
+                        if (Hs(m, n) >= hslim)
+                            % ignore sea states for which Hs is greater
+                            % than the HsLim
+                            continue;
+                        end
+                    end
 
                     % power in kW
                     if ~isempty(dptos)
@@ -335,8 +350,13 @@ classdef PowerMatrix < IEnergyComp
                                 powmn(o) = comp.AveragePower(waveClim.WaveSpectra(m, n));
                             end
                             
-                            fprintf('\nm = %i/%i, n = %i/%i, o = %i/%i, Hs = %4.1f, Te = %4.1f, run time = %4.1f s\n', ...
+                            if typeSe
+                                fprintf('\nm = %i/%i, n = %i/%i, o = %i/%i, Hs = %4.1f, Te = %4.1f, run time = %4.1f s\n', ...
+                                m, Mc, n, Nc, o, length(dptos), Hs(m,n), Te(n), toc);
+                            else
+                                fprintf('\nm = %i/%i, n = %i/%i, o = %i/%i, Hs = %4.1f, Te = %4.1f, run time = %4.1f s\n', ...
                                 m, Mc, n, Nc, o, length(dptos), Hs(m), Te(n), toc); 
+                            end
                         end
                         [pmat(m, n), ind] = max(powmn);
                         idptos(m, n) = ind;
@@ -356,8 +376,13 @@ classdef PowerMatrix < IEnergyComp
                             pmat(m, n) = comp.AveragePower(waveClim.WaveSpectra(m, n));
                         end
                         
-                        fprintf('\nm = %i/%i, n = %i/%i, Hs = %4.1f, Te = %4.1f, run time = %4.1f s\n', ...
+                        if typeSe
+                            fprintf('\nm = %i/%i, n = %i/%i, Hs = %4.1f, Te = %4.1f, run time = %4.1f s\n', ...
+                                m, Mc, n, Nc, Hs(m,n), Te(n), toc); 
+                        else
+                            fprintf('\nm = %i/%i, n = %i/%i, Hs = %4.1f, Te = %4.1f, run time = %4.1f s\n', ...
                                 m, Mc, n, Nc, Hs(m), Te(n), toc); 
+                        end
                     end
                     
                     if isSpec
