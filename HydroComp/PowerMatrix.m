@@ -234,7 +234,7 @@ classdef PowerMatrix < IEnergyComp
             
             [opts, args] = checkOptions({{'waveClim', 1}, {'minPow', 1}, ...
                 {'minOcc', 1}, {'specType', 1}, {'makeObj'}, ...
-                {'ratedPow', 1}, {'dptos', 1}, {'HsLim', 1}}, varargin);
+                {'ratedPow', 1}, {'dptos', 1}, {'HsLim', 1}, {'seed',1}}, varargin);
             
             type = 'bretschneider';
             if opts(4)
@@ -275,6 +275,12 @@ classdef PowerMatrix < IEnergyComp
             hslim = [];
             if opts(8)
                 hslim = args{8};
+            end
+            
+            if opts(9)
+                seed = args{9};
+            else
+                seed = []; % Will just use random number generator to choose a seed if one isn't selected by the user
             end
 
             [Mc, Nc] = waveClim.Size;
@@ -343,11 +349,11 @@ classdef PowerMatrix < IEnergyComp
                             
                             tic
                             if isSpec
-                                [powmn(o), errmn(o)] = comp.AveragePower(waveClim.WaveSpectra(m, n));
+                                [powmn(o), errmn(o)] = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed);
                             elseif isTime
-                                [powmn(o), tdamn{o}] = comp.AveragePower(waveClim.WaveSpectra(m, n));
+                                [powmn(o), tdamn{o}] = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed);
                             else
-                                powmn(o) = comp.AveragePower(waveClim.WaveSpectra(m, n));
+                                powmn(o) = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed);
                             end
                             
                             if typeSe
@@ -369,11 +375,11 @@ classdef PowerMatrix < IEnergyComp
                         comp.SetDpto(Dpto0);
                         tic
                         if isSpec
-                            [pmat(m, n), errs(m, n)] = comp.AveragePower(waveClim.WaveSpectra(m, n));
+                            [pmat(m, n), errs(m, n)] = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed);
                         elseif isTime
-                            [pmat(m, n), tdas{m, n}] = comp.AveragePower(waveClim.WaveSpectra(m, n));
+                            [pmat(m, n), tdas{m, n}] = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed);
                         else
-                            pmat(m, n) = comp.AveragePower(waveClim.WaveSpectra(m, n));
+                            pmat(m, n) = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed);
                         end
                         
                         if typeSe
