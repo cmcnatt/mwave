@@ -18,7 +18,7 @@ classdef PanelGeo < handle
         IsBodies;
         AvgPanelArea;
         Xsymmetry;
-        Ysymmetry;
+        Ysymmetry; 
     end
     
     methods
@@ -162,6 +162,10 @@ classdef PanelGeo < handle
         
         function [ysy] = get.Ysymmetry(geo)
             ysy = geo.ysym;
+        end
+        
+        function [] = set.Ysymmetry(geo,ysy)
+            geo.ysym = ysy;
         end
         
         function [newGeo] = GetSubsetPanels(geo, incWet, incInt)

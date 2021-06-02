@@ -376,7 +376,6 @@ classdef PowerMatrix < IEnergyComp
                         tic
                         if isSpec
                             [pmat(m, n), errs(m, n)] = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed);
-                            
                         elseif isTime
                             [pmat(m, n), tdas{m, n}] = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed);
                         else
@@ -413,9 +412,9 @@ classdef PowerMatrix < IEnergyComp
             end
             
             % for a spectral domain computation
-            % set power for sea-states that failed to converge to 0           
-            if isSpec               
-                pmat(errs > 10^-4) = 0;              
+            % set power for sea-states that failed to converge to 0
+            if isSpec
+                pmat(errs > 10^-4) = 0;
             end
             
             if makeObj
@@ -423,7 +422,6 @@ classdef PowerMatrix < IEnergyComp
                     waveClim.T02('intended'), ...
                     waveClim.T, waveClim.H, waveClim.Rho, type);
             end
-            
         end
     end
 end
