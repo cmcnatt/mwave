@@ -148,7 +148,7 @@ classdef StlVideo < handle
                 end
             end
             
-            limz = [3*minz 3*maxz];
+            limz = [2*minz 2*maxz];
             
             [maxz, minz] = vid.wave.ComputeMaxMin(vid.time);
             limw = [minz maxz];
@@ -160,7 +160,8 @@ classdef StlVideo < handle
                 v.FrameRate = 1/(vid.time(2) - vid.time(1));
                 open(v);
             else
-                mov(1:nFrames) = struct('cdata',[], 'colormap',[]);
+%                 mov(1:nFrames) = struct('cdata',[], 'colormap',[]);
+                for i = 1:nFrames; mov(i).cdata = [];mov(i).colormap = []; end; % this line was switched on 30-7-21 - it seems as if a Matlab update has prevented the format used previously.
             end
             
             figure;
@@ -191,9 +192,11 @@ classdef StlVideo < handle
                     if ~iscell(bodsm)
                         bodsm = {bodsm};
                     end
-                    
+                    prevDOF = 0; % Initialise DOF counter
                     for n = 1:length(bodsm)
-                        bodsm{n}.SetSetting(vidm.Motions(ti,:));
+                        bodsm{n}.SetSetting(vidm.Motions(ti,1+(n-1)*bodsm{n}.DOF:n*bodsm{n}.DOF));
+                        bodsm{n}.SetSetting(vidm.Motions(ti,prevDOF+1:prevDOF+bodsm{n}.DOF));
+                        prevDOF = prevDOF+bodsm{n}.DOF; % This should allow for bodies with any amounts of DOFs.
                         plot(bodsm{n}, 'Color', MColor.Black);
                     end
                 end
