@@ -1,0 +1,21 @@
+diff a/HydroComp/PowerMatrix.m b/HydroComp/PowerMatrix.m	(rejected hunks)
+@@ -412,11 +412,18 @@
+                 end
+             end
+             
++            % for a spectral domain computation
++            % set power for sea-states that failed to converge to 0           
++            if isSpec               
++                pmat(errs > 10^-4) = 0;              
++            end
++            
+             if makeObj
+                 pmat = PowerMatrix(pmat, waveClim.Hs('intended'), ...
+                     waveClim.T02('intended'), ...
+                     waveClim.T, waveClim.H, waveClim.Rho, type);
+             end
++            
+         end
+     end
+ end
+\ No newline at end of file

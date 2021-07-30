@@ -107,7 +107,7 @@ classdef FloatingBox < FloatingBody
         end
         
         function [] = MakePanelGeometry(fb, Nx, Ny, Nz)
-            panGeo = makePanel_box(fb.length, fb.beam, fb.draft, Nx, Ny, Nz);
+            panGeo = makePanel_box(fb.len, fb.beam, fb.draft, Nx, Ny, Nz);
             %panGeo.Translate(-fb.position);
             fb.panelGeo = panGeo;
             fb.iLowHi = 0;
