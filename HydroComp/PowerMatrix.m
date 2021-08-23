@@ -234,7 +234,7 @@ classdef PowerMatrix < IEnergyComp
             
             [opts, args] = checkOptions({{'waveClim', 1}, {'minPow', 1}, ...
                 {'minOcc', 1}, {'specType', 1}, {'makeObj'}, ...
-                {'ratedPow', 1}, {'dptos', 1}, {'HsLim', 1}, {'seed',1}}, varargin);
+                {'ratedPow', 1}, {'dptos', 1}, {'HsLim', 1}, {'seed',1}, {'ParallelOn'}}, varargin);
             
             type = 'bretschneider';
             if opts(4)
@@ -282,6 +282,10 @@ classdef PowerMatrix < IEnergyComp
             else
                 seed = []; % Will just use random number generator to choose a seed if one isn't selected by the user
             end
+            
+            if isTime && opts(10)
+                tdParOn = 1; % Choose best parallel programming option with time domain computation - i.e. use parsim instead of parfor loop.
+            end
 
             [Mc, Nc] = waveClim.Size;
             
@@ -314,7 +318,55 @@ classdef PowerMatrix < IEnergyComp
             else
                 Dpto0 = comp.Dpto;
             end
+            
+            if tdParOn % if (TD with parsim)
+                
+                for n = 1:Nc
 
+                    % power in kW
+                    if ~isempty(dptos)
+                        powmn = zeros(length(dptos),1);
+                        errmn = zeros(length(dptos),1);
+                        tdamn = cell(length(dptos),1);
+                        for o = 1:length(dptos)
+                            comp.SetDpto(dptos{o});
+                            
+                            tic
+                            [powmn(o), tdamn{o}] = comp.AveragePower(waveClim.WaveSpectra(:, n),'seed',seed,'ParallelOn');
+                            
+                            fprintf('\n = %i/%i, o = %i/%i, Te = %4.1f, run time = %4.1f s\n', ...
+                                n, Nc, o, length(dptos), Te(n), toc);
+                        end
+                        [pmat(m, n), ind] = max(powmn);
+                        idptos(m, n) = ind;
+                        errs(m, n) = errmn(ind);
+                        tdas(m, n) = tdamn(ind);
+                        
+                        fprintf('\n = %i/%i, Best Dpto Ind = %i\n', ...
+                                n, Nc, ind);
+                    else
+                        comp.SetDpto(Dpto0);
+                        tic
+                        [pmat(:, n), tdasTemp] = comp.AveragePower(waveClim.WaveSpectra(:, n),'seed',seed,'ParallelOn');
+                        for m = 1:length(tdasTemp)
+                            tdas{m,n} = tdasTemp;
+                        end
+                        
+                        fprintf('\nn = %i/%i, Te = %4.1f, run time = %4.1f s\n', ...
+                                n, Nc, Te(n), toc);
+                    end
+                    
+                    if ~isempty(dptos)
+                        Dptos{m, n} = dptos{ind};
+                    end
+                    
+                    if ~isempty(ratedPow)
+                        pmat(m, n) = min([pmat(m, n) ratedPow]);
+                    end
+                end
+                
+            else % if (FD) or (SD) or (TD with parfor)
+            
             parfor m = 1:Mc % this line can be parfor/for
                 for n = 1:Nc
                     if ~isempty(occlim)
@@ -409,6 +461,8 @@ classdef PowerMatrix < IEnergyComp
                         pmat(m, n) = min([pmat(m, n) ratedPow]);
                     end
                 end
+            end
+            
             end
             
             % for a spectral domain computation
