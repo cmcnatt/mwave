@@ -285,6 +285,8 @@ classdef PowerMatrix < IEnergyComp
             
             if isTime && opts(10)
                 tdParOn = 1; % Choose best parallel programming option with time domain computation - i.e. use parsim instead of parfor loop.
+            else
+                tdParOn = 0;
             end
 
             [Mc, Nc] = waveClim.Size;
@@ -325,25 +327,9 @@ classdef PowerMatrix < IEnergyComp
 
                     % power in kW
                     if ~isempty(dptos)
-                        powmn = zeros(length(dptos),1);
-                        errmn = zeros(length(dptos),1);
-                        tdamn = cell(length(dptos),1);
-                        for o = 1:length(dptos)
-                            comp.SetDpto(dptos{o});
-                            
-                            tic
-                            [powmn(o), tdamn{o}] = comp.AveragePower(waveClim.WaveSpectra(:, n),'seed',seed,'ParallelOn');
-                            
-                            fprintf('\n = %i/%i, o = %i/%i, Te = %4.1f, run time = %4.1f s\n', ...
-                                n, Nc, o, length(dptos), Te(n), toc);
-                        end
-                        [pmat(m, n), ind] = max(powmn);
-                        idptos(m, n) = ind;
-                        errs(m, n) = errmn(ind);
-                        tdas(m, n) = tdamn(ind);
                         
-                        fprintf('\n = %i/%i, Best Dpto Ind = %i\n', ...
-                                n, Nc, ind);
+                        error('When ParallelOn option is used, code is not yet setup to use multiple dptos.');
+                        
                     else
                         comp.SetDpto(Dpto0);
                         tic
