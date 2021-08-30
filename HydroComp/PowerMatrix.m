@@ -1,5 +1,5 @@
-%{ 
-mwave - A water wave and wave energy converter computation package 
+%{
+mwave - A water wave and wave energy converter computation package
 Copyright (C) 2014  Cameron McNatt
 
 This program is free software: you can redistribute it and/or modify
@@ -41,7 +41,7 @@ classdef PowerMatrix < IEnergyComp
         T;
         Rho;
         SpecType;
-        DeviceCount; 
+        DeviceCount;
     end
     
     methods
@@ -158,7 +158,7 @@ classdef PowerMatrix < IEnergyComp
             hrsYr = 24*365;
             freqOccs = waveClimI.FreqOccurance;
             Pow = hrsYr*freqOccs.*pmatI.Matrix; % kWh/yr
-
+            
             % Total power: MWh/yr
             energy = sum(sum(Pow))./1e3;
         end
@@ -184,11 +184,11 @@ classdef PowerMatrix < IEnergyComp
             end
             
             pow = pmat.PowerAt(hss, ti, ttype);
-                
-%             pmatI = pmat.InterpolateTo(hss, t02s);
-%             pow = pmatI.Mat;
+            
+            %             pmatI = pmat.InterpolateTo(hss, t02s);
+            %             pow = pmatI.Mat;
         end
-                
+        
         function [pmatI] = InterpolateTo(pmat, Hs, T)
             [t0M, hsM] = meshgrid(pmat.t02, pmat.hs);
             [TM, HsM] = meshgrid(T, Hs);
@@ -213,7 +213,7 @@ classdef PowerMatrix < IEnergyComp
             indsT = 1:skip:length(pmat.T02);
             
             plotScatter(pmat.T02, pmat.Hs, pmat.mat, 'xinds', indsT, 'yinds', indsHs);
-
+            
             xlabel('T02 (s)');
             ylabel('Hs (m)');
             cb = colorbar;
@@ -234,7 +234,7 @@ classdef PowerMatrix < IEnergyComp
             
             [opts, args] = checkOptions({{'waveClim', 1}, {'minPow', 1}, ...
                 {'minOcc', 1}, {'specType', 1}, {'makeObj'}, ...
-                {'ratedPow', 1}, {'dptos', 1}, {'HsLim', 1}, {'seed',1}, {'ParallelOn'}}, varargin);
+                {'ratedPow', 1}, {'dptos', 1}, {'HsLim', 1}, {'seed',1}, {'ParallelOn'}, {'fullMatrix'}}, varargin);
             
             type = 'bretschneider';
             if opts(4)
@@ -288,7 +288,12 @@ classdef PowerMatrix < IEnergyComp
             else
                 tdParOn = 0;
             end
-
+            
+            fullMatrix = 0;
+            if opts(11)
+                fullMatrix = 1;
+            end
+            
             [Mc, Nc] = waveClim.Size;
             
             Te = Bretschneider.ConverterT(waveClim.T02('intended'), 't02', 'te');
@@ -307,7 +312,7 @@ classdef PowerMatrix < IEnergyComp
             
             freqOccs = waveClim.FreqOccurance;
             Efs = waveClim.EnergyFlux;
-
+            
             pmat = zeros(Mc, Nc);
             idptos = ones(Mc, Nc);
             errs = zeros(Mc, Nc);
@@ -323,132 +328,171 @@ classdef PowerMatrix < IEnergyComp
             
             if tdParOn % if (TD with parsim)
                 
-                for n = 1:Nc
-
-                    % power in kW
-                    if ~isempty(dptos)
-                        
-                        error('When ParallelOn option is used, code is not yet setup to use multiple dptos.');
-                        
-                    else
-                        comp.SetDpto(Dpto0);
-                        tic
-                        [pmat(:, n), tdasTemp] = comp.AveragePower(waveClim.WaveSpectra(:, n),'seed',seed,'ParallelOn');
-                        for m = 1:length(tdasTemp)
-                            tdas{m,n} = tdasTemp;
+                if fullMatrix
+                    
+                    for n = 1:Nc
+                        % power in kW
+                        if ~isempty(dptos)
+                            error('When ParallelOn option is used, code is not yet setup to use multiple dptos.');
+                        else
+                            comp.SetDpto(Dpto0);
+                            
+                            tic
+                            [pmat(:, n), tdasTemp] = comp.AveragePower(waveClim.WaveSpectra(:, n),'seed',seed,'ParallelOn');
+                            for m = 1:length(tdasTemp)
+                                tdas{m,n} = tdasTemp;
+                            end
+                            
+                            fprintf('\nn = %i/%i, Te = %4.1f, run time = %4.1f s\n', ...
+                                n, Nc, Te(n), toc);
                         end
                         
-                        fprintf('\nn = %i/%i, Te = %4.1f, run time = %4.1f s\n', ...
-                                n, Nc, Te(n), toc);
+                        if ~isempty(dptos)
+                            Dptos{m, n} = dptos{ind};
+                        end
+                        
                     end
+                    
+                else
                     
                     if ~isempty(dptos)
-                        Dptos{m, n} = dptos{ind};
+                        error('When ParallelOn option is used, code is not yet setup to use multiple dptos.');
+                    else
+                        comp.SetDpto(Dpto0);
+                        
+                        % To ensure CPUs are maximally utilised, convert
+                        % matrices to vectors. Also enforce Hs limit and
+                        % occurrence threshold.
+                        if isempty(hslim)
+                            hslim = Inf;
+                        end
+                        HsMatrix = repmat(Hs',1,Nc);
+                        runIndsMatrix = (waveClim.freqOcc.*(HsMatrix <= hslim) > occlim);
+                        runInds = (waveClim.freqOcc(HsMatrix <= hslim) > occlim);
+                        seaStateSpectra = waveClim.WaveSpectra(runInds);
+                        
+                        tic
+                        [pmatVector, tdasTemp] = comp.AveragePower(seaStateSpectra,'seed',seed,'ParallelOn');
+                        
+                        % Insert vector of tda objects back into matrix
+                        % form.
+                        tdaCounter = 1;
+                        for i = 1:size(runIndsMatrix,1)
+                            for j = 1:size(runIndsMatrix,2)
+                                if runIndsMatrix(i,j) == 1
+                                    tdas{i,j} = tdasTemp{tdaCounter,1};
+                                    tdaCounter = tdaCounter + 1;
+                                end
+                            end
+                        end
+                        
+                        % Insert vector of non-zero power matrix entries back into
+                        % the power matrix itself.
+                        pmat(runInds) = pmatVector;
+                        
+                        fprintf('\nTotal run time = %4.1f s\n', toc);
                     end
                     
-                    if ~isempty(ratedPow)
-                        pmat(m, n) = min([pmat(m, n) ratedPow]);
-                    end
                 end
                 
             else % if (FD) or (SD) or (TD with parfor)
-            
-            parfor m = 1:Mc % this line can be parfor/for
-                for n = 1:Nc
-                    if ~isempty(occlim)
-                        if (freqOccs(m, n) <= occlim)
-                            % ignore sea states that occur less than an hour per year
-                            continue;
-                        end
-                    end
-
-                    if ~isempty(plim)
-                        if (sum(Efs{m, n}) <= plim)
-                            % ignore sea states below a power threshold
-                            continue;
-                        end
-                    end
-                    
-                    if typeSe
-                        if (Hs(m, n) >= hslim)
-                            % ignore sea states for which Hs is greater
-                            % than the HsLim
-                            continue;
-                        end
-                    end
-
-                    % power in kW
-                    if ~isempty(dptos)
-                        powmn = zeros(length(dptos),1);
-                        errmn = zeros(length(dptos),1);
-                        tdamn = cell(length(dptos),1);
-                        for o = 1:length(dptos)
-                            comp.SetDpto(dptos{o});
-                            
-                            tic
-                            if isSpec
-                                [powmn(o), errmn(o)] = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed);
-                            elseif isTime
-                                [powmn(o), tdamn{o}] = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed);
-                            else
-                                powmn(o) = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed);
-                            end
-                            
-                            if typeSe
-                                fprintf('\nm = %i/%i, n = %i/%i, o = %i/%i, Hs = %4.1f, Te = %4.1f, run time = %4.1f s\n', ...
-                                m, Mc, n, Nc, o, length(dptos), Hs(m,n), Te(n), toc);
-                            else
-                                fprintf('\nm = %i/%i, n = %i/%i, o = %i/%i, Hs = %4.1f, Te = %4.1f, run time = %4.1f s\n', ...
-                                m, Mc, n, Nc, o, length(dptos), Hs(m), Te(n), toc); 
+                
+                parfor m = 1:Mc % this line can be parfor/for
+                    for n = 1:Nc
+                        if ~isempty(occlim)
+                            if (freqOccs(m, n) <= occlim)
+                                % ignore sea states that occur less than an hour per year
+                                continue;
                             end
                         end
-                        [pmat(m, n), ind] = max(powmn);
-                        idptos(m, n) = ind;
-                        errs(m, n) = errmn(ind);
-                        tdas(m, n) = tdamn(ind);
                         
-                        fprintf('\nm = %i/%i, n = %i/%i, Best Dpto Ind = %i\n', ...
-                                m, Mc, n, Nc, ind);
-                    else
-                        comp.SetDpto(Dpto0);
-                        tic
-                        if isSpec
-                            [pmat(m, n), errs(m, n)] = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed);
-                        elseif isTime
-                            [pmat(m, n), tdas{m, n}] = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed);
-                        else
-                            pmat(m, n) = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed);
+                        if ~isempty(plim)
+                            if (sum(Efs{m, n}) <= plim)
+                                % ignore sea states below a power threshold
+                                continue;
+                            end
                         end
                         
                         if typeSe
-                            fprintf('\nm = %i/%i, n = %i/%i, Hs = %4.1f, Te = %4.1f, run time = %4.1f s\n', ...
-                                m, Mc, n, Nc, Hs(m,n), Te(n), toc); 
+                            if (Hs(m, n) >= hslim)
+                                % ignore sea states for which Hs is greater
+                                % than the HsLim
+                                continue;
+                            end
+                        end
+                        
+                        % power in kW
+                        if ~isempty(dptos)
+                            powmn = zeros(length(dptos),1);
+                            errmn = zeros(length(dptos),1);
+                            tdamn = cell(length(dptos),1);
+                            for o = 1:length(dptos)
+                                comp.SetDpto(dptos{o});
+                                
+                                tic
+                                if isSpec
+                                    [powmn(o), errmn(o)] = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed);
+                                elseif isTime
+                                    [powmn(o), tdamn{o}] = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed);
+                                else
+                                    powmn(o) = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed);
+                                end
+                                
+                                if typeSe
+                                    fprintf('\nm = %i/%i, n = %i/%i, o = %i/%i, Hs = %4.1f, Te = %4.1f, run time = %4.1f s\n', ...
+                                        m, Mc, n, Nc, o, length(dptos), Hs(m,n), Te(n), toc);
+                                else
+                                    fprintf('\nm = %i/%i, n = %i/%i, o = %i/%i, Hs = %4.1f, Te = %4.1f, run time = %4.1f s\n', ...
+                                        m, Mc, n, Nc, o, length(dptos), Hs(m), Te(n), toc);
+                                end
+                            end
+                            [pmat(m, n), ind] = max(powmn);
+                            idptos(m, n) = ind;
+                            errs(m, n) = errmn(ind);
+                            tdas(m, n) = tdamn(ind);
+                            
+                            fprintf('\nm = %i/%i, n = %i/%i, Best Dpto Ind = %i\n', ...
+                                m, Mc, n, Nc, ind);
                         else
-                            fprintf('\nm = %i/%i, n = %i/%i, Hs = %4.1f, Te = %4.1f, run time = %4.1f s\n', ...
-                                m, Mc, n, Nc, Hs(m), Te(n), toc); 
+                            comp.SetDpto(Dpto0);
+                            tic
+                            if isSpec
+                                [pmat(m, n), errs(m, n)] = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed);
+                            elseif isTime
+                                [pmat(m, n), tdas{m, n}] = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed);
+                            else
+                                pmat(m, n) = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed);
+                            end
+                            
+                            if typeSe
+                                fprintf('\nm = %i/%i, n = %i/%i, Hs = %4.1f, Te = %4.1f, run time = %4.1f s\n', ...
+                                    m, Mc, n, Nc, Hs(m,n), Te(n), toc);
+                            else
+                                fprintf('\nm = %i/%i, n = %i/%i, Hs = %4.1f, Te = %4.1f, run time = %4.1f s\n', ...
+                                    m, Mc, n, Nc, Hs(m), Te(n), toc);
+                            end
                         end
-                    end
-                    
-                    if isSpec
-                        Dptos{m, n} = comp.FreqDomComp.Dpto;
-                        Dpars{m, n} = comp.FreqDomComp.Dpar;
-                    elseif isTime
-                        if ~isempty(dptos)
-                            Dptos{m, n} = dptos{ind};
+                        
+                        if isSpec
+                            Dptos{m, n} = comp.FreqDomComp.Dpto;
+                            Dpars{m, n} = comp.FreqDomComp.Dpar;
+                        elseif isTime
+                            if ~isempty(dptos)
+                                Dptos{m, n} = dptos{ind};
+                            end
+                        else
+                            if ~isempty(dptos)
+                                Dptos{m, n} = dptos{ind};
+                                Dpars{m, n} = comp.Dpar;
+                            end
                         end
-                    else
-                        if ~isempty(dptos)
-                            Dptos{m, n} = dptos{ind};
-                            Dpars{m, n} = comp.Dpar;
+                        
+                        if ~isempty(ratedPow)
+                            pmat(m, n) = min([pmat(m, n) ratedPow]);
                         end
-                    end
-                    
-                    if ~isempty(ratedPow)
-                        pmat(m, n) = min([pmat(m, n) ratedPow]);
                     end
                 end
-            end
-            
+                
             end
             
             % for a spectral domain computation
