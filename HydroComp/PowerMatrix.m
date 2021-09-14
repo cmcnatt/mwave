@@ -377,8 +377,8 @@ classdef PowerMatrix < IEnergyComp
                         % Insert vector of tda objects back into matrix
                         % form.
                         tdaCounter = 1;
-                        for i = 1:size(runIndsMatrix,1)
-                            for j = 1:size(runIndsMatrix,2)
+                        for j = 1:size(runIndsMatrix,2) % Must loop down the columns first as if reading a book top to bottom along the lines.
+                            for i = 1:size(runIndsMatrix,1)
                                 if runIndsMatrix(i,j) == 1
                                     tdas{i,j} = tdasTemp{tdaCounter,1};
                                     tdaCounter = tdaCounter + 1;
