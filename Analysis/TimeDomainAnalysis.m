@@ -30,6 +30,14 @@ classdef TimeDomainAnalysis < handle
         motions;
         ptoKinematic;
         ptoDynamic;
+        ptoPower;
+        ptoAvailPower;
+        ptoMechPower;
+        ptoACPower;
+        ptoId;
+        ptoIq;
+        ptoIph;
+        ptoVph;
         waveSigs;
         waveRamp;
         fmotions;
@@ -116,6 +124,38 @@ classdef TimeDomainAnalysis < handle
         
         function [] = SetPtoDynamic(tda, dofs, time, ptoKin)
             tda.setValues('ptoDynamic', dofs, time, ptoKin);
+        end
+        
+        function [] = SetPtoPower(tda, dofs, time, ptoPow)
+            tda.setValues('ptoPower', dofs, time, ptoPow);
+        end
+        
+        function [] = SetPtoAvailPower(tda, dofs, time, ptoPow)
+            tda.setValues('ptoAvailPower', dofs, time, ptoPow);
+        end
+        
+        function [] = SetPtoMechPower(tda, dofs, time, ptoPow)
+            tda.setValues('ptoMechPower', dofs, time, ptoPow);
+        end
+        
+        function [] = SetPtoACPower(tda, dofs, time, ptoPow)
+            tda.setValues('ptoACPower', dofs, time, ptoPow);
+        end
+        
+        function [] = SetPtoId(tda, dofs, time, ptoCurrent)
+            tda.setValues('ptoId', dofs, time, ptoCurrent);
+        end
+        
+        function [] = SetPtoIq(tda, dofs, time, ptoCurrent)
+            tda.setValues('ptoIq', dofs, time, ptoCurrent);
+        end
+        
+        function [] = SetPtoIph(tda, dofs, time, ptoCurrent)
+            tda.setValues('ptoIph', dofs, time, ptoCurrent);
+        end
+        
+        function [] = SetPtoVph(tda, dofs, time, ptoVoltage)
+            tda.setValues('ptoVph', dofs, time, ptoVoltage);
         end
                 
         function [] = SetWaves(tda, wgPos, time, waves)
@@ -215,6 +255,38 @@ classdef TimeDomainAnalysis < handle
             [ptoDyn, timeFreq] = tda.getValues('ptoDynamic', sigInds, dofs, varargin{:});
         end
         
+        function [ptoPow, timeFreq] = GetPtoPower(tda, sigInds, dofs, varargin)
+            [ptoPow, timeFreq] = tda.getValues('ptoPower', sigInds, dofs, varargin{:});
+        end
+        
+        function [ptoPow, timeFreq] = GetPtoAvailPower(tda, sigInds, dofs, varargin)
+            [ptoPow, timeFreq] = tda.getValues('ptoAvailPower', sigInds, dofs, varargin{:});
+        end
+        
+        function [ptoPow, timeFreq] = GetPtoMechPower(tda, sigInds, dofs, varargin)
+            [ptoPow, timeFreq] = tda.getValues('ptoMechPower', sigInds, dofs, varargin{:});
+        end
+        
+        function [ptoPow, timeFreq] = GetPtoACPower(tda, sigInds, dofs, varargin)
+            [ptoPow, timeFreq] = tda.getValues('ptoACPower', sigInds, dofs, varargin{:});
+        end
+        
+        function [ptoCurrent, timeFreq] = GetPtoId(tda, sigInds, dofs, varargin)
+            [ptoCurrent, timeFreq] = tda.getValues('ptoId', sigInds, dofs, varargin{:});
+        end
+        
+        function [ptoCurrent, timeFreq] = GetPtoIq(tda, sigInds, dofs, varargin)
+            [ptoCurrent, timeFreq] = tda.getValues('ptoIq', sigInds, dofs, varargin{:});
+        end
+        
+        function [ptoCurrent, timeFreq] = GetPtoIph(tda, sigInds, dofs, varargin)
+            [ptoCurrent, timeFreq] = tda.getValues('ptoIph', sigInds, dofs, varargin{:});
+        end
+        
+        function [ptoVoltage, timeFreq] = GetPtoVph(tda, sigInds, dofs, varargin)
+            [ptoVoltage, timeFreq] = tda.getValues('ptoVph', sigInds, dofs, varargin{:});
+        end
+        
         function [pow, time] = Power(tda, sigInds, dofs, varargin)
             [opts] = checkOptions({{'mean'}, {'max'}}, varargin);
             
@@ -304,6 +376,30 @@ classdef TimeDomainAnalysis < handle
                 case 'ptoDynamic'
                     sType = 'pto';
                     sigName = 'PtoDynamic';
+                case 'ptoPower'
+                    sType = 'pto';
+                    sigName = 'PtoPower';
+                case 'ptoAvailPower'
+                    sType = 'pto';
+                    sigName = 'PtoAvailPower';
+                case 'ptoMechPower'
+                    sType = 'pto';
+                    sigName = 'PtoMechPower';
+                case 'ptoACPower'
+                    sType = 'pto';
+                    sigName = 'PtoACPower';
+                case 'ptoId'
+                    sType = 'pto';
+                    sigName = 'PtoId';
+                case 'ptoIq'
+                    sType = 'pto';
+                    sigName = 'PtoIq';
+                case 'ptoIph'
+                    sType = 'pto';
+                    sigName = 'PtoIph';
+                case 'ptoVph'
+                    sType = 'pto';
+                    sigName = 'PtoVph';
                 otherwise
                     error('setValues type not recognized');
             end
@@ -383,6 +479,22 @@ classdef TimeDomainAnalysis < handle
                 case 'ptoKinematic'
                     sType = 'pto';
                 case 'ptoDynamic'
+                    sType = 'pto';
+                case 'ptoPower'
+                    sType = 'pto';
+                case 'ptoAvailPower'
+                    sType = 'pto';
+                case 'ptoMechPower'
+                    sType = 'pto';
+                case 'ptoACPower'
+                    sType = 'pto';
+                case 'ptoId'
+                    sType = 'pto';
+                case 'ptoIq'
+                    sType = 'pto';
+                case 'ptoIph'
+                    sType = 'pto';
+                case 'ptoVph'
                     sType = 'pto';
                 otherwise
                     error('getValues type not recognized');
