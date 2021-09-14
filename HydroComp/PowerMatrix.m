@@ -433,6 +433,7 @@ classdef PowerMatrix < IEnergyComp
                                 if isSpec
                                     [powmn(o), errmn(o)] = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed);
                                 elseif isTime
+                                    warning('Simulink model may not initialise correctly using parfor - instead, it should be parallelised using parsim.');
                                     [powmn(o), tdamn{o}] = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed);
                                 else
                                     powmn(o) = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed);
