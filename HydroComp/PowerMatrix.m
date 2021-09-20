@@ -147,6 +147,10 @@ classdef PowerMatrix < IEnergyComp
             % default is to interpolate the wave climate
             interpPmat = opts(1);
             
+            if sum(size(pmat.Hs)>1) == 2 % i.e. if using steepness instead of Hs to parameterise the power matrix
+                error('TO DO: Code not currently set up to compute Annual Energy Production with Se-T power matrix.')
+            end
+            
             if interpPmat
                 pmatI = pmat.InterpolateTo(waveClim.Hs('intended'), waveClim.T02('intended'));
                 waveClimI = waveClim;
@@ -223,7 +227,7 @@ classdef PowerMatrix < IEnergyComp
     
     methods (Static)
         
-        function [pmat, idptos, errs, Dptos, Dpars, tdas] = CreatePowerMatrix(comp, Hs, T, varargin)
+        function [pmat, idptos, errs, Dptos, Dpars, tdas, pmatMech, pmatAC] = CreatePowerMatrix(comp, Hs, T, varargin)
             
             if ~isa(comp, 'IEnergyComp')
                 error('The comp must be of type IEnergyComp');
@@ -234,7 +238,8 @@ classdef PowerMatrix < IEnergyComp
             
             [opts, args] = checkOptions({{'waveClim', 1}, {'minPow', 1}, ...
                 {'minOcc', 1}, {'specType', 1}, {'makeObj'}, ...
-                {'ratedPow', 1}, {'dptos', 1}, {'HsLim', 1}, {'seed',1}, {'ParallelOn'}, {'fullMatrix'}}, varargin);
+                {'ratedPow', 1}, {'dptos', 1}, {'HsLim', 1}, {'seed',1}, {'ParallelOn'}, ...
+                {'fullMatrix'}, {'powMech'}, {'powAC'}}, varargin);
             
             type = 'bretschneider';
             if opts(4)
@@ -294,6 +299,21 @@ classdef PowerMatrix < IEnergyComp
                 fullMatrix = 1;
             end
             
+            mechPowMat = 0;
+            if opts(12)
+                mechPowMat = 1;
+                if ~isTime
+                    error('Mechanical power matrix can only be generated using a time-domain model.')
+                end
+            end
+            acPowMat = 0;
+            if opts(13)
+                acPowMat = 1;
+                if ~isTime
+                    error('AC power matrix can only be generated using a time-domain model.')
+                end
+            end
+            
             [Mc, Nc] = waveClim.Size;
             
             Te = Bretschneider.ConverterT(waveClim.T02('intended'), 't02', 'te');
@@ -314,6 +334,12 @@ classdef PowerMatrix < IEnergyComp
             Efs = waveClim.EnergyFlux;
             
             pmat = zeros(Mc, Nc);
+            if mechPowMat
+                pmatMech = zeros(Mc, Nc);
+            end
+            if acPowMat
+                pmatAC = zeros(Mc, Nc);
+            end
             idptos = ones(Mc, Nc);
             errs = zeros(Mc, Nc);
             Dptos = cell(Mc, Nc);
@@ -338,7 +364,7 @@ classdef PowerMatrix < IEnergyComp
                             comp.SetDpto(Dpto0);
                             
                             tic
-                            [pmat(:, n), tdasTemp] = comp.AveragePower(waveClim.WaveSpectra(:, n),'seed',seed,'ParallelOn');
+                            [pmat(:, n), tdasTemp, pmatMech(:,n), pmatAC(:,n)] = comp.AveragePower(waveClim.WaveSpectra(:, n),'seed',seed,'ParallelOn');
                             for m = 1:length(tdasTemp)
                                 tdas{m,n} = tdasTemp;
                             end
@@ -372,7 +398,7 @@ classdef PowerMatrix < IEnergyComp
                         seaStateSpectra = waveClim.WaveSpectra(runInds);
                         
                         tic
-                        [pmatVector, tdasTemp] = comp.AveragePower(seaStateSpectra,'seed',seed,'ParallelOn');
+                        [pmatVector, tdasTemp, pmatMechVector, pmatACVector] = comp.AveragePower(seaStateSpectra,'seed',seed,'ParallelOn');
                         
                         % Insert vector of tda objects back into matrix
                         % form.
@@ -389,6 +415,12 @@ classdef PowerMatrix < IEnergyComp
                         % Insert vector of non-zero power matrix entries back into
                         % the power matrix itself.
                         pmat(runInds) = pmatVector;
+                        if mechPowMat
+                            pmatMech(runInds) = pmatMechVector;
+                        end
+                        if acPowMat
+                            pmatAC(runInds) = pmatACVector;
+                        end
                         
                         fprintf('\nTotal run time = %4.1f s\n', toc);
                     end
@@ -424,6 +456,8 @@ classdef PowerMatrix < IEnergyComp
                         % power in kW
                         if ~isempty(dptos)
                             powmn = zeros(length(dptos),1);
+                            powACmn = zeros(length(dptos),1);
+                            powMechmn = zeros(length(dptos),1);
                             errmn = zeros(length(dptos),1);
                             tdamn = cell(length(dptos),1);
                             for o = 1:length(dptos)
@@ -436,7 +470,7 @@ classdef PowerMatrix < IEnergyComp
                                     warning('Simulink model may not initialise correctly using parfor - instead, it should be parallelised using parsim.');
                                     [powmn(o), tdamn{o}] = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed);
                                 else
-                                    powmn(o) = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed);
+                                    [powmn(o),~,powACmn(o),powMechmn(o)] = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed);
                                 end
                                 
                                 if typeSe
@@ -448,6 +482,8 @@ classdef PowerMatrix < IEnergyComp
                                 end
                             end
                             [pmat(m, n), ind] = max(powmn);
+                            [pmatAC(m, n), ind] = max(powACmn);
+                            [pmatMech(m, n), ind] = max(powMechmn);
                             idptos(m, n) = ind;
                             errs(m, n) = errmn(ind);
                             tdas(m, n) = tdamn(ind);
@@ -462,7 +498,7 @@ classdef PowerMatrix < IEnergyComp
                             elseif isTime
                                 [pmat(m, n), tdas{m, n}] = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed);
                             else
-                                pmat(m, n) = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed);
+                                [pmat(m, n), tdas{m, n}, pmatAC(m, n), pmatMech(m, n)] = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed);
                             end
                             
                             if typeSe
@@ -490,6 +526,8 @@ classdef PowerMatrix < IEnergyComp
                         
                         if ~isempty(ratedPow)
                             pmat(m, n) = min([pmat(m, n) ratedPow]);
+                            pmatAC(m, n) = min([pmatAC(m, n) ratedPow]);
+                            pmatMech(m, n) = min([pmatMech(m, n) ratedPow]);
                         end
                     end
                 end
@@ -506,6 +544,20 @@ classdef PowerMatrix < IEnergyComp
                 pmat = PowerMatrix(pmat, waveClim.Hs('intended'), ...
                     waveClim.T02('intended'), ...
                     waveClim.T, waveClim.H, waveClim.Rho, type);
+                if mechPowMat
+                    pmatMech = PowerMatrix(pmatMech, waveClim.Hs('intended'), ...
+                    waveClim.T02('intended'), ...
+                    waveClim.T, waveClim.H, waveClim.Rho, type);
+                else
+                    pmatMech = [];
+                end
+                if acPowMat
+                    pmatAC = PowerMatrix(pmatAC, waveClim.Hs('intended'), ...
+                    waveClim.T02('intended'), ...
+                    waveClim.T, waveClim.H, waveClim.Rho, type);
+                else
+                    pmatAC = [];
+                end
             end
         end
     end
