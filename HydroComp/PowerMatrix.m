@@ -392,7 +392,11 @@ classdef PowerMatrix < IEnergyComp
                         if isempty(hslim)
                             hslim = Inf;
                         end
-                        HsMatrix = repmat(Hs',1,Nc);
+                        if ~typeSe
+                            HsMatrix = repmat(Hs',1,Nc);
+                        else
+                            HsMatrix = Hs;
+                        end
                         runIndsMatrix = (waveClim.freqOcc.*(HsMatrix <= hslim) > occlim);
                         runInds = (waveClim.freqOcc(HsMatrix <= hslim) > occlim);
                         seaStateSpectra = waveClim.WaveSpectra(runInds);
