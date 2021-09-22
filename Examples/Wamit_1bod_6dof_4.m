@@ -27,6 +27,8 @@ Contributors:
 % constraints not handled by WAMIT, the drift forces can still be computed
 % accurately using WAMIT.
 
+%test
+
 %% Set up the run
 
 % every run needs a name. All the Wamit input and output files are named 
