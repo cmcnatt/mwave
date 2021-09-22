@@ -334,12 +334,8 @@ classdef PowerMatrix < IEnergyComp
             Efs = waveClim.EnergyFlux;
             
             pmat = zeros(Mc, Nc);
-            if mechPowMat
-                pmatMech = zeros(Mc, Nc);
-            end
-            if acPowMat
-                pmatAC = zeros(Mc, Nc);
-            end
+            pmatMech = zeros(Mc, Nc);
+            pmatAC = zeros(Mc, Nc);
             idptos = ones(Mc, Nc);
             errs = zeros(Mc, Nc);
             Dptos = cell(Mc, Nc);
@@ -460,8 +456,13 @@ classdef PowerMatrix < IEnergyComp
                         % power in kW
                         if ~isempty(dptos)
                             powmn = zeros(length(dptos),1);
-                            powACmn = zeros(length(dptos),1);
-                            powMechmn = zeros(length(dptos),1);
+                            
+                            if acPowMat
+                                powACmn = zeros(length(dptos),1);
+                            end
+                            if mechPowMat
+                                powMechmn = zeros(length(dptos),1);
+                            end
                             errmn = zeros(length(dptos),1);
                             tdamn = cell(length(dptos),1);
                             for o = 1:length(dptos)
@@ -472,9 +473,9 @@ classdef PowerMatrix < IEnergyComp
                                     [powmn(o), errmn(o)] = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed);
                                 elseif isTime
                                     warning('Simulink model may not initialise correctly using parfor - instead, it should be parallelised using parsim.');
-                                    [powmn(o), tdamn{o}] = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed);
+                                    [powmn(o), tdamn{o}, powACmn(o), powMechmn(o)] = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed);
                                 else
-                                    [powmn(o),~,powACmn(o),powMechmn(o)] = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed);
+                                    [powmn(o)] = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed);
                                 end
                                 
                                 if typeSe
@@ -486,8 +487,12 @@ classdef PowerMatrix < IEnergyComp
                                 end
                             end
                             [pmat(m, n), ind] = max(powmn);
-                            [pmatAC(m, n), ind] = max(powACmn);
-                            [pmatMech(m, n), ind] = max(powMechmn);
+                            if acPowMat
+                                [pmatAC(m, n), ind] = max(powACmn);
+                            end
+                            if mechPowMat
+                                [pmatMech(m, n), ind] = max(powMechmn);
+                            end
                             idptos(m, n) = ind;
                             errs(m, n) = errmn(ind);
                             tdas(m, n) = tdamn(ind);
@@ -500,9 +505,9 @@ classdef PowerMatrix < IEnergyComp
                             if isSpec
                                 [pmat(m, n), errs(m, n)] = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed);
                             elseif isTime
-                                [pmat(m, n), tdas{m, n}] = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed);
-                            else
                                 [pmat(m, n), tdas{m, n}, pmatAC(m, n), pmatMech(m, n)] = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed);
+                            else
+                                [pmat(m, n)] = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed);
                             end
                             
                             if typeSe
@@ -530,8 +535,12 @@ classdef PowerMatrix < IEnergyComp
                         
                         if ~isempty(ratedPow)
                             pmat(m, n) = min([pmat(m, n) ratedPow]);
-                            pmatAC(m, n) = min([pmatAC(m, n) ratedPow]);
-                            pmatMech(m, n) = min([pmatMech(m, n) ratedPow]);
+                            if acPowMat
+                                pmatAC(m, n) = min([pmatAC(m, n) ratedPow]);
+                            end
+                            if mechPowMat
+                                pmatMech(m, n) = min([pmatMech(m, n) ratedPow]);
+                            end
                         end
                     end
                 end
