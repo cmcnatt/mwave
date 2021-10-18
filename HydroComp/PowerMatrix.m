@@ -36,6 +36,7 @@ classdef PowerMatrix < IEnergyComp
     properties (Dependent)
         Matrix;
         Hs;
+        Se;
         T02;
         H;
         T;
@@ -102,6 +103,28 @@ classdef PowerMatrix < IEnergyComp
             val = pmat.hs;
         end
         
+        function [val] = get.Se(pmat)
+            % the wave steepnesses used
+            Hs = pmat.hs;
+            H = Hs*2*sqrt(2)/4; % Find wave height of that regular wave that has equivalent energy to the irregular wave of Hs.
+            
+            % Find Te from T02 values stored
+            TtypeIn = 'T02'; TtypeOut = 'Te';
+            Te = Bretschneider.ConverterT(pmat.t02, TtypeIn, TtypeOut);
+            
+            if size(Hs,1) > 1 && size(Hs,2) > 1
+                L = repmat(1.5608*Te.*Te,size(Hs,1),1); % Find wavelength of regular wave with period Te
+                SeAll = H./L; % Find wave steepnesses
+                Se = SeAll(:,1); % Pick out just one column - all should be identical if Hs matrix was generated using a single Se vector.
+            else
+                Harray = repmat(H',1,length(Te));
+                Larray = repmat(1.5608*Te.*Te,length(Hs),1);
+                Se = Harray./Larray;
+            end
+            
+            val = Se';
+        end
+        
         function [val] = get.T02(pmat)
             % the T02 used
             val = pmat.t02;
@@ -147,16 +170,31 @@ classdef PowerMatrix < IEnergyComp
             % default is to interpolate the wave climate
             interpPmat = opts(1);
             
+            % Check power matrix and wave climate objects are of the same type.
+            if ( sum(size(pmat.Hs)>1) == 2 && sum(size(waveClim.Hs)>1) ~= 2 ) ...
+                    || ( sum(size(pmat.Hs)>1) ~= 2 && sum(size(waveClim.Hs)>1) == 2 )
+                error('In order to compute AEP, power matrix object and wave climate object must be of same type - either Hs-T or Se-T.')
+            end
+            
+            typeSe = 0;
             if sum(size(pmat.Hs)>1) == 2 % i.e. if using steepness instead of Hs to parameterise the power matrix
-                error('TO DO: Code not currently set up to compute Annual Energy Production with Se-T power matrix.')
+                typeSe = 1;
             end
             
             if interpPmat
-                pmatI = pmat.InterpolateTo(waveClim.Hs('intended'), waveClim.T02('intended'));
+                if typeSe
+                    pmatI = pmat.InterpolateTo(waveClim.Hs('intended'), waveClim.T02('intended'), 'typeSe', waveClim.Se('Intended'));
+                else
+                    pmatI = pmat.InterpolateTo(waveClim.Hs('intended'), waveClim.T02('intended'));
+                end
                 waveClimI = waveClim;
             else
                 pmatI = pmat;
-                waveClimI = waveClim.InterpolateTo(pmat.hs, pmat.t02);
+                if typeSe
+                    waveClimI = waveClim.InterpolateTo(pmat.hs, pmat.t02, 'typeSe', pmat.Se);
+                else
+                    waveClimI = waveClim.InterpolateTo(pmat.hs, pmat.t02);
+                end
             end
             
             hrsYr = 24*365;
@@ -193,9 +231,18 @@ classdef PowerMatrix < IEnergyComp
             %             pow = pmatI.Mat;
         end
         
-        function [pmatI] = InterpolateTo(pmat, Hs, T)
-            [t0M, hsM] = meshgrid(pmat.t02, pmat.hs);
-            [TM, HsM] = meshgrid(T, Hs);
+        function [pmatI] = InterpolateTo(pmat, Hs, T, varargin)
+            [opts, args] = checkOptions({{'typeSe',1}}, varargin);
+            
+            if opts(1)
+                [t0M, hsM] = meshgrid(pmat.t02, pmat.Se);
+                HsMatrix = Hs;
+                Se = args{1};
+                [TM, HsM] = meshgrid(T, Se);
+            else
+                [t0M, hsM] = meshgrid(pmat.t02, pmat.hs);
+                [TM, HsM] = meshgrid(T, Hs);
+            end
             
             mat2 = interp2(t0M, hsM, pmat.mat, TM, HsM);
             

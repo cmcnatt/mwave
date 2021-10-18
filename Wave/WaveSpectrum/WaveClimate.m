@@ -167,6 +167,35 @@ classdef WaveClimate < handle
             end
         end
         
+        function [se] = Se(wc, varargin)
+            [opts] = checkOptions({'Intended'}, varargin);
+            if (opts(1))
+                hs = wc.hs;
+                t02 = wc.t02;
+            else
+                hs = wc.Hs('Intended');
+                t02 = wc.T02('Intended');
+            end
+            
+            H = hs*2*sqrt(2)/4; % Find wave height of that regular wave that has equivalent energy to the irregular wave of Hs.
+            
+            % Find Te from T02 values stored
+            TtypeIn = 'T02'; TtypeOut = 'Te';
+            Te = Bretschneider.ConverterT(t02, TtypeIn, TtypeOut);
+            
+            if size(hs,1) > 1 && size(hs,2) > 1
+                L = repmat(1.5608*Te.*Te,size(hs,1),1); % Find wavelength of regular wave with period Te
+                SeAll = H./L; % Find wave steepnesses
+                Se = SeAll(:,1); % Pick out just one column - all should be identical if Hs matrix was generated using a single Se vector.
+            else
+                Harray = repmat(H',1,length(Te));
+                Larray = repmat(1.5608*Te.*Te,length(hs),1);
+                Se = Harray./Larray;
+            end
+            
+            se = Se;
+        end
+        
         function [t02] = T02(wc, varargin)
             [opts] = checkOptions({'Intended'}, varargin);
             if (opts(1))
@@ -243,9 +272,19 @@ classdef WaveClimate < handle
             ef = spec.EnergyFlux(wc.rho, wc.h, 'total');
         end
         
-        function [climI] = InterpolateTo(clim, Hs, T) % Interpolates clim into new Hs and T bins
-            [t0M, hsM] = meshgrid(clim.t02, clim.hs);
-            [TM, HsM] = meshgrid(T, Hs);
+        function [climI] = InterpolateTo(clim, Hs, T, varargin) % Interpolates clim into new Hs and T bins
+            [opts, args] = checkOptions({{'typeSe',1}}, varargin);
+            
+            if opts(1)
+                [t0M, hsM] = meshgrid(clim.t02, clim.Se);
+                HsMatrix = Hs;
+                Se = args{1};
+                [TM, HsM] = meshgrid(T, Se);
+            else
+                [t0M, hsM] = meshgrid(clim.t02, clim.hs);
+                [TM, HsM] = meshgrid(T, Hs);
+            end
+            
             freqOcc2 = interp2(t0M, hsM, clim.freqOcc, TM, HsM);
             
             freqOcc2(isnan(freqOcc2)) = 0;
@@ -421,7 +460,7 @@ classdef WaveClimate < handle
                             if typeSe
                                 specs_(m,n) = Bretschneider(Hs(m,n), T(n), 1./f, Ttype);
                             else
-                                specs_(m,n) = Bretschneider(Hs(m), T(n), 1./f, Ttype);
+                                specs_(m,n) = Bretschneider(Hs(m), T(n), 1./f, Ttype, 'cos2s',12,0,[-pi:pi/25:pi]);
                             end
                         else
                             if typeSe
