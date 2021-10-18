@@ -460,7 +460,7 @@ classdef WaveClimate < handle
                             if typeSe
                                 specs_(m,n) = Bretschneider(Hs(m,n), T(n), 1./f, Ttype);
                             else
-                                specs_(m,n) = Bretschneider(Hs(m), T(n), 1./f, Ttype, 'cos2s',12,0,[-pi:pi/25:pi]);
+                                specs_(m,n) = Bretschneider(Hs(m), T(n), 1./f, Ttype); % 'cos2s',12,0,[-pi:pi/25:pi]
                             end
                         else
                             if typeSe
