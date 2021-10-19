@@ -441,13 +441,13 @@ classdef WaveClimate < handle
             else
                 Ttype = 'T02';
             end
-            
+
             if strcmpi(type, 'bretschneider')
                 bs = true;
             elseif strcmpi(type, 'jonswap')
                 bs = false;
             else
-                error('Currently only Bretschneider and JONSWAP specta are supported');
+                error('Currently only Bretschneider and JONSWAP spectra are supported');
             end          
                         
             if isempty(f)
@@ -458,15 +458,15 @@ classdef WaveClimate < handle
                     for n = 1:nT
                         if bs
                             if typeSe
-                                specs_(m,n) = Bretschneider(Hs(m,n), T(n), 1./f, Ttype);
+                                specs_(m,n) = Bretschneider(Hs(m,n), T(n), 1./f, Ttype, varargin{:});
                             else
-                                specs_(m,n) = Bretschneider(Hs(m), T(n), 1./f, Ttype); % 'cos2s',12,0,[-pi:pi/25:pi]
+                                specs_(m,n) = Bretschneider(Hs(m), T(n), 1./f, Ttype, varargin{:}); 
                             end
                         else
                             if typeSe
-                                specs_(m,n) = JONSWAP(Hs(m,n), T(n), 1./f, Ttype);
+                                specs_(m,n) = JONSWAP(Hs(m,n), T(n), 1./f, Ttype, varargin{:});
                             else
-                                specs_(m,n) = JONSWAP(Hs(m), T(n), 1./f, Ttype);
+                                specs_(m,n) = JONSWAP(Hs(m), T(n), 1./f, Ttype, varargin{:});
                             end
                         end
                     end
