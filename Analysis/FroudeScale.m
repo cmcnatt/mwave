@@ -102,6 +102,10 @@ classdef FroudeScale < handle
             vals = FroudeScale.Compute('time', scale, val);
         end
         
+        function [vals] = Frequency(scale, val)
+            vals = FroudeScale.Compute('frequency', scale, val);
+        end
+        
         function [vals] = Velocity(scale, val)
             vals = FroudeScale.Compute('vel', scale, val);
         end
