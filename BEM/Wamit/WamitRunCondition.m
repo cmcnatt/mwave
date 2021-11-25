@@ -796,7 +796,13 @@ classdef WamitRunCondition < IBemRunCondition
             fprintf(fileID, ['Model ' geoFile ', created: ' date '\n']);
             fprintf(fileID, '%8.4f %8.4f\n', ulen, g);
             fprintf(fileID, '%i %i \n', geo.Xsymmetry, geo.Ysymmetry);
-            fprintf(fileID, '%i\n', count);
+            hOrder = [];
+            
+            if fb.WamILowHi
+                hOrder = 0;
+            end
+            
+            fprintf(fileID, '%i\n', count, hOrder);
             
             pans = geo.Panels;
             
