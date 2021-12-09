@@ -409,7 +409,7 @@ classdef PowerMatrix < IEnergyComp
                             tic
                             [pmat(:, n), tdasTemp, pmatMech(:,n), pmatAC(:,n)] = comp.AveragePower(waveClim.WaveSpectra(:, n),'seed',seed,'ParallelOn');
                             for m = 1:length(tdasTemp)
-                                tdas{m,n} = tdasTemp;
+                                tdas{m,n} = tdasTemp{m,1};
                             end
                             
                             fprintf('\nn = %i/%i, Te = %4.1f, run time = %4.1f s\n', ...
