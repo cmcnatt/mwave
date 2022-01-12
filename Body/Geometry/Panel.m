@@ -148,6 +148,7 @@ classdef Panel < handle
         function [] = FlipNormals(pan)
             
             pan.vertices = flipud(pan.vertices);
+            pan.normal = -1*pan.Normal;
         end
         
         function [] = Translate(pan, vector)
