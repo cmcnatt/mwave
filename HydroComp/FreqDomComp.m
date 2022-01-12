@@ -236,6 +236,86 @@ classdef FreqDomComp < IFreqDomComp & CopyLoadHandleBase
                 dofc = dofc + dofn;
             end
         end
+
+        function [Fhin] = ForceAtHinge(comp,rhin)
+            % Computes loads acting at hinge - i.e. the forces and moments
+            % needed to enforce the hinge constraint.
+
+            cg1 = comp.Bodies(1, 1).CgGlobal; % Set centres of gravity
+            cg2 = comp.Bodies(1, 2).CgGlobal;
+            
+            Fc = comp.ForceConstraint; % Compute the constraint forces (for theory, see Appendix D of NWEC3 R32: Numerical Modelling report)
+            v = comp.Velocities; % Compute the body velocities
+            
+            [N, ~] = size(rhin); % Detect number of hinge constraints
+            if N > 1
+                error('Multiple hinges not yet supported');
+            end
+            
+            [Nt, Nd, ~] = size(Fc); % Detect number of wave periods and wave headings
+            
+            Fhin = zeros(Nt, Nd, 12); % Vector should contain 6 DoFs for each body
+            
+            dof1 = logical(comp.Bodies(1,1).Modes.Vector); % Detect which degrees of freedom are active
+            dof2 = logical(comp.Bodies(1,2).Modes.Vector);
+            
+            err = 9e-2; % Specify tolerance for sense check
+            
+            for m = 1:Nt
+                for n = 1:Nd
+                    Fc0 = squeeze(Fc(m, n, :));
+                    Tor0 = comp.Dpto*squeeze(v(m, n, :)); % Compute hinge torque (applied by PTO), if any
+                    Tor0 = Tor0(logical(sum(comp.PTOInds)));
+
+                    Fb1 = zeros(6, 1);
+                    Fb2 = zeros(6, 1);
+
+                    Fb1(dof1) = Fc0(dof1);
+                    Fb2(dof2) = Fc0(logical([zeros(1,6) dof2])); % Need to pick out correct of the 12 DoFs listed in Fc0.
+                    
+                    formulation = 2; % Both formulations should give same result
+                    if formulation == 1
+                        % Transfer forces applied at Cgs into moments about hinge location
+                        r1 = skewMat(rhin - cg1);
+                        r2 = skewMat(rhin - cg2);
+
+                        fhin1 = zeros(6,1);
+                        fhin2 = zeros(6,1);
+
+                        fhin1(1:3) = Fb1(1:3);
+                        fhin1(4:6) = Fb1(4:6) - r1*Fb1(1:3);
+                        fhin2(1:3) = Fb2(1:3);
+                        fhin2(4:6) = Fb2(4:6) - r2*Fb2(1:3);
+                    elseif formulation == 2
+                        % Compute transformation matrix (to get from Cg to
+                        % hinge location) for each body.
+                        r1 = skewMat(rhin - cg1);
+                        r2 = skewMat(rhin - cg2);
+                        Id = [1 0 0;...
+                              0 1 0;...
+                              0 0 1];
+                        Pt_r1 = [Id r1;...
+                                 zeros(3,3) Id];
+                        Pt_r2 = [Id r2;...
+                                 zeros(3,3) Id];
+                        P_r1 = transpose(Pt_r1);
+                        P_r2 = transpose(Pt_r2);
+
+                        fhin1 = P_r1*Fb1;
+                        fhin2 = P_r2*Fb2;
+                    end
+                    
+                    if abs(Tor0) > 1e-6
+                        if abs(fhin2(5) - Tor0)/abs(Tor0) > err
+                            error('Computed constraint hinge torque does not match expected hinge torque');
+                        end
+                    end
+                    
+                    Fhin(m, n, 1:6) = fhin1;
+                    Fhin(m, n, 7:12) = fhin2;
+                end
+            end
+        end
         
         function [kfs, kfr] = KochinFuncs(hbcomp)
             
