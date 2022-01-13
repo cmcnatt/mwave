@@ -22,15 +22,17 @@ classdef TimeDomainAnalysis < handle
     % Holds and processes time-domain results, which could come from an
     % experiment or a simulation
     
-    properties (Access = protected)    
+    properties (Access = public)    
         nSig;
         sigDes;
         motDof;
         ptoDof;
+        forceDof;
         motions;
         ptoKinematic;
         ptoDynamic;
         ptoPower;
+        hingeLoads;
         ptoAvailPower;
         ptoMechPower;
         ptoACPower;
@@ -45,18 +47,22 @@ classdef TimeDomainAnalysis < handle
         fptoDynamic;
         fwaveSigs;
         smotions;
+        shingeLoads;
         sptoKinematic;
         sptoDynamic;
         swaveSigs;
         motTime;
         ptoTime;
+        forceTime;
         waveTime;
         waveRampTime;
         motFreq;
         ptoFreq;
+        forceFreq;
         waveFreq;
         motTimeLims;
         ptoTimeLims;
+        forceTimeLims;
         waveTimeLims;
         waveRampTimeLims;
         wgPos;
@@ -66,6 +72,7 @@ classdef TimeDomainAnalysis < handle
     
     properties (Dependent)
         MotionDoF;
+        ForceDoF;
         PtoDoF;
         SignalDescription;
         NSignals;
@@ -80,6 +87,10 @@ classdef TimeDomainAnalysis < handle
         
         function [val] = get.MotionDoF(tda)
             val = tda.motDof;
+        end
+
+        function [val] = get.ForceDoF(tda)
+            val = tda.forceDof;
         end
         
         function [val] = get.PtoDoF(tda)
@@ -128,6 +139,10 @@ classdef TimeDomainAnalysis < handle
         
         function [] = SetPtoPower(tda, dofs, time, ptoPow)
             tda.setValues('ptoPower', dofs, time, ptoPow);
+        end
+
+        function [] = SetHingeLoads(tda, dofs, time, hinLoads)
+            tda.setValues('hingeLoads', dofs, time, hinLoads);
         end
         
         function [] = SetPtoAvailPower(tda, dofs, time, ptoPow)
@@ -203,6 +218,35 @@ classdef TimeDomainAnalysis < handle
             end
             tda.smotions = [];
         end
+
+        function [] = SetForceTimeLimits(tda, sigInds, dofs, startTime, stopTime)
+            if isempty(tda.forceTimeLims)
+                tda.forceTimeLims = cell(tda.nSig, tda.forceDof);
+            end
+            
+            if isempty(sigInds)
+                sigInds = 1:tda.nSig;
+            elseif ischar(sigInds)
+                if strcmp(sigInds, ':');
+                    sigInds = 1:tda.nSig;
+                end
+            end
+            
+            if isempty(dofs)
+                dofs = 1:tda.forceDof;
+            elseif ischar(dofs)
+                if strcmp(dofs, ':');
+                    dofs = 1:tda.forceDof;
+                end
+            end
+            
+            for m = 1:length(sigInds)
+                for n = 1:length(dofs)
+                    tda.forceTimeLims{sigInds(m), dofs(n)} = [startTime stopTime];
+                end
+            end
+            tda.smotions = [];
+        end
         
         function [] = SetPtoTimeLimits(tda, sigInds, dofs, startTime, stopTime)
             if isempty(tda.ptoTimeLims)
@@ -257,6 +301,10 @@ classdef TimeDomainAnalysis < handle
         
         function [ptoPow, timeFreq] = GetPtoPower(tda, sigInds, dofs, varargin)
             [ptoPow, timeFreq] = tda.getValues('ptoPower', sigInds, dofs, varargin{:});
+        end
+
+        function [hinLoads, timeFreq] = GetHingeLoads(tda, sigInds, dofs, varargin)
+            [hinLoads, timeFreq] = tda.getValues('hingeLoads', sigInds, dofs, varargin{:});
         end
         
         function [ptoPow, timeFreq] = GetPtoAvailPower(tda, sigInds, dofs, varargin)
@@ -346,6 +394,11 @@ classdef TimeDomainAnalysis < handle
             startTime = tda.motTimeLims{sigInd, dof}(1);
             stopTime = tda.motTimeLims{sigInd, dof}(2);
         end
+
+        function [startTime, stopTime] = GetForceTimeLimits(tda, sigInd, dof)
+            startTime = tda.forceTimeLims{sigInd, dof}(1);
+            stopTime = tda.forceTimeLims{sigInd, dof}(2);
+        end
         
         function [startTime, stopTime] = GetPtoTimeLimits(tda, sigInd, dof)
             startTime = tda.ptoTimeLims{sigInd, dof}(1);
@@ -379,6 +432,9 @@ classdef TimeDomainAnalysis < handle
                 case 'ptoPower'
                     sType = 'pto';
                     sigName = 'PtoPower';
+                case 'hingeLoads'
+                    sType = 'force';
+                    sigName = 'HingeLoads';
                 case 'ptoAvailPower'
                     sType = 'pto';
                     sigName = 'PtoAvailPower';
@@ -482,6 +538,8 @@ classdef TimeDomainAnalysis < handle
                     sType = 'pto';
                 case 'ptoPower'
                     sType = 'pto';
+                case 'hingeLoads'
+                    sType = 'force';
                 case 'ptoAvailPower'
                     sType = 'pto';
                 case 'ptoMechPower'
@@ -569,6 +627,8 @@ classdef TimeDomainAnalysis < handle
         function [pow, timeFreq] = power(tda, sigInds, dofs, varargin)
             [opts, args] = checkOptions({{'spectra'}, {'smooth', 1}}, varargin);
             
+            warning('This method simply multiplies the hinge torque and the hinge velocity to get a measure of power - this may not be suitable for more complex PTO systems. Better to use GetPto... methods instead.')
+
             spectra = opts(1);
             smooth = opts(2);
             windowDf = [];
@@ -774,6 +834,29 @@ classdef TimeDomainAnalysis < handle
                         end
                         tda.smotions{m, n} = spec;
                         tda.motFreq{m, n} = freq;
+                    end
+                end
+            end
+
+            if ~isempty(tda.hingeLoads)
+                tda.shingeLoads = cell(tda.nSig, tda.forceDof);
+                tda.forceFreq = cell(tda.nSig, tda.forceDof);
+                tlims = tda.forceTimeLims;
+                if isempty(tlims)
+                    tlims = cell(tda.nSig, tda.forceDof);
+                end
+                for m = 1:tda.nSig
+                    for n = 1:tda.forceDof
+                        timemn = tda.forceTime{m, n};
+                        sigmn = tda.hingeLoads{m, n};
+                        [iStart, iStop] = tda.tlimInds(tlims{m, n}, timemn, false);
+                        
+                        [spec, freq] = TimeDomainAnalysis.FFT(timemn(iStart:iStop), sigmn(iStart:iStop), noMean);
+                        if ~isempty(windowDf)
+                            spec = TimeDomainAnalysis.SmoothSpectrum(freq, spec, windowDf);
+                        end
+                        tda.shingeLoads{m, n} = spec;
+                        tda.forceFreq{m, n} = freq;
                     end
                 end
             end

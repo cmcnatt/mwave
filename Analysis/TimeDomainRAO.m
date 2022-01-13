@@ -53,6 +53,10 @@ classdef TimeDomainRAO < TimeDomainAnalysis
         function [mots, timeFreq] = GetMotions(tda, sigInds, dofs, varargin)
             [mots, timeFreq] = tda.raoGetValues('motions', sigInds, dofs, varargin{:});
         end
+
+        function [hinLoads, timeFreq] = GetHingeLoads(tda, sigInds, dofs, varargin)
+            [hinLoads, timeFreq] = tda.raoGetValues('hingeLoads', sigInds, dofs, varargin{:});
+        end
         
         function [ptoKin, timeFreq] = GetPtoKinematic(tda, sigInds, dofs, varargin)
             [ptoKin, timeFreq] = tda.raoGetValues('ptoKinematic', sigInds, dofs, varargin{:});
@@ -60,6 +64,10 @@ classdef TimeDomainRAO < TimeDomainAnalysis
         
         function [ptoDyn, timeFreq] = GetPtoDynamic(tda, sigInds, dofs, varargin)
             [ptoDyn, timeFreq] = tda.raoGetValues('ptoDynamic', sigInds, dofs, varargin{:});
+        end
+
+        function [ptoPow, timeFreq] = GetPtoPower(tda, sigInds, dofs, varargin)
+            [ptoPow, timeFreq] = tda.raoGetValues('ptoPower', sigInds, dofs, varargin{:});
         end
         
         function [pow, timeFreq] = Power(tda, sigInds, dofs, varargin)
@@ -278,7 +286,12 @@ classdef TimeDomainRAO < TimeDomainAnalysis
                 dofs = 1:tda.motDof;
             elseif ischar(dofs)
                 if strcmp(dofs, ':');
-                    dofs = 1:tda.motDof;
+                    switch type
+                        case 'hingeLoads'
+                            dofs = 1:tda.forceDof;
+                        case 'motions'
+                            dofs = 1:tda.motDof;
+                    end
                 end
             end
             
