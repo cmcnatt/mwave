@@ -503,13 +503,9 @@ classdef PowerMatrix < IEnergyComp
                         % power in kW
                         if ~isempty(dptos)
                             powmn = zeros(length(dptos),1);
+                            powACmn = zeros(length(dptos),1);
+                            powMechmn = zeros(length(dptos),1);
                             
-                            if acPowMat
-                                powACmn = zeros(length(dptos),1);
-                            end
-                            if mechPowMat
-                                powMechmn = zeros(length(dptos),1);
-                            end
                             errmn = zeros(length(dptos),1);
                             tdamn = cell(length(dptos),1);
                             for o = 1:length(dptos)
