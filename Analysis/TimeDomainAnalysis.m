@@ -22,7 +22,7 @@ classdef TimeDomainAnalysis < handle
     % Holds and processes time-domain results, which could come from an
     % experiment or a simulation
     
-    properties (Access = public)    
+    properties (Access = protected)    
         nSig;
         sigDes;
         motDof;
