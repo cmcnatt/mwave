@@ -171,8 +171,8 @@ classdef PowerMatrix < IEnergyComp
             interpPmat = opts(1);
             
             % Check power matrix and wave climate objects are of the same type.
-            if ( sum(size(pmat.Hs)>1) == 2 && sum(size(waveClim.Hs)>1) ~= 2 ) ...
-                    || ( sum(size(pmat.Hs)>1) ~= 2 && sum(size(waveClim.Hs)>1) == 2 )
+            if ( sum(size(pmat.Hs)>1) == 2 && sum(size(waveClim.Hs('intended'))>1) ~= 2 ) ...
+                    || ( sum(size(pmat.Hs)>1) ~= 2 && sum(size(waveClim.Hs('intended'))>1) == 2 )
                 error('In order to compute AEP, power matrix object and wave climate object must be of same type - either Hs-T or Se-T.')
             end
             
