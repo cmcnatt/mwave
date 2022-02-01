@@ -374,8 +374,8 @@ classdef TimeDomainAnalysis < handle
             end
         end
         
-        function [waves, timeFreq, wgPos, waveRamp] = GetWaves(tda, sigInds, wgInds, varargin)
-            [waves, timeFreq, wgPos, waveRamp] = tda.getWaves(sigInds, wgInds, varargin{:});
+        function [waves, timeFreq, wgPos] = GetWaves(tda, sigInds, wgInds, varargin)
+            [waves, timeFreq, wgPos] = tda.getWaves(sigInds, wgInds, varargin{:});
         end
         
         function [waveRamp, time] = GetWaveRamp(tda, varargin)
