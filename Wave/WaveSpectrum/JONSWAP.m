@@ -32,12 +32,15 @@ classdef JONSWAP < WaveSpectrum
                 ws = ws@WaveSpectrum();
                 if (nargin > 0)
                     f = 1./T;
-
+                    
                     E = JONSWAP.MakeSpec(Hs, Tp, T, gamma, varargin{:});
                     if (spread)
                         s = args{1}{1};
                         dirc = args{1}{2};
                         dir = args{1}{3};
+                        if size(dir,1) ~= 1
+                            dir = dir.';
+                        end
 
                         G = cosSpectSpread(s, dirc, dir);
                         E = E.'*G;
