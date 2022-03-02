@@ -13,4 +13,5 @@ FixedWidth = get(0,'FixedWidthFontName');
 % Output the table using the annotation command.
 annotation(fig, 'Textbox', 'String', TString, 'Interpreter', 'Tex', ...
     'FontName', FixedWidth, 'Units', 'Normalized', varargin{:});
+end
 
