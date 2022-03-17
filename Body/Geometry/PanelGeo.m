@@ -516,7 +516,7 @@ classdef PanelGeo < handle
         
         function plotFuncs(obj, func, varargin)
 
-            [opts, args] = checkOptions({{'ShowNorm'}, {'OnlyWet'}, {'NoInt'}, {'color', 1}, {'alpha', 1}, {'edge', 1} {'line', 1}}, varargin);
+            [opts, args] = checkOptions({{'ShowNorm'}, {'OnlyWet'}, {'NoInt'}, {'color', 1}, {'alpha', 1}, {'edge', 1}, {'line', 1}, {'water'}}, varargin);
             showNorm = opts(1);
             onlyWet = opts(2);
             noInt = opts(3);
@@ -536,6 +536,7 @@ classdef PanelGeo < handle
             if opts(7)
                 line = args{7};
             end
+            showWater = opts(8);
             
             
             xsy = false;
@@ -594,7 +595,7 @@ classdef PanelGeo < handle
             end
             
             patch(args{:});
-            
+
             if (showNorm)
                 hold on;
                 ipan = obj.getIndices(noInt, onlyWet);
@@ -605,6 +606,33 @@ classdef PanelGeo < handle
 %                 h1 = quiver3(cent(ipan,1), cent(ipan,2), cent(ipan,3), norm(ipan,1), norm(ipan,2), norm(ipan,3),'color', MColor.Black,'linewidth',1.5);
 %                 set(h1,'AutoScale','on', 'AutoScaleFactor', 1.5)
             end
+    
+            if showWater
+                % Find maximum extents of geometry
+                xExtent(1) = min(obj.Centroids(:,1));
+                xExtent(2) = max(obj.Centroids(:,1));
+                yExtent(1) = min(obj.Centroids(:,2));
+                yExtent(2) = max(obj.Centroids(:,2));
+
+                del = 0.4*max([-xExtent(1) xExtent(2) -yExtent(1) yExtent(2)]);
+                        
+                water = PanelGeo(...
+                    Panel(...
+                    [xExtent(1)-del yExtent(1)-del 0; 
+                    xExtent(2)+del yExtent(1)-del 0; 
+                    xExtent(2)+del yExtent(2)+del 0; 
+                    xExtent(1)-del yExtent(2)+del 0]));
+                [meshWater, vertsWater] = water.QuadMesh(noInt, onlyWet);
+                argsWater = args; % Reuse args from WEC mesh, but change some settings
+                argsWater{2} = meshWater; % faces
+                argsWater{4} = vertsWater; % vertices
+                argsWater{14} = 'none'; % turn off edges
+                argsWater{16} = 0.5; % Add transparency
+                argsWater{18} = MColor.Blue; % Set colour
+                patch(argsWater{:});
+%                 surf(water, 'color', MColor.Blue, 'alpha', 0.5);
+            end
+
         end
     end
 end
