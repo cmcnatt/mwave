@@ -286,7 +286,7 @@ classdef PowerMatrix < IEnergyComp
             [opts, args] = checkOptions({{'waveClim', 1}, {'minPow', 1}, ...
                 {'minOcc', 1}, {'specType', 1}, {'makeObj'}, ...
                 {'ratedPow', 1}, {'dptos', 1}, {'HsLim', 1}, {'seed',1}, {'ParallelOn'}, ...
-                {'fullMatrix'}, {'powMech'}, {'powAC'}}, varargin);
+                {'fullMatrix'}, {'powMech'}, {'powAC'}, {'beta', 1}}, varargin);
             
             type = 'bretschneider';
             if opts(4)
@@ -360,6 +360,12 @@ classdef PowerMatrix < IEnergyComp
                     error('AC power matrix can only be generated using a time-domain model.')
                 end
             end
+
+            if opts(14)
+                beta0 = args{14}; % Allow input of a non-zero angle between WEC and waves
+            else
+                beta0 = 0; % otherwise, assume WEC is aligned perfectly to waves
+            end
             
             [Mc, Nc] = waveClim.Size;
             
@@ -407,7 +413,7 @@ classdef PowerMatrix < IEnergyComp
                             comp.SetDpto(Dpto0);
                             
                             tic
-                            [pmat(:, n), tdasTemp, pmatMech(:,n), pmatAC(:,n)] = comp.AveragePower(waveClim.WaveSpectra(:, n),'seed',seed,'ParallelOn');
+                            [pmat(:, n), tdasTemp, pmatMech(:,n), pmatAC(:,n)] = comp.AveragePower(waveClim.WaveSpectra(:, n),'seed',seed,'ParallelOn','beta',beta0);
                             for m = 1:length(tdasTemp)
                                 tdas{m,n} = tdasTemp{m,1};
                             end
@@ -445,7 +451,7 @@ classdef PowerMatrix < IEnergyComp
                         seaStateSpectra = waveClim.WaveSpectra(runInds);
                         
                         tic
-                        [pmatVector, tdasTemp, pmatMechVector, pmatACVector] = comp.AveragePower(seaStateSpectra,'seed',seed,'ParallelOn');
+                        [pmatVector, tdasTemp, pmatMechVector, pmatACVector] = comp.AveragePower(seaStateSpectra,'seed',seed,'ParallelOn','beta',beta0);
                         
                         % Insert vector of tda objects back into matrix
                         % form.
@@ -516,7 +522,7 @@ classdef PowerMatrix < IEnergyComp
                                     [powmn(o), errmn(o)] = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed);
                                 elseif isTime
                                     error('Simulink model may not initialise correctly using parfor - instead, it should be parallelised using parsim.');
-                                    [powmn(o), tdamn{o}, powACmn(o), powMechmn(o)] = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed);
+                                    [powmn(o), tdamn{o}, powACmn(o), powMechmn(o)] = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed,'beta',beta0);
                                 else
                                     [powmn(o)] = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed);
                                 end
@@ -548,7 +554,7 @@ classdef PowerMatrix < IEnergyComp
                             if isSpec
                                 [pmat(m, n), errs(m, n)] = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed);
                             elseif isTime
-                                [pmat(m, n), tdas{m, n}, pmatAC(m, n), pmatMech(m, n)] = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed);
+                                [pmat(m, n), tdas{m, n}, pmatAC(m, n), pmatMech(m, n)] = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed,'beta',beta0);
                             else
                                 [pmat(m, n)] = comp.AveragePower(waveClim.WaveSpectra(m, n),'seed',seed);
                             end
