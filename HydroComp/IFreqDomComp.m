@@ -823,6 +823,35 @@ classdef IFreqDomComp < IEnergyComp & handle
                 end
             end
         end
+
+        function [natPeriods] = ComputeNaturalPeriods(hcomp)
+            % COMPUTENATURALPERIODS: Computes the natural periods of the
+            % WEC, using just the mass matrix, added mass matrix and
+            % hydrostatic stiffness matrix.
+
+            % Compute impedance matrix without damping
+            omega = 2*pi./hcomp.T; % Compute frequencies
+            matNF = -repmat(omega,1,size(hcomp.A,2),size(hcomp.A,3)).^2.*(shiftdim(repmat(hcomp.M,1,1,length(omega)),2) + hcomp.A) ...
+                + shiftdim(repmat(hcomp.C,1,1,length(omega)),2);
+
+            % Compute determinant - i.e. where reactance terms cancel and thus where
+            % natural frequencies lie.
+            for i = 1:length(omega)
+                detVec(i) = det(squeeze(matNF(i,:,:)));
+            end
+
+            % Interpolate data
+            wInterp = omega(1):0.001:omega(end);
+            detVecInterp = makima(omega,detVec,wInterp);
+
+            % Automatically find zero-crossings and thus natural frequencies
+            zci = @(v) find(diff(sign(v)));                    % Returns Zero-Crossing Indices Of Argument Vector
+            zx = zci(detVecInterp);
+            natPeriodsAuto(1:length(zx)) = 2*pi./wInterp(zx);
+
+            % Set function output
+            natPeriods = sort(natPeriodsAuto);
+        end
         
         function [] = SetM(hcomp, m, m0)
             % Set the Mass value, currently does not change the
