@@ -322,7 +322,7 @@ classdef WaveClimate < handle
         
         function [T0, Hs0] = PlotScatter(clim, varargin)
             [opts, args] = checkOptions({{'skip', 1}, {'hslim', 1}, ...
-                {'percent'}, {'Tp'}, {'Te'}, {'EfWeight'}}, varargin);
+                {'percent'}, {'Tp'}, {'Te'}, {'EfWeight'}, {'occurance'}}, varargin);
             
             skip = 2;
             if opts(1)
@@ -336,6 +336,7 @@ classdef WaveClimate < handle
             useTp = opts(4);
             useTe = opts(5);
             efWeight = opts(6);
+            occurance = opts(7);
             
             Hs = clim.Hs('Intended');
             T_ = clim.T02('Intended');
@@ -348,6 +349,9 @@ classdef WaveClimate < handle
             if percent
                 freqO = 100*clim.FreqOccurance;
                 ylab = '% of year';
+            elseif occurance
+                freqO = 100*clim.FreqOccurance;
+                ylab = 'Occurance (%)';
             else
                 freqO = clim.FreqOccurance('hours');
                 ylab = 'hours/year';
