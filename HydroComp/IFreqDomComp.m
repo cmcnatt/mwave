@@ -832,7 +832,7 @@ classdef IFreqDomComp < IEnergyComp & handle
             % Compute impedance matrix without damping
             omega = 2*pi./hcomp.T; % Compute frequencies
             matNF = -repmat(omega,1,size(hcomp.A,2),size(hcomp.A,3)).^2.*(shiftdim(repmat(hcomp.M,1,1,length(omega)),2) + hcomp.A) ...
-                + shiftdim(repmat(hcomp.C,1,1,length(omega)),2);
+                + shiftdim(repmat(hcomp.C+hcomp.K,1,1,length(omega)),2);
 
             % Compute determinant - i.e. where reactance terms cancel and thus where
             % natural frequencies lie.
