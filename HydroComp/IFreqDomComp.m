@@ -824,15 +824,30 @@ classdef IFreqDomComp < IEnergyComp & handle
             end
         end
 
-        function [natPeriods] = ComputeNaturalPeriods(hcomp)
+        function [natPeriods] = ComputeNaturalPeriods(hcomp,varargin)
             % COMPUTENATURALPERIODS: Computes the natural periods of the
             % WEC, using just the mass matrix, added mass matrix and
             % hydrostatic stiffness matrix.
+            [opts, args] = checkOptions({{'dofInds', 1}}, varargin);
+            
+            if opts(1)
+                dofInds = args{1};
+                for i = 1:length(dofInds)
+                    if mod(dofInds(i),1) ~= 0
+                        error('Specified DoFs must be integers.')
+                    end
+                    if dofInds(i) > hcomp.DoF
+                        error('At least one of specified DoFs lies outside range of computed DoFs.')
+                    end
+                end
+            else
+                dofInds = 1:hcomp.DoF;
+            end
 
             % Compute impedance matrix without damping
             omega = 2*pi./hcomp.T; % Compute frequencies
-            matNF = -repmat(omega,1,size(hcomp.A,2),size(hcomp.A,3)).^2.*(shiftdim(repmat(hcomp.M,1,1,length(omega)),2) + hcomp.A) ...
-                + shiftdim(repmat(hcomp.C+hcomp.K,1,1,length(omega)),2);
+            matNF = -repmat(omega,1,length(dofInds),length(dofInds)).^2.*(shiftdim(repmat(hcomp.M(dofInds,dofInds),1,1,length(omega)),2) + hcomp.A(:,dofInds,dofInds)) ...
+                + shiftdim(repmat(hcomp.C(dofInds,dofInds)+hcomp.K(dofInds,dofInds),1,1,length(omega)),2);
 
             % Compute determinant - i.e. where reactance terms cancel and thus where
             % natural frequencies lie.
