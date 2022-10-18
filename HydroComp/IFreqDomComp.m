@@ -845,7 +845,11 @@ classdef IFreqDomComp < IEnergyComp & handle
             end
 
             % Compute impedance matrix without damping
-            omega = 2*pi./hcomp.T; % Compute frequencies
+            if hcomp.T(end) > hcomp.T(1) % Make sure vector is right way around
+                omega = flipud(2*pi./hcomp.T);
+            else
+                omega = 2*pi./hcomp.T; % Compute frequencies
+            end
             matNF = -repmat(omega,1,length(dofInds),length(dofInds)).^2.*(shiftdim(repmat(hcomp.M(dofInds,dofInds),1,1,length(omega)),2) + hcomp.A(:,dofInds,dofInds)) ...
                 + shiftdim(repmat(hcomp.C(dofInds,dofInds)+hcomp.K(dofInds,dofInds),1,1,length(omega)),2);
 
