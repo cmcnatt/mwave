@@ -336,7 +336,7 @@ classdef WaveFieldCollection < IWaveField & handle
 
                                 S = (0.5*a_.^2./Df./Db);
 
-                                specs(n, m) = WaveSpectrum(S, f, beta);
+                                specs(n, m) = WaveSpectrum(S.', f, beta); % Not sure why, but I needed to switch S to S.' to avoid a bug from WaveSpectrum (changed on 15/02/2023 by AC)
                             end
                         end
                     else
