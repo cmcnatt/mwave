@@ -48,6 +48,15 @@ classdef PowerMatrix < IEnergyComp
     methods
         
         function [pmat] = PowerMatrix(mat, Hs, T02, T, H, Rho, specType)
+            % Note: it is not straightforward to add an 'Se' option because
+            % of the use of nargin here, so we cannot use varargin with
+            % checkOpts as we might in other codes. 
+            %   If wish to make
+            % a power matrix based on an Se vector, the user should compute
+            % the Hs matrix that corresponds to the Se vector, and input
+            % that to this constructor. (i.e. the reverse of the code on
+            % get.Se)
+
             pmat.f =[];
             pmat.mat = mat;
             pmat.hs = Hs;
