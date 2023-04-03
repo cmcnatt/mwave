@@ -172,6 +172,10 @@ classdef TimeDomainAnalysis < handle
         function [] = SetPtoVph(tda, dofs, time, ptoVoltage)
             tda.setValues('ptoVph', dofs, time, ptoVoltage);
         end
+
+        function [] = SetGearRatio(tda, dofs, time, gearRatio)
+            tda.setValues('gearRatio', dofs, time, gearRatio);
+        end
                 
         function [] = SetWaves(tda, wgPos, time, waves)
             
@@ -334,6 +338,10 @@ classdef TimeDomainAnalysis < handle
         function [ptoVoltage, timeFreq] = GetPtoVph(tda, sigInds, dofs, varargin)
             [ptoVoltage, timeFreq] = tda.getValues('ptoVph', sigInds, dofs, varargin{:});
         end
+
+        function [gearRatio, timeFreq] = GetGearRatio(tda, sigInds, dofs, varargin)
+            [gearRatio, timeFreq] = tda.getValues('gearRatio', sigInds, dofs, varargin{:});
+        end
         
         function [pow, time] = Power(tda, sigInds, dofs, varargin)
             [opts] = checkOptions({{'mean'}, {'max'}}, varargin);
@@ -456,6 +464,9 @@ classdef TimeDomainAnalysis < handle
                 case 'ptoVph'
                     sType = 'pto';
                     sigName = 'PtoVph';
+                case 'gearRatio'
+                    sType = 'pto';
+                    sigName = 'gearRatio';
                 otherwise
                     error('setValues type not recognized');
             end
@@ -553,6 +564,8 @@ classdef TimeDomainAnalysis < handle
                 case 'ptoIph'
                     sType = 'pto';
                 case 'ptoVph'
+                    sType = 'pto';
+                case 'gearRatio'
                     sType = 'pto';
                 otherwise
                     error('getValues type not recognized');
