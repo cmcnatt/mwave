@@ -40,6 +40,7 @@ classdef TimeDomainAnalysis < handle
         ptoIq;
         ptoIph;
         ptoVph;
+        gearRatio;
         waveSigs;
         waveRamp;
         fmotions;
