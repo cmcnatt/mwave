@@ -41,6 +41,9 @@ classdef TimeDomainAnalysis < handle
         ptoIph;
         ptoVph;
         gearRatio;
+        thetaVHM;
+        thetaL;
+        pnts;
         waveSigs;
         waveRamp;
         fmotions;
@@ -176,6 +179,18 @@ classdef TimeDomainAnalysis < handle
 
         function [] = SetGearRatio(tda, dofs, time, gearRatio)
             tda.setValues('gearRatio', dofs, time, gearRatio);
+        end
+
+        function [] = SetThetaVHM(tda, dofs, time, thetaVHM)
+            tda.setValues('thetaVHM', dofs, time, thetaVHM);
+        end
+
+        function [] = SetThetaL(tda, dofs, time, thetaL)
+            tda.setValues('thetaL', dofs, time, thetaL);
+        end
+
+        function [] = SetLinkagePoints(tda, dofs, time, pnts)
+            tda.setValues('pnts', dofs, time, pnts);
         end
                 
         function [] = SetWaves(tda, wgPos, time, waves)
@@ -344,6 +359,18 @@ classdef TimeDomainAnalysis < handle
             [gearRatio, timeFreq] = tda.getValues('gearRatio', sigInds, dofs, varargin{:});
         end
         
+        function [thetaVHM, timeFreq] = GetThetaVHM(tda, sigInds, dofs, varargin)
+            [thetaVHM, timeFreq] = tda.getValues('thetaVHM', sigInds, dofs, varargin{:});
+        end
+
+        function [thetaL, timeFreq] = GetThetaL(tda, sigInds, dofs, varargin)
+            [thetaL, timeFreq] = tda.getValues('thetaL', sigInds, dofs, varargin{:});
+        end
+
+        function [pnts, timeFreq] = GetLinkagePoints(tda, sigInds, dofs, varargin)
+            [pnts, timeFreq] = tda.getValues('pnts', sigInds, dofs, varargin{:});
+        end
+
         function [pow, time] = Power(tda, sigInds, dofs, varargin)
             [opts] = checkOptions({{'mean'}, {'max'}}, varargin);
             
@@ -468,6 +495,15 @@ classdef TimeDomainAnalysis < handle
                 case 'gearRatio'
                     sType = 'pto';
                     sigName = 'gearRatio';
+                case 'thetaVHM'
+                    sType = 'pto';
+                    sigName = 'thetaVHM';
+                case 'thetaL'
+                    sType = 'pto';
+                    sigName = 'thetaL';
+                case 'pnts'
+                    sType = 'pto';
+                    sigName = 'pnts';
                 otherwise
                     error('setValues type not recognized');
             end
@@ -504,6 +540,12 @@ classdef TimeDomainAnalysis < handle
                 err = 1;
             end
             
+            if strcmp(type,'pnts')
+                err = 0; % for pnts, allow Nsig = 4 and Ndof = 2
+                tda.nSig = 4;
+                tda.ptoDof = 2;
+                         % NOTE: perhaps this should be better coded later.
+            end
             if err
                 error([sigName ' must be of size Nsig x Ndof x Ntime']);
             end
@@ -568,6 +610,12 @@ classdef TimeDomainAnalysis < handle
                     sType = 'pto';
                 case 'gearRatio'
                     sType = 'pto';
+                case 'thetaVHM'
+                    sType = 'pto';
+                case 'thetaL'
+                    sType = 'pto';
+                case 'pnts'
+                    sType = 'pto';
                 otherwise
                     error('getValues type not recognized');
             end
@@ -617,6 +665,9 @@ classdef TimeDomainAnalysis < handle
             
             for m = 1:Nsig
                 for n = 1:Ndof
+                    if strcmp(type,'pnts')
+                        tlims{m,n} = tlims{1,1};
+                    end
                     if spec
                         eval(['timeFreq{m, n} = tda.' sType 'Freq{sigInds(m), dofs(n)};'])
                         eval(['sigs{m, n} = tda.' fstr type '{sigInds(m), dofs(n)};'])
