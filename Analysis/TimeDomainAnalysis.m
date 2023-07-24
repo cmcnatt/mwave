@@ -54,6 +54,7 @@ classdef TimeDomainAnalysis < handle
         shingeLoads;
         sptoKinematic;
         sptoDynamic;
+        sthetaVHM;
         swaveSigs;
         motTime;
         ptoTime;
@@ -63,6 +64,7 @@ classdef TimeDomainAnalysis < handle
         motFreq;
         ptoFreq;
         forceFreq;
+        thetaVHMFreq;
         waveFreq;
         motTimeLims;
         ptoTimeLims;
@@ -899,6 +901,29 @@ classdef TimeDomainAnalysis < handle
                         end
                         tda.smotions{m, n} = spec;
                         tda.motFreq{m, n} = freq;
+                    end
+                end
+            end
+
+            if ~isempty(tda.thetaVHM)
+                tda.sthetaVHM = cell(tda.nSig, tda.ptoDof);
+                tda.thetaVHMFreq = cell(tda.nSig, tda.ptoDof);
+                tlims = tda.ptoTimeLims;
+                if isempty(tlims)
+                    tlims = cell(tda.nSig, tda.ptoDof);
+                end
+                for m = 1:tda.nSig
+                    for n = 1:tda.ptoDof
+                        timemn = tda.ptoTime{m, n};
+                        sigmn = tda.thetaVHM{m, n};
+                        [iStart, iStop] = tda.tlimInds(tlims{m,n}, timemn, false);
+                        
+                        [spec, freq] = TimeDomainAnalysis.FFT(timemn(iStart:iStop), sigmn(iStart:iStop), noMean);
+                        if ~isempty(windowDf)
+                            spec = TimeDomainAnalysis.SmoothSpectrum(freq, spec, windowDf);
+                        end
+                        tda.sthetaVHM{m, n} = spec;
+                        tda.thetaVHMFreq{m, n} = freq;
                     end
                 end
             end

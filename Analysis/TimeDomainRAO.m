@@ -69,6 +69,10 @@ classdef TimeDomainRAO < TimeDomainAnalysis
         function [ptoPow, timeFreq] = GetPtoPower(tda, sigInds, dofs, varargin)
             [ptoPow, timeFreq] = tda.raoGetValues('ptoPower', sigInds, dofs, varargin{:});
         end
+
+        function [ptoPow, timeFreq] = GetThetaVHM(tda, sigInds, dofs, varargin)
+            [ptoPow, timeFreq] = tda.raoGetValues('thetaVHM', sigInds, dofs, varargin{:});
+        end
         
         function [pow, timeFreq] = Power(tda, sigInds, dofs, varargin)
             [opts, args] = checkOptions({{'rao'}, {'noNorm'}, {'CW', 1}, {'mat'}, {'mean'}}, varargin);
