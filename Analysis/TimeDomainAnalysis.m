@@ -33,6 +33,7 @@ classdef TimeDomainAnalysis < handle
         ptoDynamic;
         ptoPower;
         hingeLoads;
+        interrPtLoads;
         ptoAvailPower;
         ptoMechPower;
         ptoACPower;
@@ -52,6 +53,7 @@ classdef TimeDomainAnalysis < handle
         fwaveSigs;
         smotions;
         shingeLoads;
+        sinterrPtLoads;
         sptoKinematic;
         sptoDynamic;
         sthetaVHM;
@@ -149,6 +151,10 @@ classdef TimeDomainAnalysis < handle
 
         function [] = SetHingeLoads(tda, dofs, time, hinLoads)
             tda.setValues('hingeLoads', dofs, time, hinLoads);
+        end
+
+        function [] = SetInterrPtLoads(tda, dofs, time, interrPtLoads)
+            tda.setValues('interrPtLoads', dofs, time, interrPtLoads);
         end
         
         function [] = SetPtoAvailPower(tda, dofs, time, ptoPow)
@@ -328,6 +334,10 @@ classdef TimeDomainAnalysis < handle
         function [hinLoads, timeFreq] = GetHingeLoads(tda, sigInds, dofs, varargin)
             [hinLoads, timeFreq] = tda.getValues('hingeLoads', sigInds, dofs, varargin{:});
         end
+
+        function [interrPtLoads, timeFreq] = GetInterrPtLoads(tda, sigInds, dofs, varargin)
+            [interrPtLoads, timeFreq] = tda.getValues('interrPtLoads', sigInds, dofs, varargin{:});
+        end
         
         function [ptoPow, timeFreq] = GetPtoAvailPower(tda, sigInds, dofs, varargin)
             [ptoPow, timeFreq] = tda.getValues('ptoAvailPower', sigInds, dofs, varargin{:});
@@ -473,6 +483,9 @@ classdef TimeDomainAnalysis < handle
                 case 'hingeLoads'
                     sType = 'force';
                     sigName = 'HingeLoads';
+                case 'interrPtLoads'
+                    sType = 'force';
+                    sigName = 'InterrPtLoads';
                 case 'ptoAvailPower'
                     sType = 'pto';
                     sigName = 'PtoAvailPower';
@@ -595,6 +608,8 @@ classdef TimeDomainAnalysis < handle
                 case 'ptoPower'
                     sType = 'pto';
                 case 'hingeLoads'
+                    sType = 'force';
+                case 'interrPtLoads'
                     sType = 'force';
                 case 'ptoAvailPower'
                     sType = 'pto';
