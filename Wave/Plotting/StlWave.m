@@ -230,7 +230,7 @@ classdef StlWave < IStlGeo
                 
                 k = solveForK(stl.omega, stl.h);
                 
-                stl.eta = zeros(length(stl.x), length(stl.y), N);
+                stl.eta = zeros(length(stl.y), length(stl.x), N);
                 for n = 1:N
                     stl.eta(:,:,n) = stl.a(n)*exp(-1i*(k(n)*cos(beta0(n))*X_ + k(n)*sin(beta0(n))*Y_));
                 end   
