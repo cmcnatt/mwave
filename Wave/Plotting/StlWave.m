@@ -30,6 +30,7 @@ classdef StlWave < IStlGeo
         omega;
         beta;
         h;
+        phase;
         eta;
         x;
         y;
@@ -48,6 +49,7 @@ classdef StlWave < IStlGeo
         Omega;
         Beta;
         H;
+        Phase;
         X;
         Y;
         Time;
@@ -56,7 +58,7 @@ classdef StlWave < IStlGeo
     
     methods
         
-        function [stl] = StlWave(a, omega, beta, h)
+        function [stl] = StlWave(a, omega, beta, h, phase)
             if nargin > 0
                 stl.a = a;
             end
@@ -68,6 +70,11 @@ classdef StlWave < IStlGeo
             end
             if nargin > 3
                 stl.h = h;
+            end
+            if nargin > 4
+                stl.phase = phase;
+            else
+                stl.phase = zeros(length(omega),1);
             end
         end
         
@@ -149,6 +156,14 @@ classdef StlWave < IStlGeo
         function [val] = get.H(stl)
             val = stl.h;
         end
+
+        function [] = set.Phase(stl, val)
+            stl.phase = val;
+            stl.computeEta;
+        end
+        function [val] = get.Phase(stl)
+            val = stl.phase;
+        end
         
         function [] = set.X(stl, val)
             stl.x = val;
@@ -212,8 +227,12 @@ classdef StlWave < IStlGeo
     methods (Access = private)
         function [] = computeEta(stl)
             if ~isempty(stl.x) && ~isempty(stl.y) && ~isempty(stl.a) ...
-                    && ~isempty(stl.omega) && ~isempty(stl.beta) && ~isempty(stl.h)
+                    && ~isempty(stl.omega) && ~isempty(stl.beta) && ~isempty(stl.h) && ~isempty(stl.phase)
                 
+                if stl.x ~= stl.y
+                    warning('Code is likely to run into issues with a non-square domain, and errors are not obvious - using a square domain is recommended for now.')
+                end
+
                 [X_, Y_] = meshgrid(stl.x, stl.y);
                 
                 N = length(stl.a);
@@ -230,9 +249,9 @@ classdef StlWave < IStlGeo
                 
                 k = solveForK(stl.omega, stl.h);
                 
-                stl.eta = zeros(length(stl.y), length(stl.x), N);
+                stl.eta = zeros(length(stl.x), length(stl.y), N);
                 for n = 1:N
-                    stl.eta(:,:,n) = stl.a(n)*exp(-1i*(k(n)*cos(beta0(n))*X_ + k(n)*sin(beta0(n))*Y_));
+                    stl.eta(:,:,n) = stl.a(n)*exp(-1i*(k(n)*cos(beta0(n))*X_ + k(n)*sin(beta0(n))*Y_ - stl.phase(n)));
                 end   
             end
         end
@@ -243,7 +262,7 @@ classdef StlWave < IStlGeo
                 stl.computeEta;
             end
             if ~isempty(stl.x) && ~isempty(stl.y) && ~isempty(stl.a) ...
-                    && ~isempty(stl.omega) && ~isempty(stl.beta) && ~isempty(stl.h)
+                    && ~isempty(stl.omega) && ~isempty(stl.beta) && ~isempty(stl.h) && ~isempty(stl.phase)
                 
                 if isempty(stl.time)
                     stl.time = 0;
