@@ -151,6 +151,12 @@ classdef StlVideo < handle
             limz = [2*minz 2*maxz];
             
             [maxz, minz] = vid.wave.ComputeMaxMin(vid.time);
+            if 2*maxz > limz(2) % i.e. if wave is bigger than body motions, use this to scale z-axis.
+                limz(2) = 2*maxz;
+            end
+            if 2*minz < limz(1)
+                limz(1) = 2*minz;
+            end
             limw = [minz maxz];
             
             mov = [];
