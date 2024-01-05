@@ -409,7 +409,7 @@ classdef WaveClimate < handle
     
     methods (Static)
         function [wc] = MakeWaveClimate(type, Hs, T, f, varargin)
-            [opts, args] = checkOptions({{'FreqOcc', 1}, {'H', 1}, {'Rho', 1}, {'T02'}, {'Tp'}}, varargin);
+            [opts, args] = checkOptions({{'FreqOcc', 1}, {'H', 1}, {'Rho', 1}, {'T02'}, {'Tp'}, {'spread',4}}, varargin);
             
             if size(Hs,1) > 1 && size(Hs,2) > 1
                 typeSe = 1; % when wave steepness is used, there is a unique Hs for each Se-Te pairing
@@ -446,6 +446,33 @@ classdef WaveClimate < handle
                 Ttype = 'T02';
             end
 
+            spread = opts(6);
+            if spread
+                s = args{6}{1}; % Spreading parameter for cos^(2s) distribution
+                dirc = args{6}{2}; % Wave direction at centre of distribution
+                Nb = args{6}{3}; % Set number of angles to use for wave components
+                Nw = args{6}{4}; % Set number of frequencies to use for wave components
+
+                % Catch errors
+                if length(s) > 1
+                    errorMsg = sprintf(['MoeCreateClimates is only set up to accommodate a single spreading parameter.\n'...
+                        'The user should run a loop outside this function in order to create a 3D power matrix.']);
+                    error(errorMsg)
+                end
+                if s < 1 || s > 100
+                    warning('Spreading parameters outside range 1-100 are quite extreme. Are you sure this is correct?')
+                end
+                if length(dirc) > 1
+                    error('User must specify a single value for the centre of the distribution.')
+                end
+                if length(Nb) > 1 || Nb <= 0 || rem(Nb,1) > 0
+                    error('User must specify a single, positive, integer value for the centre of the distribution.')
+                end
+                if length(Nw) > 1 || Nw <= 0 || rem(Nw,1) > 0
+                    error('User must specify a single, positive, integer value for the centre of the distribution.')
+                end
+            end
+
             if strcmpi(type, 'bretschneider')
                 bs = true;
             elseif strcmpi(type, 'jonswap')
@@ -458,13 +485,57 @@ classdef WaveClimate < handle
                 specs_ = [];
             else
                 specs_(nHs, nT) = Bretschneider;
+                
+                if spread
+                    % With numWaveComponents = Nw*Nb, will want to trim
+                    % spectrum first:
+                    for m = 1:nHs
+                        for n = 1:nT
+                            if strcmp(Ttype,'T02')
+                                T02_n = T(n);
+                            end
+                            if typeSe
+                                Hs_m = Hs(m,n);
+                            else
+                                Hs_m = Hs(m);
+                            end
+                            testAngRange = [-pi/2:pi/200:pi/2]; testOmegaRange = 2*pi*f;
+                            [~, AwTemp0] = WaveClimate.bretschneider(Hs_m, T02_n, testOmegaRange, 123, 'cos2s',s,dirc,testAngRange');
+
+                            [wMaxVal wMaxInd] = max(max(abs(AwTemp0)));
+                            angleInds = find(abs(AwTemp0(:,wMaxInd))>wMaxVal/100); % Find angle indices of above range that are worth considering in our spectrum.
+                            betaForSpecAll(m,n,:) = linspace(0.99*testAngRange(min(angleInds)), 0.99*testAngRange(max(angleInds)), Nb);
+
+                            [betaMaxVal betaMaxInd] = max(max(abs(AwTemp0),[],2));
+                            freqInds = find(abs(AwTemp0(betaMaxInd,:))>betaMaxVal/100); % Find frequency indices of above range that are worth considering in our spectrum.
+                            wForSpec = logspace(log10(1.01*testOmegaRange(min(freqInds))), log10(0.99*testOmegaRange(max(freqInds))), Nw);
+                            fForSpecAll(m,n,:) = wForSpec/(2*pi);
+                        end
+                    end
+                    minBeta = min(betaForSpecAll,[],'all'); % Find minimum beta from all individual trimmed spectra
+                    maxBeta = max(betaForSpecAll,[],'all'); % Find maximum beta from all individual trimmed spectra
+                    betaForSpec = linspace(minBeta, maxBeta, Nb);
+
+                    minf = min(fForSpecAll,[],'all'); % Find minimum f from all individual trimmed spectra
+                    maxf = max(fForSpecAll,[],'all'); % Find maximum f from all individual trimmed spectra
+                    fForSpec = linspace(minf, maxf, Nw);
+                end
+
                 for m = 1:nHs
                     for n = 1:nT
                         if bs
-                            if typeSe
-                                specs_(m,n) = Bretschneider(Hs(m,n), T(n), 1./f, Ttype, varargin{:});
+                            if spread
+                                if typeSe
+                                    specs_(m,n) = Bretschneider(Hs(m,n), T(n), 1./fForSpec, Ttype, varargin{:}, 'Cos2s', s, dirc, betaForSpec);
+                                else
+                                    specs_(m,n) = Bretschneider(Hs(m), T(n), 1./fForSpec, Ttype, varargin{:}, 'Cos2s', s, dirc, betaForSpec);
+                                end
                             else
-                                specs_(m,n) = Bretschneider(Hs(m), T(n), 1./f, Ttype, varargin{:}); 
+                                if typeSe
+                                    specs_(m,n) = Bretschneider(Hs(m,n), T(n), 1./f, Ttype, varargin{:});
+                                else
+                                    specs_(m,n) = Bretschneider(Hs(m), T(n), 1./f, Ttype, varargin{:});
+                                end
                             end
                         else
                             if typeSe
@@ -548,6 +619,47 @@ classdef WaveClimate < handle
                end
             end
         end
+
+        function [S, A] = bretschneider(Hs, Tp, w, seed, varargin)
+
+            [opts, args] = checkOptions({{'Cos2s', 3}}, varargin);
+            spread = opts(1);
+
+            wp = 2*pi./Tp;
+            coef = 5/16*wp^4*Hs^2;
+            Suni = coef./(w.^5).*exp(-5/4*(wp./w).^4);
+
+            if spread
+                s = args{1}{1};
+                dirc = args{1}{2};
+                dir = args{1}{3};
+
+                G = cosSpectSpread(s, dirc, dir);
+                S = Suni.*G;
+
+                dbeta = dir(2:end) - dir(1:end-1);
+                dbeta(end+1) = dbeta(end);
+            else
+                S = Suni;
+
+                dbeta = 1;
+            end
+
+            if ~isempty(seed)
+                rng(seed);
+            end
+            phase = (2*pi*rand(length(dbeta), length(w)));
+            if iscolumn(w)
+                phase = phase';
+            end
+
+            dw = w(2:end) - w(1:end-1);
+            dw(end+1) = dw(end);
+
+            A = (sqrt(2*S.*repmat(dw,length(dbeta),1).*repmat(dbeta,1,length(dw))).*exp(1i*phase));
+
+        end
+
     end
     
 end
