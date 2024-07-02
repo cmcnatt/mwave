@@ -85,7 +85,7 @@ classdef Bretschneider < WaveSpectrum
                 error('typeIn not recognized');
             end
             
-            % convert T02 to typeOut
+            % convert T02 to typeOut.
             if strcmpi(typeOut, 'T02')
                 To = T02;
             elseif strcmpi(typeOut, 'Te')
