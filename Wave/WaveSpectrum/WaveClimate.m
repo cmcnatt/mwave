@@ -409,7 +409,7 @@ classdef WaveClimate < handle
     
     methods (Static)
         function [wc] = MakeWaveClimate(type, Hs, T, f, varargin)
-            [opts, args] = checkOptions({{'FreqOcc', 1}, {'H', 1}, {'Rho', 1}, {'T02'}, {'Tp'}, {'spread',4}}, varargin);
+            [opts, args] = checkOptions({{'FreqOcc', 1}, {'H', 1}, {'Rho', 1}, {'T02'}, {'Tp'}, {'spread',4}, {'spread_logSpacing'}}, varargin);
             
             if size(Hs,1) > 1 && size(Hs,2) > 1
                 typeSe = 1; % when wave steepness is used, there is a unique Hs for each Se-Te pairing
@@ -452,6 +452,8 @@ classdef WaveClimate < handle
                 dirc = args{6}{2}; % Wave direction at centre of distribution
                 Nb = args{6}{3}; % Set number of angles to use for wave components
                 Nw = args{6}{4}; % Set number of frequencies to use for wave components
+
+                logSpacing = opts(7); % Set whether to use log spacing or linear for frequencies
 
                 % Catch errors
                 if length(s) > 1
@@ -518,7 +520,11 @@ classdef WaveClimate < handle
 
                     minf = min(fForSpecAll,[],'all'); % Find minimum f from all individual trimmed spectra
                     maxf = max(fForSpecAll,[],'all'); % Find maximum f from all individual trimmed spectra
-                    fForSpec = linspace(minf, maxf, Nw);
+                    if logSpacing
+                        fForSpec = logspace(log10(minf), log10(maxf), Nw);
+                    else
+                        fForSpec = linspace(log10(minf), log10(maxf), Nw);
+                    end
                 end
 
                 for m = 1:nHs
