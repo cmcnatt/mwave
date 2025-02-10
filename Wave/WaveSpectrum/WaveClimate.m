@@ -523,7 +523,7 @@ classdef WaveClimate < handle
                     if logSpacing
                         fForSpec = logspace(log10(minf), log10(maxf), Nw);
                     else
-                        fForSpec = linspace(log10(minf), log10(maxf), Nw);
+                        fForSpec = linspace(minf, maxf, Nw);
                     end
                 end
 
