@@ -501,7 +501,7 @@ classdef WaveClimate < handle
                             else
                                 Hs_m = Hs(m);
                             end
-                            testAngRange = [-pi/2:pi/200:pi/2]; testOmegaRange = 2*pi*f;
+                            testAngRange = [-pi/2:pi/200:pi/2]+dirc; testOmegaRange = 2*pi*f;
                             [~, AwTemp0] = WaveClimate.bretschneider(Hs_m, T02_n, testOmegaRange, 123, 'cos2s',s,dirc,testAngRange');
 
                             [wMaxVal wMaxInd] = max(max(abs(AwTemp0)));
