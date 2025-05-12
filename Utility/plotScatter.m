@@ -24,8 +24,7 @@ end
 
 yLab = cell(1,length(y));
 for n = 1:length(y)
-    %yLab{n} = num2str(y(n), '%4.2f');
-    yLab{n} = num2str(y(n), '%.2e');
+    yLab{n} = num2str(y(n), '%4.2f');
 end
 
 xLab = cell(1,length(x));
