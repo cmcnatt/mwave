@@ -219,7 +219,7 @@ disp('ERROR: This example section is not working correctly')
 Hs = 2;                         % significant wave height
 fm = 0.2;                       % modal period
 f = 0.08:0.02:0.8;              % the range of wave frequencies (Hz)
-S = bretschneider(Hs, fm, f);   % Bretschneider spectrum
+S = Bretschneider.MakeSpec(Hs, 1./fm, 1./f);   % Bretschneider spectrum
 
 % next create a directional spread
 s = 4;                              % spreading parameter
