@@ -262,22 +262,33 @@ classdef PowerMatrix < IEnergyComp
         end
         
         function [] = PlotScatter(pmat, varargin)
-            [opts, args] = checkOptions({{'skip', 1}}, varargin);
+            [opts, args] = checkOptions({{'skip', 1},{'compareWith',1}}, varargin);
             
             skip = 2;
             if opts(1)
                 skip = args{1};
             end
+            if opts(2) % i.e. wish to make comparison plot
+                pmat2 = args{2};
+            end
             
             indsHs = 1:skip:length(pmat.Hs);
             indsT = 1:skip:length(pmat.T02);
             
-            plotScatter(pmat.T02, pmat.Hs, pmat.mat, 'xinds', indsT, 'yinds', indsHs);
+            if opts(2)
+                plotScatter(pmat.T02, pmat.Hs, 100*pmat.mat./pmat2.mat, 'xinds', indsT, 'yinds', indsHs);
+            else
+                plotScatter(pmat.T02, pmat.Hs, pmat.mat, 'xinds', indsT, 'yinds', indsHs);
+            end
             
             xlabel('T02 (s)');
             ylabel('Hs (m)');
             cb = colorbar;
-            ylabel(cb, 'power (kW)');
+            if opts(2)
+                ylabel(cb, 'power (% difference)');
+            else
+                ylabel(cb, 'power (kW)');
+            end
         end
     end
     
