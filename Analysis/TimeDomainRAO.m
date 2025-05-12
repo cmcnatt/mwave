@@ -354,7 +354,7 @@ classdef TimeDomainRAO < TimeDomainAnalysis
                                 sigs{m, 1}(o) = (specs{o, m}(1) - delta)/ai(o);
                                 sigs{m, 2}(o) = delta/ai(o);
                             else
-                                indf = indexOf(freq{o,m}, n*tda.freqs(o));
+                                indf = indexOf(freq{o,m}, n*tda.freqs(o)); % Gets the response value at the given frequency (if any nonlinear behaviour in model, there may be other response components, but these are just ignored here.)
                                 sigs{m, n}(o) = specs{o, m}(indf)/ai(o);
                             end
                         end
