@@ -40,7 +40,7 @@ classdef Bretschneider < WaveSpectrum
 
                         G = cosSpectSpread(s, dirc, dir);
                         E = E.'*G;
-                        ws.setSpectrum(E, f, dir);
+                        ws.setSpectrum(E, f, dir, s);
                     else
                         ws.setSpectrum(E, f);
                     end

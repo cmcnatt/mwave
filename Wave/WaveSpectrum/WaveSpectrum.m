@@ -26,6 +26,7 @@ classdef WaveSpectrum <handle
         frequencies;
         directions;
         cutoff;
+        spreading;
     end
     
     properties (Dependent)
@@ -33,6 +34,7 @@ classdef WaveSpectrum <handle
         M0;
         SigWaveHeight;
         PeakPeriod;
+        Spreading;
     end
     
     methods
@@ -75,6 +77,15 @@ classdef WaveSpectrum <handle
         % SigWaveHeight
         function [Hs] = get.SigWaveHeight(spec)
             Hs = 4*sqrt(spec.M0);
+        end
+
+        % Spreading
+        function [s] = get.Spreading(spec)
+            s = spec.spreading;
+        end
+
+        function [] = set.Spreading(spec, s)
+            spec.Spreading = s;
         end
         
         % PeakPeriod
@@ -409,6 +420,9 @@ classdef WaveSpectrum <handle
             spec.spectrum = specin;
             spec.frequencies = f;
             spec.directions = dir;
+            if length(varargin) == 2
+                spec.spreading = varargin{2};
+            end
             
             spec.cutoff = 0.01;
         end
