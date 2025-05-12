@@ -226,9 +226,3 @@ expectedPow = round([0 0 peakPow avgPow]', 2);
 energyFlux = round([energyFluxD, energyFlux0, energyFluxP, energyFluxS]', 2);
 
 tab = table(expectedPow, energyFlux)
-
-%% Time domain
-% 
-% a = spec.Amplitudes('randPhase');
-% xi0a = squeeze(xi0).*(a.'*ones(1,3));
-% xiPa = squeeze(xiP).*(a.'*ones(1,3));
