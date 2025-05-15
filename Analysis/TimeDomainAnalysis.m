@@ -91,6 +91,7 @@ classdef TimeDomainAnalysis < handle
     methods
         
         function [tdan] = TimeDomainAnalysis()
+            % Test comment - mwave private.
         end
         
         function [val] = get.MotionDoF(tda)
