@@ -29,11 +29,11 @@ end
 
 xLab = cell(1,length(x));
 for n = 1:length(x)
-    xLab{n} = num2str(x(n), '%4.1f');
+    xLab{n} = num2str(x(n), '%4.2f');
 end
 
 imagesc(mat);
-set(gca, 'XAxisLocation','top',...
+set(gca, 'XAxisLocation','bottom',...
     'ytick', yinds, 'yticklabel', yLab(yinds),...
     'xtick', xinds, 'xticklabel', xLab(xinds));
 fet;

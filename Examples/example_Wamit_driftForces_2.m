@@ -65,7 +65,7 @@ wam_run = WamitRunCondition(folder, run_name);
 
 wam_run.Rho = rho;      % set the fluid density (kg/m^3)
 wam_run.T = 4:0.1:12;   % set the wave period(s)(in s)
-wam_run.Beta = 0;       % set the incident wave direction(s) (in radians)
+wam_run.Beta = 45*pi/180;       % set the incident wave direction(s) (in radians)
 wam_run.H = Inf;        % set the water depth (in m) - can be a positive 
                         % value or Inf
 wam_run.CompDrift = true; % Turn drift force computation on/off
@@ -118,7 +118,7 @@ logical(cyl.Modes.Vector)); % Remove rows and columns for DoFs not studied.
 freqDomComp = FreqDomComp(freqDomForces, cyl, 'Constrained', P);
 
 % 4) Add desired changes to damping and stiffness matrices
-Dpto_6dof = zeros(6,6); Dpto_6dof(3,3) = 10000; 
+Dpto_6dof = zeros(6,6); Dpto_6dof(3,3) = 100000; 
 Dpto = Dpto_6dof(logical(cyl.Modes.Vector),...
     logical(cyl.Modes.Vector));
 freqDomComp.SetDpto(Dpto);
