@@ -28,7 +28,7 @@ norms = cell(size(bodynames));
 Npoints = zeros(size(bodynames));
 
 for n = 1:length(bodynames)
-    buffer = importdata([folderpath '\' bodynames{n} '.pnl']);
+    buffer = importdata(fullfile(folderpath, [bodynames{n},'.pnl']));
 
     raw = buffer.data;
 

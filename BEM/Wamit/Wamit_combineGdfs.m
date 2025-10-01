@@ -32,7 +32,7 @@ isy = zeros(Ngdf, 1);
 verts = cell(Ngdf, 1);
 
 for n = 1:Ngdf
-    fid = fopen([sourceFolder '\' gdfIn{n} '.gdf']);
+    fid = fopen(fullfile(sourceFolder,[gdfIn{n},'.gdf']));
     fgetl(fid);
     num = textscan(fid,'%f',2);
     num = num{1};
@@ -58,7 +58,7 @@ if ~all(ulen == ulen(1)) || ~all(g == g(1))...
     warning('Gdf settings are not the same.');
 end
 
-filename = [destFolder '\' gdfOut '.gdf'];
+filename = fullfile(destFolder, [gdfOut, '.gdf']);
 fid = fopen(filename, 'wt');
                         
 fprintf(fid, ['Model ' gdfOut ', created: ' date '\n']);

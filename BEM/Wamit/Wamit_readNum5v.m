@@ -40,9 +40,9 @@ end
 
 Np = sum(Npoints);
 
-fidx = fopen([folderpath '/' runname '.5vx']);
-fidy = fopen([folderpath '/' runname '.5vy']);
-fidz = fopen([folderpath '/' runname '.5vz']);
+fidx = fopen(fullfile(folderpath, [runname, '.5vx']));
+fidy = fopen(fullfile(folderpath, [runname, '.5vy']));
+fidz = fopen(fullfile(folderpath, [runname, '.5vz']));
 % ignore the header lines
 fgetl(fidx);
 fgetl(fidy);

@@ -48,7 +48,7 @@ isy = zeros(Ngdf, 1);
 verts = cell(Ngdf, 1);
 
 for n = 1:Ngdf
-    fid = fopen([sourceFolder '\' gdfIn{n} '.gdf']);
+    fid = fopen(fullfile(sourceFolder, [gdfIn{n}, '.gdf']));
     fgetl(fid);
     num = textscan(fid,'%f',2);
     num = num{1};

@@ -52,7 +52,7 @@ else
 end
 
 pdim = rho*g;
-fid = fopen([folderpath '/' runname '.5p']);
+fid = fopen(fullfile(folderpath, [runname, '.5p']));
 % ignore the header line
 fgetl(fid);
 

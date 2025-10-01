@@ -8,7 +8,7 @@ if nargin < 5
     onlyWets = false;
 end
 
-filename = [folderPath '\' geoName '.gdf'];
+filename = fullfile(folderPath, [geoName, '.gdf']);
 fileID = fopen(filename, 'wt');
 
 ulen = 1;

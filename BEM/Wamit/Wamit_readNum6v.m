@@ -27,9 +27,9 @@ points = Wamit_readFpt(folderpath, runname);
 
 [Npoints, buffer] = size(points);
 
-fidx = fopen([folderpath '/' runname '.6vx']);
-fidy = fopen([folderpath '/' runname '.6vy']);
-fidz = fopen([folderpath '/' runname '.6vz']);
+fidx = fopen(fullfile(folderpath, [runname, '.6vx']));
+fidy = fopen(fullfile(folderpath, [runname, '.6vy']));
+fidz = fopen(fullfile(folderpath, [runname, '.6vz']));
 % ignore the header lines
 fgetl(fidx);
 fgetl(fidy);

@@ -20,7 +20,7 @@ Contributors:
 %}
 function [panGeo] = Wamit_readGdf(folderpath, filename)
 
-fid = fopen([folderpath '\' filename '.gdf']);
+fid = fopen(fullfile(folderpath, [filename, '.gdf']));
 fgetl(fid);
 num = textscan(fid,'%f',2);
 num = num{1};

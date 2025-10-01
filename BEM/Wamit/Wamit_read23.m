@@ -59,9 +59,9 @@ end
 
 % read in the file and ignore the header line.
 try
-    file_data = importdata([folderpath '/' runname '.2' ext]);
+    file_data = importdata(fullfile(folderpath,[ runname,'.2',ext]));
 catch
-    file_data = importdata([folderpath '/' runname '.3' ext]);
+    file_data = importdata(fullfile(folderpath,[ runname,'.3',ext]));
 end
 data = file_data.data;
 

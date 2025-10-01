@@ -48,7 +48,7 @@ classdef NemohRunCondition < IBemRunCondition
     methods
         
         function [run] = NemohRunCondition(folder)
-            run.exePath = [myMatPath '\..\nemoh'];
+            run.exePath = ['/Users/rcoe/Nemoh/bin'];
             run.rho = 1000;
             run.nOmega = 0;
             run.nBeta = 0;
@@ -58,7 +58,7 @@ classdef NemohRunCondition < IBemRunCondition
             run.cylArray = [];
             run.useCylSurf = true;
             if (nargin == 0)
-                run.folder = ' ';
+                run.folder = '.';
             else 
                 run.folder = folder;
                 run.makeFolderAndSub(folder);
@@ -203,7 +203,7 @@ classdef NemohRunCondition < IBemRunCondition
             run.writeCal;
                         
             % Write input text file
-            fid=fopen([run.folder, '/input.txt'],'wt');
+            fid=fopen(fullfile(run.folder, 'input.txt'),'wt');
             fprintf(fid,' \n 0 \n');
             fclose(fid);
             
@@ -219,9 +219,9 @@ classdef NemohRunCondition < IBemRunCondition
             opts = checkOptions({'Background'}, varargin);
             
             if (opts)
-                system(['cd ' run.folder ' && ' run.exePath '\preProcessor.exe &']);
+                system(['cd ' run.folder ' && ' fullfile(run.exePath, 'preProcessor'), '&']);
             else
-                system(['cd ' run.folder ' && '  run.exePath '\preProcessor.exe']);
+                system(['cd ' run.folder ' && '  fullfile(run.exePath, 'preProcessor')]);
             end
         end
         
@@ -235,9 +235,9 @@ classdef NemohRunCondition < IBemRunCondition
             opts = checkOptions({'Background'}, varargin);
             
             if (opts)
-                system(['cd ' run.folder ' && ' run.exePath '\Solver.exe &']);
+                system(['cd ' run.folder ' && ' fullfile(run.exePath, 'Solver.exe'), '&']);
             else
-                system(['cd ' run.folder ' && '  run.exePath '\Solver.exe']);
+                system(['cd ' run.folder ' && '  fullfile(run.exePath, 'Solver.exe')]);
             end
         end
         
@@ -251,9 +251,9 @@ classdef NemohRunCondition < IBemRunCondition
             opts = checkOptions({'Background'}, varargin);
             
             if (opts)
-                system(['cd ' run.folder ' && ' run.exePath '\postProcessor.exe &']);
+                system(['cd ' run.folder ' && ' fullfile(run.exePath, 'postProcessor.exe'), '&']);
             else
-                system(['cd ' run.folder ' && '  run.exePath '\postProcessor.exe']);
+                system(['cd ' run.folder ' && '  fullfile(run.exePath, 'postProcessor.exe')]);
             end
         end
         
@@ -278,7 +278,7 @@ classdef NemohRunCondition < IBemRunCondition
             end
                         
             if (~noBat || back)
-                filename = [run.folder '\nem_run.bat'];
+                filename = fullfile(run.folder,'nem_run.bat');
                 fileID = fopen(filename, 'wt');
                 if (~noMesh)
                     fprintf(fileID, '%s\\Mesh.exe >Mesh\\Mesh.log\n', run.exePath);
@@ -295,9 +295,9 @@ classdef NemohRunCondition < IBemRunCondition
                 if (noBat)
                     runStr = ['cd ' run.folder];
                     if (~noMesh)
-                        runStr = [runStr ' && ' run.exePath '\Mesh.exe >Mesh\Mesh.log '];
+                        runStr = [runStr ' && ' run.exePath '/Mesh.exe >Mesh\Mesh.log '];
                     end
-                    runStr = [runStr ' && ' run.exePath '\preProcessor.exe && ' run.exePath '\Solver.exe && ' run.exePath '\postProcessor.exe'];
+                    runStr = [runStr ' && ' run.exePath '/preProcessor.exe && ' run.exePath '/Solver.exe && ' run.exePath '/postProcessor.exe'];
                 else
                     runStr = ['cd ' run.folder ' && nem_run.bat'];
                 end
@@ -351,7 +351,7 @@ classdef NemohRunCondition < IBemRunCondition
             fprintf('\n --> Number of nodes             : %g',nx);
             fprintf('\n --> Number of panels (max 2000) : %g \n',nf);
 
-            fid = fopen([run.folder '\mesh.cal'],'w');
+            fid = fopen(fullfile(run.folder, 'mesh.cal'),'w');
             fprintf(fid, 'axisym \n');
             fprintf(fid,'1 \n 0. 0. \n ');
             
@@ -384,10 +384,10 @@ classdef NemohRunCondition < IBemRunCondition
         function [Mass, Inertia, KH, XB, YB, ZB] = RunMesh(run)
             % Runs the Nemoh Mesh function
             oldFolder = cd(run.folder);
-            system([run.exePath '\Mesh.exe >Mesh\Mesh.log']);
+            system([fullfile(run.exePath,'Mesh.exe') '>' fullfile('Mesh','Mesh.log')]);
             cd(oldFolder);
             
-            fid=fopen([run.folder,'\Mesh\axisym.tec'],'r');
+            fid=fopen(fullfile(run.folder,'Mesh','axisym.tec'),'r');
             ligne=fscanf(fid,'%s',2);
             run.nx=fscanf(fid,'%g',1);
             ligne=fscanf(fid,'%s',2);
@@ -443,7 +443,7 @@ classdef NemohRunCondition < IBemRunCondition
             
             clear KH;
             KH = zeros(6,6);
-            fid=fopen([run.folder,'\Mesh\KH.dat'],'r');
+            fid=fopen(fullfile(run.folder,'Mesh','KH.dat'),'r');
             
             for i=1:6   
                 ligne=fscanf(fid,'%g %g',6);
@@ -454,7 +454,7 @@ classdef NemohRunCondition < IBemRunCondition
             clear XB YB ZB Mass WPA Inertia
             
             Inertia=zeros(6,6);
-            fid=fopen([run.folder,'\Mesh\Hydrostatics.dat'],'r');
+            fid=fopen(fullfile(run.folder,'Mesh','Hydrostatics.dat'),'r');
             ligne=fscanf(fid,'%s',2);
             XB=fscanf(fid,'%f',1);
             ligne=fgetl(fid);
@@ -472,7 +472,7 @@ classdef NemohRunCondition < IBemRunCondition
             status=fclose(fid);
             clear ligne
             
-            fid=fopen([run.folder,'\Mesh\Inertia_hull.dat'],'r');
+            fid=fopen(fullfile(run.folder,'Mesh','Inertia_hull.dat'),'r');
             
             for i=1:3
                 ligne=fscanf(fid,'%g %g',3);
@@ -492,16 +492,16 @@ classdef NemohRunCondition < IBemRunCondition
                 system(['mkdir ', fold]);
             end
             
-            if (~exist([fold '\Mesh'], 'dir'))
-                system(['mkdir ', fold, '\Mesh']);
+            if (~exist(fullfile(fold,'Mesh'), 'dir'))
+                system(['mkdir ', fullfile(fold, 'Mesh')]);
             end
             
-            if (~exist([fold '\Results'], 'dir'))
-                system(['mkdir ', fold, '\Results']);
+            if (~exist(fullfile(fold, 'Results'), 'dir'))
+                system(['mkdir ', fullfile(fold, 'Results')]);
             end
             
             % Write ID file
-            fid = fopen([run.folder '\ID.dat'],'wt');
+            fid = fopen(fullfile(run.folder, 'ID.dat'),'wt');
             fprintf(fid, '1\n.');
             fclose(fid);
         end
@@ -547,7 +547,7 @@ classdef NemohRunCondition < IBemRunCondition
             end
             
             % write Cal file
-            fid = fopen([run.folder, '\Nemoh.cal'],'wt');
+            fid = fopen(fullfile(run.folder, 'Nemoh.cal'),'wt');
                       
             fprintf(fid,'--- Environment ------------------------------------------------------------------------------------------------------------------ \n');
             fprintf(fid,'%7.2f                                              ! RHO               ! KG/M**3       ! Fluid specific volume \n', run.rho);
@@ -657,11 +657,12 @@ classdef NemohRunCondition < IBemRunCondition
             end
             geoFile = run.writeMeshFile(floatBod, true, name);
             
-            fid = fopen([run.folder '\mesh.cal'],'wt');
+            fid = fopen(fullfile(run.folder, 'mesh.cal'),'wt');
             fprintf(fid, '%s \n', geoFile);
             fprintf(fid, '1 \n 0. 0. \n ');
             
             fprintf(fid, '%f %f %f \n', floatBod.Cg);
+            geo = PanelGeo(floatBod.PanelGeo);
             npan = sum((geo.IsWets + ~geo.IsInteriors) == 2);
             fprintf(fid,'%g \n 2 \n 0. \n 1.\n', npan);
             
@@ -706,7 +707,7 @@ classdef NemohRunCondition < IBemRunCondition
             
             geoFile = [name '.dat'];
             
-            fid = fopen([run.folder, '\Mesh\' geoFile],'wt');
+            fid = fopen(fullfile(run.folder, 'Mesh', geoFile),'wt');
             
             if (forMesh)
                 fprintf(fid,' %i \n', npan*4);

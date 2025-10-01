@@ -33,7 +33,7 @@ noConv = cell(size(bodynames));
 
 totPanCnt = 0;
 for n = 1:length(bodynames)
-    name = [folderpath '\' bodynames{n} '.bpo'];
+    name = fullfile(folderpath,[bodynames{n},'.bpo']);
     if exist(name, 'file')
         buffer = importdata(name, ' ', 2);
 

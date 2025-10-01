@@ -46,7 +46,7 @@ if opts(1)
 end
 
 % Read in the file and ignore the header line.
-fid = fopen([folderpath '\' runname '.1']);
+fid = fopen(fullfile(folderpath,[runname,'.1']));
 head = fgetl(fid);
 
 n = 0;

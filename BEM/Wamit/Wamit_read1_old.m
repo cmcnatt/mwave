@@ -24,7 +24,7 @@ function [A, B, T, Modes] = Wamit_read1(folderpath, runname, rho)
 % (Modes)
 
 % Read in the file and ignore the header line.
-file_data = importdata([folderpath '\' runname '.1']);
+file_data = importdata(fullfile(folderpath, [runname,'.1']));
 data = file_data.data;
 
 % First, find out how many periods there are and make a vector of them.

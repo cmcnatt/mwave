@@ -83,7 +83,7 @@ classdef NemohResult < IBemResult
             % Excitation forces
             % Need to fix for multiple directions
             nB = result.nB;
-            fid = fopen([result.folder,'\Results\ExcitationForce.tec'],'r');
+            fid = fopen(fullfile(result.folder,'Results','ExcitationForce.tec'),'r');
             fgetl(fid);             % read header lines
             dofs = zeros(1, nbod);
             for l = 1:nbod
@@ -117,7 +117,7 @@ classdef NemohResult < IBemResult
             fclose(fid);
              
             % Radiation forces
-            fid = fopen([result.folder,'\Results\RadiationCoefficients.tec'],'r');
+            fid = fopen(fullfile(result.folder,'Results','RadiationCoefficients.tec'),'r');
             fgetl(fid);             % read header lines
             for l = 1:nbod
                 for m = 1:dofs(l)
@@ -144,7 +144,7 @@ classdef NemohResult < IBemResult
             % Hydrostatic matrix
             C = zeros(doft, doft);
             
-            fid = fopen([result.folder,'\Mesh\KH.dat'],'r');
+            fid = fopen(fullfile(result.folder,'Mesh','KH.dat'),'r');
             
             if (fid > 0)
                 for n = 1:doft   

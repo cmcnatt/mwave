@@ -127,7 +127,7 @@ classdef WamitResult < IBemResult
             % Reads the Wamit results
 
             % read error log
-            fid = fopen([result.folder '\errorp.log']);
+            fid = fopen(fullfile(result.folder, 'errorp.log'));
             nerr = 0;
             while(~feof(fid))
                 line = fgetl(fid);
@@ -158,7 +158,7 @@ classdef WamitResult < IBemResult
                         
             % If no run name is given, get it from .frc in fnames.wam
             if (isempty(result.runName))
-                fid = fopen([result.folder '\fnames.wam']);
+                fid = fopen(fullfile(result.folder,'fnames.wam'));
                 if (fid == -1)
                     error('Run name could not be located');
                 end
@@ -180,7 +180,7 @@ classdef WamitResult < IBemResult
             end
             
             % Gravity, depth and density
-            fid = fopen([result.folder '\' result.runName '.out']);
+            fid = fopen(fullfile(result.folder, [result.runName, '.out']));
             if (fid == -1)
                 warning('No WAMIT results for this run!');
             end
@@ -233,11 +233,11 @@ classdef WamitResult < IBemResult
             if (isempty(result.solveRad) || isempty(result.solveDiff))
                 result.solveRad = false;
                 result.solveDiff = false;
-                fid1 = fopen([result.folder '\' result.runName '.1']);
-                fid2 = fopen([result.folder '\' result.runName '.2']);
-                fid3 = fopen([result.folder '\' result.runName '.3']);
-                fid4 = fopen([result.folder '\' result.runName '.2fk']);
-                fid5 = fopen([result.folder '\' result.runName '.3fk']);
+                fid1 = fopen(fullfile(result.folder, [result.runName, '.1']));
+                fid2 = fopen(fullfile(result.folder, [result.runName, '.2']));
+                fid3 = fopen(fullfile(result.folder, [result.runName, '.3']));
+                fid4 = fopen(fullfile(result.folder, [result.runName, '.2fk']));
+                fid5 = fopen(fullfile(result.folder, [result.r,unName, '.3fk']));
                 
                 if fid1 ~= -1
                     result.solveRad = true;
@@ -362,11 +362,11 @@ classdef WamitResult < IBemResult
             if (isempty(result.solveBody))
                 result.solveBody = false;
                 if result.fieldPointsAsBody
-                    fid1 = fopen([result.folder '\' result.runName '.6p']);
-                    fid2 = fopen([result.folder '\' result.runName '.6vx']);
+                    fid1 = fopen(fullfile(result.folder, [result.runName, '.6p']));
+                    fid2 = fopen(fullfile(result.folder, [result.runName, '.6vx']));
                 else
-                    fid1 = fopen([result.folder '\' result.runName '.5p']);
-                    fid2 = fopen([result.folder '\' result.runName '.5vx']);
+                    fid1 = fopen(fullfile(result.folder, [result.runName, '.5p']));
+                    fid2 = fopen(fullfile(result.folder, [result.runName, '.5vx']));
                 end
                 
                 if (fid1 ~= -1)
@@ -595,8 +595,8 @@ classdef WamitResult < IBemResult
             
             if (isempty(result.solveField))
                 result.solveField = false;
-                fid1 = fopen([result.folder '\' result.runName '.6p']);
-                fid2 = fopen([result.folder '\' result.runName '.6vx']);
+                fid1 = fopen(fullfile(result.folder, [result.runName, '.6p']));
+                fid2 = fopen(fullfile(result.folder, [result.runName, '.6vx']));
                 
                 if (fid1 ~= -1)
                     result.solveField = true;
@@ -634,7 +634,7 @@ classdef WamitResult < IBemResult
                     nPoints = 0;
                 else
                     nPoints = size(P_rad, 3);
-                    data = importdata([result.folder '\' result.runName '.fpt']);
+                    data = importdata(fullfile(result.folder, [result.runName '.fpt']));
                     data = data.data;
                     result.fieldPoints = squeeze(data(:,2:4));
                     fpoints = result.fieldPoints;
@@ -840,7 +840,7 @@ classdef WamitResult < IBemResult
             for n = 1:length(result.driftOption)
                 ext = num2str(result.driftOption(n)+6); % Find file extension based on which drift methods have been used
                 try
-                    data = importdata([result.Folder '\' result.RunName '.' ext]);
+                    data = importdata(fullfile(result.Folder, [result.RunName '.' ext]));
                 catch
                     error('Unable to extract drift forces from results files.')
                 end

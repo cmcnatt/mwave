@@ -20,7 +20,7 @@ Contributors:
 %}
 function [points] = Wamit_readFpt(folderpath, runname)
 
-fid = fopen([folderpath '\' runname '.fpt']);
+fid = fopen(fullfile(folderpath, [runname, '.fpt']));
 fgetl(fid);
 
 n = 1;

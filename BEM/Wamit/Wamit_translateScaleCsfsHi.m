@@ -55,7 +55,7 @@ Nk = cell(Ngdf, 1);
 knts = cell(Ngdf, 1);
 
 for m = 1:Ngdf
-    fid = fopen([sourceFolder '\' csfIn{m} '.csf']);
+    fid = fopen(fullfile(sourceFolder, [csfIn{m}, '.csf']));
     
     header{m} = fgetl(fid);
     num = textscan(fid,'%f',1);

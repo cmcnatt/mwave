@@ -20,7 +20,7 @@ Contributors:
 %}
 function [verts] = Wamit_readGdfDat(folderpath, filename)
 
-fid = fopen([folderpath '\' filename '_pat.dat']);
+fid = fopen(fullfile(folderpath, [filename,'_pat.dat']));
 
 n = 0;
 verts = cell(1,1);

@@ -1,6 +1,6 @@
 function Wamit_writeCsfHi(folderPath, geoName, panelGeoCsf, pszcsf)
 
-filename = [folderPath '\' geoName '.csf'];
+filename = fullfile(folderPath, [geoName, '.csf']);
 fileID = fopen(filename, 'wt');
 
 ilowhicsf = 1; % This function is for higher order CSF file creation.

@@ -20,7 +20,7 @@ Contributors:
 %}
 function [panGeoCsf] = Wamit_readCsfHi(folderpath, filename)
 
-fid = fopen([folderpath '\' filename '.csf']);
+fid = fopen(fullfile(folderpath, [filename,'.csf']);
 fgetl(fid);
 num = textscan(fid,'%f',1);
 num = num{1};

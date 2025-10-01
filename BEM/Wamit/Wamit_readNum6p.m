@@ -34,7 +34,7 @@ points = Wamit_readFpt(folderpath, runname);
 [Npoints buffer] = size(points);
 
 
-fid = fopen([folderpath '/' runname '.6p']);
+fid = fopen(fullfile(folderpath, [runname, '.6p']));
 % ignore the header line
 fgetl(fid);
 

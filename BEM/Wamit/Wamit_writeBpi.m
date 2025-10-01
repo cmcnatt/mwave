@@ -29,7 +29,7 @@ else
     end
 end
     
-fileName = [fileLoc '\' name '.bpi'];
+fileName = fullfile(fileLoc,[name, '.bpi']);
 fileID = fopen(fileName, 'wt');
 
 fprintf(fileID, ['Model ' name ', created: ' date '\n']);

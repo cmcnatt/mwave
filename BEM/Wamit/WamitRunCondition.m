@@ -94,9 +94,9 @@ classdef WamitRunCondition < IBemRunCondition
             run.bodyPanInds = [];
             run.solveDiff = true;
             run.solveRad = true;
-            run.exePath = 'C:\wamitv7';
-            run.scratchPath = '\wamitv7\scratch';
-            run.useridPath = '\wamitv7';
+            run.exePath = '/usr/netpub/WAMIT/bin/wamit';
+            run.scratchPath = '.';
+            run.useridPath = '/usr/netpub/WAMIT/';
             run.ncpu = 1;
             run.ramGB = 2;
             run.maxItt = 35;
@@ -550,40 +550,40 @@ classdef WamitRunCondition < IBemRunCondition
         function [] = CleanRunFolder(run, varargin)
             opts = checkOptions({'ExceptGdf'}, varargin);
             if ~opts(1)
-                delete([run.folder '\*.gdf']);
-                delete([run.folder '\*.spl']);
-                delete([run.folder '\*.ms2']);
+                delete(fullfile(run.folder,'*.gdf'));
+                delete(fullfile(run.folder,'*.spl'));
+                delete(fullfile(run.folder,'*.ms2'));
             end
-            delete([run.folder '\*.1']); 
-            delete([run.folder '\*.2']);
-            delete([run.folder '\*.3']);
-            delete([run.folder '\*.4']);
-            delete([run.folder '\*.5*']);
-            delete([run.folder '\*.6*']);
-            delete([run.folder '\*.7']);
-            delete([run.folder '\*.8']);
-            delete([run.folder '\*.9']);
-            delete([run.folder '\*.frc']);
-            delete([run.folder '\*.pot']);
-            delete([run.folder '\*.cfg']);
-            delete([run.folder '\*.wam']);
-            delete([run.folder '\*.bpi']);
-            delete([run.folder '\*.rao']);
-            delete([run.folder '\*.p2f']);
-            delete([run.folder '\*.log']);
-            delete([run.folder '\*.txt']);
-            delete([run.folder '\*.out']);
-            delete([run.folder '\*.num']);
-            delete([run.folder '\*.dat']);
-            delete([run.folder '\*.pnl']);
-            delete([run.folder '\*.hst']);
-            delete([run.folder '\*.fpt']);
-            delete([run.folder '\*.idf']);
-            delete([run.folder '\*.bpo']);
-            delete([run.folder '\*.dat']);
-            delete([run.folder '\*.csf']);
-            delete([run.folder '\*.bat']);
-            delete([run.folder '\*.mmx']);
+            delete(fullfile(run.folder,'*.1')); 
+            delete(fullfile(run.folder,'*.2'));
+            delete(fullfile(run.folder,'*.3'));
+            delete(fullfile(run.folder,'*.4'));
+            delete(fullfile(run.folder,'*.5*'));
+            delete(fullfile(run.folder,'*.6*'));
+            delete(fullfile(run.folder,'*.7'));
+            delete(fullfile(run.folder,'*.8'));
+            delete(fullfile(run.folder,'*.9'));
+            delete(fullfile(run.folder,'*.frc'));
+            delete(fullfile(run.folder,'*.pot'));
+            delete(fullfile(run.folder,'*.cfg'));
+            delete(fullfile(run.folder,'*.wam'));
+            delete(fullfile(run.folder,'*.bpi'));
+            delete(fullfile(run.folder,'*.rao'));
+            delete(fullfile(run.folder,'*.p2f'));
+            delete(fullfile(run.folder,'*.log'));
+            delete(fullfile(run.folder,'*.txt'));
+            delete(fullfile(run.folder,'*.out'));
+            delete(fullfile(run.folder,'*.num'));
+            delete(fullfile(run.folder,'*.dat'));
+            delete(fullfile(run.folder,'*.pnl'));
+            delete(fullfile(run.folder,'*.hst'));
+            delete(fullfile(run.folder,'*.fpt'));
+            delete(fullfile(run.folder,'*.idf'));
+            delete(fullfile(run.folder,'*.bpo'));
+            delete(fullfile(run.folder,'*.dat'));
+            delete(fullfile(run.folder,'*.csf'));
+            delete(fullfile(run.folder,'*.bat'));
+            delete(fullfile(run.folder,'*.mmx'));
         end
         
         function [] = WriteRun(run, varargin)
@@ -642,7 +642,7 @@ classdef WamitRunCondition < IBemRunCondition
             end
                         
             if (~noBat)
-                filename = [run.folder '\wam_run.bat'];
+                filename = fullfile(run.folder,'wam_run.bat');
                 fileID = fopen(filename, 'wt');
                 
                 fprintf(fileID, ['set "fN=' run.runName '"\n\n']);
@@ -687,7 +687,7 @@ classdef WamitRunCondition < IBemRunCondition
             end
             
             % fnames
-            filename = [run.folder '\fnames.wam'];
+            filename = fullfile(run.folder,'fnames.wam');
             fileID = fopen(filename, 'wt');
             
             fprintf(fileID, [run.runName '.cfg\n']);
@@ -755,9 +755,9 @@ classdef WamitRunCondition < IBemRunCondition
             opts = checkOptions({'Background'}, varargin);
             
             if (opts)
-                system(['cd "' run.folder '" && "' run.folder '\wam_run.bat" &']);
+                system(['cd "' run.folder '" && "' run.folder '/wam_run.bat" &']);
             else
-                system(['cd "' run.folder '" && "' run.folder '\wam_run.bat"']);
+                system(['cd "' run.folder '" && "' run.folder '/wam_run.bat"']);
             end
         end
     end
@@ -779,7 +779,7 @@ classdef WamitRunCondition < IBemRunCondition
             geo = PanelGeo(geo);
             geo.Translate(-fb.CenterRot); %translate to rotate about center of rotation.
             
-            filename = [run.folder '\' geoFile '.gdf'];
+            filename = fullfile(run.folder, [geoFile, '.gdf']);
             fileID = fopen(filename, 'wt');
             
             ulen = 1;
@@ -846,7 +846,7 @@ classdef WamitRunCondition < IBemRunCondition
                 run.boxCSF = false; % Use cylinder-shaped control surface by default
             end
             
-            filename = [run.folder '\' geoFile '.csf']; % file must have same 
+            filename = fullfile(run.folder, [geoFile, '.csf']); % file must have sam);
                                             % name as corresponding .GDF file.
             fileID = fopen(filename, 'wt');
             
@@ -931,20 +931,20 @@ classdef WamitRunCondition < IBemRunCondition
         end % writeAutoCsf
         
         function [] = writeWamConfig(run)
-            filename = [run.folder '\config.wam'];
+            filename = fullfile(run.folder,'config.wam');
             fileID = fopen(filename, 'wt');
 
             fprintf(fileID, '! generic configuration file:  config.wam\n');
             fprintf(fileID, 'RAMGBMAX=%4.1f\n', run.ramGB);
             fprintf(fileID, 'NCPU=%i\n', run.ncpu);
             fprintf(fileID, 'USERID_PATH = %s\n', run.useridPath);
-            fprintf(fileID, 'LICENSE_PATH=\\wamitv7\\license\n');
+            fprintf(fileID, 'LICENSE_PATH=/usr/netpub/WAMIT/');
             fclose(fileID);
         end
         
         function [] = writeCfg(run)
             Nbod = length(run.floatBods);
-            filename = [run.folder '\' run.runName '.cfg'];
+            filename = fullfile(run.folder, [run.runName, '.cfg']);
             fileID = fopen(filename, 'wt');
 
             fprintf(fileID, 'IDELFILES = 2\n');
@@ -1119,7 +1119,7 @@ classdef WamitRunCondition < IBemRunCondition
         end
         
         function [] = writeFrc(run)
-            filename = [run.folder '\' run.runName '.frc'];
+            filename = fullfile(run.folder, [run.runName, '.frc']);
             fileID = fopen(filename, 'wt');
             
             % header
@@ -1322,7 +1322,7 @@ classdef WamitRunCondition < IBemRunCondition
                                                            % any additional indices will refer to damping plates.  
             
             % Now, open and write the RAO file to be read in by WAMIT            
-            filename = [run.folder '\' run.runName '.rao'];
+            filename = fullfile(run.folder, [run.runName, '.rao']);
             fileID = fopen(filename, 'wt');
             
             % header
@@ -1344,7 +1344,7 @@ classdef WamitRunCondition < IBemRunCondition
         end % writeRAOs
         
         function [] = writePot(run)
-            filename = [run.folder '\' run.runName '.pot'];
+            filename = fullfile(run.folder, [run.runName, '.pot']);
             fileID = fopen(filename, 'wt');
             
             % header

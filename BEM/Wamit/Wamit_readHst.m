@@ -20,7 +20,7 @@ Contributors:
 %}
 function [C] = Wamit_readHst(folderpath, runname, rho, g)
 
-file_data = importdata([folderpath '/' runname '.hst']);
+file_data = importdata(fullfile(folderpath, [runname, '.hst']));
 data = file_data.data;
 
 dof = max(data(:,1));
